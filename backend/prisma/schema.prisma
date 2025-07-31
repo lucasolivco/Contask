@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  createdTasks Task[] @relation("CreatedBy")
+  assignedTasks Task[] @relation("AssignedTo")
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relacionamentos
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+  
+  assignedToId String
+  assignedTo   User   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  
+  attachments Attachment[]
+  notifications Notification[]
+
+  @@map("tasks")
+}
+
+model Attachment {
+  id       String @id @default(cuid())
+  filename String
+  originalName String
+  mimeType String
+  size     Int
+  path     String
+  
+  taskId   String
+  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@map("attachments")
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  type    NotificationType
+  title   String
+  message String
+  read    Boolean          @default(false)
+  
+  userId  String
+  user    User             @relation(fields: [userId], references: [id])
+  
+  taskId  String?
+  task    Task?            @relation(fields: [taskId], references: [id])
+  
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+enum Role {
+  MANAGER
+  EMPLOYEE
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_UPDATED
+  TASK_COMPLETED
+  TASK_OVERDUE
+}
