@@ -1,12 +1,12 @@
-// "Menu" de funcionalidades relacionadas a tarefas
+// "Menu" de funcionalidades relacionadas às tarefas
 import { Router } from 'express'
-import {
-    createTask,
-    getTasks,
-    getTask,
-    updateTaskStatus,
-    getEmployees
-} from  '../controllers/taskController'
+import { 
+  createTask, 
+  getTasks, 
+  getTask, 
+  updateTaskStatus, 
+  getEmployees 
+} from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 
 const router = Router()
@@ -15,12 +15,12 @@ const router = Router()
 router.use(authenticateToken)
 
 // Rotas para gerentes
+router.get('/employees', requireManager, getEmployees) // Listar funcionários
 router.post('/', requireManager, createTask) // Criar tarefa
-router.get('/', requireManager, getTasks) // Listar tarefas
 
 // Rotas para todos os usuários autenticados
-router.get('/employees', getTasks) // Listar tarefas
-router.get('/:id', getTask) // Obter tarefa específica
-router.patch('/:id/status', updateTaskStatus) // Atualizar status da tarefa
+router.get('/', getTasks) // Listar tarefas
+router.get('/:id', getTask) // Ver tarefa específica
+router.patch('/:id/status', updateTaskStatus) // Atualizar status
 
 export default router
