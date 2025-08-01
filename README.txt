@@ -9,7 +9,8 @@ Um gerenciador de tarefas completo com autenticação e controle de usuários. E
 - **TypeScript**
 - **Node.js** + **Express**
 - **React** (frontend em desenvolvimento)
-- **MongoDB** ou outro banco de dados (configurável)
+- **PostgreSQL** (configurável)
+- **Docker**
 - **dotenv**, **helmet**, **cors**, **rate-limit**, entre outros
 
 ---
