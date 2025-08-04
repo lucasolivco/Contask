@@ -19,9 +19,11 @@ api.interceptors.request.use((config) => {
     }
 
     return config // Continua com a requisição
+
 }, (error) => {
     // Se der erro, mostra uma mensagem
     console.error('Erro na requisição:', error)
     return Promise.reject(error) // Rejeita a promessa com o erro
 })
 
+export default api // Exporta o "telefone" para ser usado em outros lugares

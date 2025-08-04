@@ -1,0 +1,44 @@
+// Serviços para tarefas - como "formulários" que ajudam a criar, atualizar e buscar tarefas
+import api from './api'
+import type { Task, CreateTaskForm, TaskFilter, TaskResponse, EmployeesResponse  } from '../types'
+
+// Buscar lista de tarefas (com filros opcionais)
+export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
+    const params = new URLSearchParams();
+
+    if (filters?.status) params.append('status', filters.status)
+    if (filters?.priority) params.append('priority', filters.priority)
+    if (filters?.search) params.append('search', filters.search)
+    if (filters?.assignedToId) params.append('assignedToId', filters.assignedToId)
+    if (filters?.dueDate) params.append('dueDate', filters.dueDate)
+    
+    const response = await api.get('/tasks?${params.toString()}');
+    return response.data;
+}
+
+// Buscar uma tarefa específica pelo ID
+export const getTask = async (id: string): Promise<{ task: Task }> => {
+    const response = await api.get(`/tasks/${id}`);
+    return response.data;
+}
+
+// Criar nova tarefa (só gerentes)
+export const createTask = async (data: CreateTaskForm): Promise<{ task: Task }> => {
+    const response = await api.post('/tasks', data);
+    return response.data
+}
+
+// Atualizar status de uma tarefa
+export const updateTaskStatus = async (
+    id: string,
+    status: Task['status']
+): Promise<{ task: Task }> => {
+    const response = await api.patch(`/tasks/${id}/status`, { status });
+    return response.data;
+}
+
+// Buscar lista de funcionários (só gerentes)
+export const getEmployees = async (): Promise<EmployeesResponse> => {
+    const response = await api.get('/tasks/employees');
+    return response.data;
+}

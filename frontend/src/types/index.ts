@@ -83,6 +83,7 @@ export interface CreateTaskForm {
 export interface TaskFilter {
     status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'; // Filtro por status da tarefa
     priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; // Filtro por prioridade da tarefa
+    search?: string; // Filtro por texto no título ou descrição
     assignedToId?: string; // Filtro por ID do usuário a quem a tarefa está atribuída
     dueDate?: string; // Filtro por data de vencimento
 }
