@@ -9,7 +9,7 @@ export interface User {
 
 export interface Task {
     id: string; // Identificador único da tarefa
-    tittle: string; // Título da tarefa
+    title: string; // Título da tarefa
     description: string; // Descrição da tarefa
     status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'; // Status da tarefa
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; // Prioridade da tarefa
@@ -102,7 +102,7 @@ export interface LoginResponse {
 }
 
 export interface TaskResponse {
-  task: Task[]
+  tasks: Task[]
 }
 
 export interface EmployeesResponse {
