@@ -18,10 +18,12 @@ import Input from '../components/ui/Input'
 import { useAuth } from '../contexts/AuthContext'
 import { getTasks, updateTaskStatus } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
+import { useNavigate } from 'react-router-dom'
 
 const Tasks: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   
   // Estados para filtros
   const [filters, setFilters] = React.useState<TaskFilter>({})
@@ -150,7 +152,7 @@ const Tasks: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {/* TODO: Ver detalhes */}}
+              onClick={() => navigate(`/tasks/${task.id}`)}
             >
               <Eye size={16} />
               Ver detalhes
@@ -178,7 +180,7 @@ const Tasks: React.FC = () => {
         </div>
 
         {user?.role === 'MANAGER' && (
-          <Button onClick={() => window.location.href = '/tasks/create'}>
+          <Button onClick={() => navigate('/tasks/create')}>
             <Plus size={16} />
             Nova Tarefa
           </Button>

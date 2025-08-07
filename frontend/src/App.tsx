@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Tasks from './pages/Tasks'
+import CreateTask from './pages/CreateTask'
 
 // Cria um cliente para gerenciar requisições da API
 // É como um "correio central" que organiza todas as chamadas para o backend
@@ -122,6 +123,7 @@ function App() {
               {/* Subrotas que aparecem dentro do layout */}
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="tasks" element={<Tasks />} />
+              <Route path="tasks/create" element={<CreateTask />} />
               {/* TODO: Adicionar mais rotas conforme criamos as páginas */}
             </Route>
             
