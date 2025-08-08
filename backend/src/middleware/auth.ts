@@ -21,7 +21,7 @@ export const authenticateToken = async (
         //Busca o token no cabeçalho
         //É como mostrar seu ingresso na entrada do cinema
         const authHeader = req.headers.authorization
-        const token = authHeader && authHeader.split('')[1] // Remove "Beater" do início
+        const token = authHeader && authHeader.split(' ')[1] // Remove "Beater" do início
 
         if (!token) {
             return res.status(401).json({
@@ -69,7 +69,7 @@ export const requireManager= (
     next: NextFunction
 ) => {
     // Só gerentes podem criar e gerenciar tarefas
-    if (req.user?.role !== 'manager') {
+    if (req.user?.role !== 'MANAGER') {
         return res.status(403).json({
             error: 'Acesso negado: apenas gerentes podem acessar esta área.'
         })
