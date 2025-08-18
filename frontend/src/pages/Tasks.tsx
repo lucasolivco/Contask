@@ -4,19 +4,16 @@ import { toast } from 'sonner'
 import { 
   CheckSquare, 
   Plus,
-  Eye,
-  Calendar,
-  User,
-  AlertTriangle,
+  TrendingUp,
   Clock,
-  CheckCircle2,
-  XCircle,
-  Pause
+  AlertTriangle,
+  Target
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import TaskFilters from '../components/tasks/TaskFilters'
+import TaskCard from '../components/tasks/TaskCard'
 import { useAuth } from '../contexts/AuthContext'
 import { getTasks, updateTaskStatus } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
@@ -61,7 +58,7 @@ const Tasks: React.FC = () => {
       filtered = filtered.filter(task =>
         task.dueDate &&
         new Date(task.dueDate) < now &&
-        ['PENDING', 'IN_PROGRESS'].includes(task.status!)
+        ['PENDING', 'IN_PROGRESS'].includes(task.status)
       )
     }
 
@@ -72,131 +69,28 @@ const Tasks: React.FC = () => {
     updateStatusMutation.mutate({ id: taskId, status: newStatus })
   }
 
-  // Componente para Card de Tarefa
-  const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
-    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETADO'
-
-    const getStatusIcon = (status: string) => {
-      switch (status) {
-        case 'COMPLETED': return <CheckCircle2 className="h-4 w-4 text-green-600" />
-        case 'IN_PROGRESS': return <Clock className="h-4 w-4 text-blue-600" />
-        case 'CANCELLED': return <XCircle className="h-4 w-4 text-red-600" />
-        default: return <Pause className="h-4 w-4 text-gray-600" />
-      }
-    }
-
-    const getStatusText = (status: string) => {
-      switch (status) {
-        case 'PENDING': return 'Pendente'
-        case 'IN_PROGRESS': return 'Em Progresso'
-        case 'COMPLETED': return 'Concluída'
-        case 'CANCELLED': return 'Cancelada'
-        default: return status
-      }
-    }
-
-    const getPriorityText = (priority: string) => {
-      switch (priority) {
-        case 'HIGH': return 'Alta'
-        case 'MEDIUM': return 'Média'
-        case 'LOW': return 'Baixa'
-        case 'URGENT': return 'Urgente'
-        default: return priority
-      }
-    }
-
-    return (
-      <Card className={`card-hover ${isOverdue ? 'border-red-200 bg-red-50/30' : 'hover:border-rose-200'}`}>
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              {getStatusIcon(task.status!)}
-              <span className="text-sm font-medium text-gray-700">
-                {getStatusText(task.status!)}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {isOverdue && (
-                <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                  <AlertTriangle className="h-3 w-3" />
-                  Atrasada
-                </span>
-              )}
-              <span className={`priority-${task.priority!.toLowerCase()}`}>
-                {getPriorityText(task.priority!)}
-              </span>
-            </div>
-          </div>
-
-          {/* Título e descrição */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-              {task.title}
-            </h3>
-            {task.description && (
-              <p className="text-gray-600 text-sm line-clamp-2">
-                {task.description}
-              </p>
-            )}
-          </div>
-
-          {/* Informações */}
-          <div className="space-y-2 text-sm text-gray-500">
-            {task.dueDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  Vence em {new Date(task.dueDate).toLocaleDateString('pt-BR')}
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>
-                {user?.role === 'MANAGER' ? (
-                  `Atribuído para ${task.assignedTo.name}`
-                ) : (
-                  `Criado por ${task.createdBy.name}`
-                )}
-              </span>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-            <select
-              value={task.status}
-              onChange={(e) => handleStatusChange(task.id, e.target.value as Task['status'])}
-              className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-300"
-              disabled={updateStatusMutation.isPending}
-            >
-              <option value="PENDING">📋 Pendente</option>
-              <option value="IN_PROGRESS">⚡ Em Progresso</option>
-              <option value="COMPLETED">✅ Concluída</option>
-              <option value="CANCELLED">❌ Cancelada</option>
-            </select>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(`/tasks/${task.id}`)}
-            >
-              <Eye size={16} />
-              Detalhes
-            </Button>
-          </div>
-        </div>
-      </Card>
-    )
+  const handleTaskClick = (taskId: string) => {
+    navigate(`/tasks/${taskId}`)
   }
+
+  // Estatísticas - CORRIGIDO: usando valores em inglês
+  const stats = useMemo(() => {
+    const pending = tasks.filter(t => t.status === 'PENDING').length
+    const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS').length
+    const completed = tasks.filter(t => t.status === 'COMPLETED').length
+    const overdue = tasks.filter(t => 
+      t.dueDate && 
+      new Date(t.dueDate) < new Date() && 
+      ['PENDING', 'IN_PROGRESS'].includes(t.status)
+    ).length
+
+    return { pending, inProgress, completed, overdue, total: tasks.length }
+  }, [tasks])
 
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
           Erro ao carregar tarefas. Tente novamente.
         </div>
       </div>
@@ -204,15 +98,17 @@ const Tasks: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-8 scrollbar-modern">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <CheckSquare className="h-8 w-8 text-rose-500" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="animate-fade-in">
+          <h1 className="heading-xl flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-lg">
+              <CheckSquare className="h-8 w-8 text-white" />
+            </div>
             {user?.role === 'MANAGER' ? 'Gerenciar Tarefas' : 'Minhas Tarefas'}
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted mt-3 text-lg">
             {user?.role === 'MANAGER' 
               ? 'Crie e acompanhe tarefas da sua equipe'
               : 'Visualize e atualize suas tarefas atribuídas'
@@ -221,36 +117,57 @@ const Tasks: React.FC = () => {
         </div>
         
         {user?.role === 'MANAGER' && (
-          <Button onClick={() => navigate('/tasks/create')} size="lg">
+          <Button 
+            onClick={() => navigate('/tasks/create')} 
+            size="lg"
+            className="interactive-glow"
+          >
             <Plus className="h-5 w-5" />
             Nova Tarefa
           </Button>
         )}
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="text-center gradient-blue border-blue-200">
-          <div className="text-2xl font-bold text-blue-700">{tasks.length}</div>
-          <div className="text-blue-600 text-sm">Total</div>
-        </Card>
-        <Card className="text-center bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <div className="text-2xl font-bold text-yellow-700">
-            {tasks.filter(t => t.status === 'PENDENTE').length}
+      {/* Estatísticas - DESIGN ELEGANTE SEM GRADIENTES */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-slide-up">
+        <Card className="text-center stat-card-total card-hover">
+          <div className="flex items-center justify-center mb-3">
+            <div className="p-3 bg-slate-100 rounded-xl">
+              <Target className="h-6 w-6 text-slate-600" />
+            </div>
           </div>
-          <div className="text-yellow-600 text-sm">Pendentes</div>
+          <div className="text-2xl font-bold text-slate-700 mb-1">{stats.total}</div>
+          <div className="text-slate-600 text-sm font-medium">Total</div>
         </Card>
-        <Card className="text-center bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <div className="text-2xl font-bold text-green-700">
-            {tasks.filter(t => t.status === 'COMPLETADO').length}
+        
+        <Card className="text-center stat-card-pending card-hover">
+          <div className="flex items-center justify-center mb-3">
+            <div className="p-3 bg-blue-100 rounded-xl">
+              <Clock className="h-6 w-6 text-blue-600" />
+            </div>
           </div>
-          <div className="text-green-600 text-sm">Concluídas</div>
+          <div className="text-2xl font-bold text-blue-700 mb-1">{stats.pending}</div>
+          <div className="text-blue-600 text-sm font-medium">Pendentes</div>
         </Card>
-        <Card className="text-center bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <div className="text-2xl font-bold text-red-700">
-            {tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && ['PENDING', 'IN_PROGRESS'].includes(t.status!)).length}
+        
+        <Card className="text-center stat-card-completed card-hover">
+          <div className="flex items-center justify-center mb-3">
+            <div className="p-3 bg-emerald-100 rounded-xl">
+              <CheckSquare className="h-6 w-6 text-emerald-600" />
+            </div>
           </div>
-          <div className="text-red-600 text-sm">Atrasadas</div>
+          <div className="text-2xl font-bold text-emerald-700 mb-1">{stats.completed}</div>
+          <div className="text-emerald-600 text-sm font-medium">Concluídas</div>
+        </Card>
+        
+        <Card className="text-center stat-card-overdue card-hover">
+          <div className="flex items-center justify-center mb-3">
+            <div className="p-3 bg-amber-100 rounded-xl">
+              <AlertTriangle className="h-6 w-6 text-amber-600" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-amber-700 mb-1">{stats.overdue}</div>
+          <div className="text-amber-600 text-sm font-medium">Atrasadas</div>
         </Card>
       </div>
 
@@ -259,35 +176,53 @@ const Tasks: React.FC = () => {
 
       {/* Lista de Tarefas */}
       {isLoading ? (
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-40 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-64 bg-gray-200 rounded-2xl animate-pulse"></div>
           ))}
         </div>
       ) : filteredTasks.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTasks.map((task, index) => (
+            <div 
+              key={task.id} 
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <TaskCard
+                task={task}
+                onClick={() => handleTaskClick(task.id)}
+                onStatusChange={handleStatusChange}
+                userRole={user?.role || ''}
+              />
+            </div>
           ))}
         </div>
       ) : (
-        <Card className="text-center py-12">
-          <CheckSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {tasks.length === 0 ? 'Nenhuma tarefa encontrada' : 'Nenhuma tarefa corresponde aos filtros'}
-          </h3>
-          <p className="text-gray-500 mb-6">
-            {tasks.length === 0 
-              ? 'Comece criando sua primeira tarefa'
-              : 'Tente ajustar os filtros para ver mais resultados'
-            }
-          </p>
-          {user?.role === 'MANAGER' && tasks.length === 0 && (
-            <Button onClick={() => navigate('/tasks/create')}>
-              <Plus className="h-4 w-4" />
-              Criar Primeira Tarefa
-            </Button>
-          )}
+        <Card className="text-center py-16 animate-fade-in">
+          <div className="max-w-md mx-auto">
+            <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-6">
+              <CheckSquare className="h-16 w-16 text-gray-400" />
+            </div>
+            <h3 className="heading-md mb-3">
+              {tasks.length === 0 ? 'Nenhuma tarefa encontrada' : 'Nenhuma tarefa corresponde aos filtros'}
+            </h3>
+            <p className="text-muted mb-8">
+              {tasks.length === 0 
+                ? 'Comece criando sua primeira tarefa'
+                : 'Tente ajustar os filtros para ver mais resultados'
+              }
+            </p>
+            {user?.role === 'MANAGER' && tasks.length === 0 && (
+              <Button 
+                onClick={() => navigate('/tasks/create')}
+                className="interactive-glow"
+              >
+                <Plus className="h-4 w-4" />
+                Criar Primeira Tarefa
+              </Button>
+            )}
+          </div>
         </Card>
       )}
     </div>

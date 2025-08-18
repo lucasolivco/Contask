@@ -41,7 +41,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         assignedToId,
         createdById: req.user!.userId, // O gerente que está criando
         dueDate: dueDate ? new Date(dueDate) : null,
-        priority: priority || 'MEDIUM'
+        priority: priority || 'MÉDIA'
       },
       include: {
         // Inclui informações do criador e responsável
@@ -128,7 +128,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         lt: now
       }
       whereCondition.status = {
-        in: ['PENDING', 'IN_PROGRESS']
+        in: ['PENDENTE', 'EM_PROGRESSO']
       }
     }
 
@@ -231,7 +231,7 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
     const userRole = req.user!.role
 
     // Lista de status válidos
-    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+    const validStatuses = ['PENDENTE', 'EM_PROGRESSO', 'COMPLETADO', 'CANCELADO']
     
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ 

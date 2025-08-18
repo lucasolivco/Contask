@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Search, Filter, X, AlertTriangle, Calendar } from 'lucide-react'
+import React, { useState } from 'react'
+import { Search, Filter, X, AlertTriangle, Calendar, Settings } from 'lucide-react'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
@@ -36,43 +36,46 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
   }).length
 
   return (
-    <div className="space-y-4">
-      {/* Barra de Busca Principal */}
-      <Card className="gradient-rose border-rose-100">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Campo de busca */}
+    <div className="space-y-6 animate-slide-up">
+      {/* Barra de Busca Principal - DESIGN NEUTRO E ELEGANTE */}
+      <Card className="bg-white border-gray-200 shadow-lg">
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Campo de busca - CORES NEUTRAS */}
           <div className="flex-1">
-            <Input
-              type="text"
-              placeholder="Buscar tarefas por título ou descrição..."
-              value={filters.search || ''}
-              onChange={(e) => updateFilter('search', e.target.value)}
-              icon={<Search className="h-4 w-4" />}
-              className="bg-white/80 border-rose-200 focus:bg-white"
-            />
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar tarefas por título ou descrição..."
+                value={filters.search || ''}
+                onChange={(e) => updateFilter('search', e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 focus:outline-none transition-all duration-200 shadow-sm hover:border-gray-300"
+              />
+            </div>
           </div>
           
-          {/* Botões de ação */}
-          <div className="flex gap-2">
-            {/* Filtro Atrasadas */}
+          {/* Botões de ação - DESIGN MINIMALISTA */}
+          <div className="flex gap-3">
+            {/* Filtro Atrasadas - COR LARANJA */}
             <Button
               variant={filters.overdue ? 'danger' : 'ghost'}
               onClick={() => updateFilter('overdue', !filters.overdue)}
-              className={`${!filters.overdue ? 'hover:bg-red-50 text-red-600' : ''}`}
+              className={`interactive-scale ${!filters.overdue ? 'hover:bg-amber-50 text-amber-700 border border-amber-200' : 'bg-amber-100 text-amber-800 border-amber-300'}`}
             >
               <AlertTriangle className="h-4 w-4" />
-              <span className="hidden sm:inline">Atrasadas</span>
+              <span className="hidden sm:inline font-medium">Atrasadas</span>
             </Button>
             
             {/* Toggle Filtros Avançados */}
             <Button
               variant={showAdvanced ? 'secondary' : 'ghost'}
               onClick={() => setShowAdvanced(!showAdvanced)}
+              className="interactive-scale relative"
             >
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">Filtros</span>
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Filtros</span>
               {activeFiltersCount > 0 && (
-                <span className="bg-rose-500 text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-scale-in">
                   {activeFiltersCount}
                 </span>
               )}
@@ -83,7 +86,7 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
               <Button
                 variant="ghost"
                 onClick={clearAllFilters}
-                className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 interactive-scale"
               >
                 <X className="h-4 w-4" />
                 <span className="hidden sm:inline">Limpar</span>
@@ -93,19 +96,21 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
         </div>
       </Card>
 
-      {/* Filtros Avançados */}
+      {/* Filtros Avançados - DESIGN CLEAN */}
       {showAdvanced && (
-        <Card className="bg-white border-rose-100 animate-fade-in">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-rose-700">
-              <Filter className="h-4 w-4" />
-              <h3 className="font-medium">Filtros Avançados</h3>
+        <Card className="bg-white border-gray-200 shadow-lg animate-fade-in">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Filter className="h-4 w-4 text-gray-600" />
+              </div>
+              <h3 className="heading-sm text-gray-800">Filtros Avançados</h3>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Status da Tarefa
                 </label>
                 <select
@@ -113,7 +118,7 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
                   onChange={(e) => updateFilter('status', e.target.value || undefined)}
                   className="input-field"
                 >
-                  <option value="">Todos os status</option>
+                  <option value="">🔍 Todos os status</option>
                   <option value="PENDING">📋 Pendente</option>
                   <option value="IN_PROGRESS">⚡ Em Progresso</option>
                   <option value="COMPLETED">✅ Concluída</option>
@@ -123,26 +128,26 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
 
               {/* Prioridade */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prioridade
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Nível de Prioridade
                 </label>
                 <select
                   value={filters.priority || ''}
                   onChange={(e) => updateFilter('priority', e.target.value || undefined)}
                   className="input-field"
                 >
-                  <option value="">Todas as prioridades</option>
-                  <option value="LOW">🟢 Baixa</option>
-                  <option value="MEDIUM">🟡 Média</option>
-                  <option value="HIGH">🟠 Alta</option>
-                  <option value="URGENT">🔴 Urgente</option>
+                  <option value="">🎯 Todas as prioridades</option>
+                  <option value="URGENT">🚨 Urgente</option>
+                  <option value="HIGH">⚡ Alta</option>
+                  <option value="MEDIUM">📋 Média</option>
+                  <option value="LOW">📝 Baixa</option>
                 </select>
               </div>
 
               {/* Data de vencimento */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="inline h-4 w-4 mr-1" />
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  <Calendar className="inline h-4 w-4 mr-2" />
                   Data de Vencimento
                 </label>
                 <input
@@ -157,16 +162,16 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
         </Card>
       )}
 
-      {/* Indicadores de Filtros Ativos */}
+      {/* Indicadores de Filtros Ativos - DESIGN MELHORADO */}
       {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap gap-2 animate-fade-in">
+        <div className="flex flex-wrap gap-3 animate-fade-in">
           {filters.search && (
-            <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-sm">
+            <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border border-gray-200">
               <Search className="h-3 w-3" />
               "{filters.search}"
               <button
                 onClick={() => updateFilter('search', '')}
-                className="hover:bg-rose-200 rounded-full p-0.5 transition-colors"
+                className="hover:bg-gray-200 rounded-full p-1 transition-colors interactive-scale"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -174,11 +179,11 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
           )}
           
           {filters.status && (
-            <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-sm">
+            <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border border-blue-200">
               Status: {filters.status}
               <button
                 onClick={() => updateFilter('status', undefined)}
-                className="hover:bg-rose-200 rounded-full p-0.5 transition-colors"
+                className="hover:bg-blue-200 rounded-full p-1 transition-colors interactive-scale"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -186,11 +191,11 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
           )}
           
           {filters.priority && (
-            <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-sm">
+            <span className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border border-orange-200">
               Prioridade: {filters.priority}
               <button
                 onClick={() => updateFilter('priority', undefined)}
-                className="hover:bg-rose-200 rounded-full p-0.5 transition-colors"
+                className="hover:bg-orange-200 rounded-full p-1 transition-colors interactive-scale"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -198,12 +203,12 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
           )}
           
           {filters.overdue && (
-            <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">
+            <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border border-amber-200 animate-pulse">
               <AlertTriangle className="h-3 w-3" />
               Atrasadas
               <button
                 onClick={() => updateFilter('overdue', false)}
-                className="hover:bg-red-200 rounded-full p-0.5 transition-colors"
+                className="hover:bg-amber-200 rounded-full p-1 transition-colors interactive-scale"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -211,12 +216,12 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
           )}
           
           {filters.dueDate && (
-            <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-sm">
+            <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border border-purple-200">
               <Calendar className="h-3 w-3" />
               {new Date(filters.dueDate).toLocaleDateString('pt-BR')}
               <button
                 onClick={() => updateFilter('dueDate', undefined)}
-                className="hover:bg-rose-200 rounded-full p-0.5 transition-colors"
+                className="hover:bg-purple-200 rounded-full p-1 transition-colors interactive-scale"
               >
                 <X className="h-3 w-3" />
               </button>

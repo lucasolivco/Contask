@@ -1,4 +1,4 @@
-// CreateTask.tsx - Página para gerentes criarem novas tarefas
+// CreateTask.tsx - CORRIGIDO
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Save, ArrowLeft, User, Calendar, AlertTriangle } from 'lucide-react'
+import { Save, ArrowLeft, User, Calendar, AlertTriangle, Sparkles } from 'lucide-react'
 
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -14,300 +14,340 @@ import Card from '../components/ui/Card'
 import { createTask, getEmployees } from '../services/taskService'
 import type { CreateTaskForm } from '../types'
 
-// Schema de validação - Define as regras para cada campo do formulário
-// É como uma "receita" que diz o que é obrigatório e como deve estar formatado
+// Schema CORRIGIDO - usando valores em inglês que o backend espera
 const createTaskSchema = z.object({
   title: z
     .string()
-    .min(1, 'Título é obrigatório') // Não pode estar vazio
-    .min(3, 'Título deve ter pelo menos 3 caracteres') // Mínimo 3 caracteres
-    .max(100, 'Título deve ter no máximo 100 caracteres'), // Máximo 100 caracteres
+    .min(1, 'Título é obrigatório')
+    .min(3, 'Título deve ter pelo menos 3 caracteres')
+    .max(100, 'Título deve ter no máximo 100 caracteres'),
   
   description: z
     .string()
     .max(500, 'Descrição deve ter no máximo 500 caracteres')
-    .optional(), // Campo opcional
+    .optional(),
   
   assignedToId: z
     .string()
-    .min(1, 'Funcionário é obrigatório'), // Deve selecionar um funcionário
+    .min(1, 'Funcionário é obrigatório'),
   
   dueDate: z
     .string()
-    .optional(), // Data de vencimento é opcional
+    .optional(),
   
+  // CORRIGIDO: usar valores em inglês
   priority: z
-    .enum(['BAIXA', 'MÉDIA', 'ALTA', 'URGENTE'] as const)
+    .enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const)
     .describe('Prioridade é obrigatória'),
 })
 
 const CreateTask: React.FC = () => {
-  const navigate = useNavigate() // Hook para navegação programática
+  const navigate = useNavigate()
   
-  // Hook do React Hook Form - gerencia todo o estado do formulário
   const {
-    register, // Função para "registrar" campos no formulário
-    handleSubmit, // Função que processa o envio do formulário
-    formState: { errors }, // Objeto com todos os erros de validação
-    watch // Função para "observar" valores de campos em tempo real
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch
   } = useForm<CreateTaskForm>({
-    resolver: zodResolver(createTaskSchema), // Usa o Zod para validação
+    resolver: zodResolver(createTaskSchema),
     defaultValues: {
-      priority: 'MÉDIA' // Valor padrão para prioridade
+      priority: 'MEDIUM' // CORRIGIDO: valor padrão em inglês
     }
   })
 
-  // Query para buscar lista de funcionários
-  // useQuery é usado para BUSCAR dados (GET)
+  // Query para buscar funcionários
   const { 
     data: employeesData, 
-    isLoading: loadingEmployees 
+    isLoading: loadingEmployees,
+    error: employeesError
   } = useQuery({
-    queryKey: ['employees'], // Chave única para cache
-    queryFn: getEmployees, // Função que faz a requisição
-    // Esta query só roda se estivermos na página (automático)
+    queryKey: ['employees'],
+    queryFn: getEmployees,
+    retry: 1
   })
 
   // Mutation para criar tarefa
-  // useMutation é usado para MODIFICAR dados (POST, PUT, DELETE)
   const createTaskMutation = useMutation({
-    mutationFn: createTask, // Função que faz a requisição
-    
-    // Callback executado quando a requisição é bem-sucedida
+    mutationFn: createTask,
     onSuccess: (data) => {
-        toast.success(`Tarefa "${data.task.title}" criada com sucesso!`)
-        navigate('/tasks')
+      toast.success(`Tarefa "${data.task.title}" criada com sucesso!`)
+      navigate('/tasks')
     },
-    
-    // Callback executado quando há erro
     onError: (error: any) => {
       console.error('Erro ao criar tarefa:', error)
-      
-      // Extrai a mensagem de erro da resposta da API
       const message = error.response?.data?.error || 'Erro ao criar tarefa'
       toast.error(message)
     }
   })
 
-  // Função executada quando o formulário é enviado
   const onSubmit = (data: CreateTaskForm) => {
-    console.log('Dados do formulário:', data) // Para debug
-    
-    // Chama a mutation para criar a tarefa
+    console.log('Dados do formulário:', data)
     createTaskMutation.mutate(data)
   }
 
-  // Observa o valor da prioridade para mudar a cor do indicador
   const selectedPriority = watch('priority')
 
-  // Mapeamento de cores para cada prioridade
-  const priorityColors = {
-    BAIXA: 'text-green-600 bg-green-50 border-green-200',
-    MÉDIA: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    ALTA: 'text-orange-600 bg-orange-50 border-orange-200',
-    URGENTE: 'text-red-600 bg-red-50 border-red-200'
-  }
-
-  // Mapeamento de labels para cada prioridade
-  const priorityLabels = {
-    BAIXA: 'Baixa',
-    MÉDIA: 'Média',
-    ALTA: 'Alta',
-    URGENTE: 'Urgente'
+  // CORRIGIDO: usar chaves em inglês
+  const priorityConfig = {
+    LOW: {
+      label: 'Baixa',
+      color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      icon: '📝'
+    },
+    MEDIUM: {
+      label: 'Média',
+      color: 'text-amber-600 bg-amber-50 border-amber-200',
+      icon: '📋'
+    },
+    HIGH: {
+      label: 'Alta',
+      color: 'text-orange-600 bg-orange-50 border-orange-200',
+      icon: '⚡'
+    },
+    URGENT: {
+      label: 'Urgente',
+      color: 'text-red-600 bg-red-50 border-red-200',
+      icon: '🚨'
+    }
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
-      {/* Header da página */}
-      <div className="flex items-center space-x-4">
-        {/* Botão para voltar */}
+    <div className="p-6 max-w-4xl mx-auto space-y-8 animate-fade-in">
+      {/* Header melhorado */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-6">
         <Button
           variant="ghost"
           onClick={() => navigate('/tasks')}
-          className="p-2"
+          className="self-start interactive-scale"
         >
           <ArrowLeft size={20} />
+          <span className="hidden sm:inline">Voltar</span>
         </Button>
         
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="flex-1">
+          <h1 className="heading-xl flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-lg">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
             Nova Tarefa
           </h1>
-          <p className="text-gray-600">
-            Crie uma nova tarefa para sua equipe
+          <p className="text-muted mt-2 text-lg">
+            Crie uma nova tarefa e atribua para sua equipe
           </p>
         </div>
       </div>
 
-      {/* Formulário principal */}
-      <Card>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Formulário melhorado */}
+      <Card className="shadow-lg border-gray-200">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           
-          {/* Campo: Título da tarefa */}
-          <div>
+          {/* Seção: Informações Básicas */}
+          <div className="space-y-6">
+            <h3 className="heading-md text-rose-700 border-b border-rose-100 pb-2">
+              📝 Informações da Tarefa
+            </h3>
+            
             <Input
               label="Título da Tarefa"
-              placeholder="Ex: Implementar nova funcionalidade"
+              placeholder="Ex: Implementar sistema de autenticação"
               error={errors.title?.message}
-              {...register('title')} // Conecta o campo ao React Hook Form
+              className="text-lg"
+              {...register('title')}
             />
-          </div>
 
-          {/* Campo: Descrição (opcional) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Descrição (opcional)
-            </label>
-            <textarea
-              placeholder="Descreva os detalhes da tarefa..."
-              rows={4}
-              className={`
-                input-field resize-none
-                ${errors.description ? 'border-red-500 focus:ring-red-500' : ''}
-              `}
-              {...register('description')} // Conecta o campo ao React Hook Form
-            />
-            {/* Mostra erro se houver */}
-            {errors.description && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          {/* Campo: Funcionário */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <User className="inline h-4 w-4 mr-1" />
-              Atribuir para
-            </label>
-            
-            <select
-              className={`
-                input-field
-                ${errors.assignedToId ? 'border-red-500 focus:ring-red-500' : ''}
-              `}
-              {...register('assignedToId')} // Conecta o campo ao React Hook Form
-            >
-              <option value="">Selecione um funcionário</option>
-              
-              {/* Renderiza opções dinamicamente baseado na API */}
-              {employeesData?.employees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name} ({employee.email})
-                  {/* Mostra quantas tarefas o funcionário já tem */}
-                  {employee._count?.assignedTasks > 0 && 
-                    ` - ${employee._count.assignedTasks} tarefa(s)`
-                  }
-                </option>
-              ))}
-            </select>
-            
-            {/* Loading state para quando está buscando funcionários */}
-            {loadingEmployees && (
-              <p className="text-sm text-gray-500 mt-1">
-                Carregando funcionários...
-              </p>
-            )}
-            
-            {/* Mostra erro se houver */}
-            {errors.assignedToId && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.assignedToId.message}
-              </p>
-            )}
-          </div>
-
-          {/* Campos lado a lado: Data e Prioridade */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Campo: Data de vencimento */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar className="inline h-4 w-4 mr-1" />
-                Data de Vencimento (opcional)
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Descrição (opcional)
               </label>
-              <input
-                type="date"
+              <textarea
+                placeholder="Descreva os detalhes, requisitos e observações importantes..."
+                rows={4}
                 className={`
-                  input-field
-                  ${errors.dueDate ? 'border-red-500 focus:ring-red-500' : ''}
+                  input-field resize-none
+                  ${errors.description ? 'border-red-500 focus:ring-red-500' : ''}
                 `}
-                // Define data mínima como hoje
-                min={new Date().toISOString().split('T')[0]}
-                {...register('dueDate')} // Conecta o campo ao React Hook Form
+                {...register('description')}
               />
-              {errors.dueDate && (
+              {errors.description && (
                 <p className="text-sm text-red-600 mt-1">
-                  {errors.dueDate.message}
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Seção: Atribuição */}
+          <div className="space-y-6">
+            <h3 className="heading-md text-rose-700 border-b border-rose-100 pb-2">
+              👥 Atribuição e Prazo
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <User className="inline h-4 w-4 mr-2" />
+                Atribuir para Funcionário
+              </label>
+              
+              {employeesError ? (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+                  Erro ao carregar funcionários. Tente recarregar a página.
+                </div>
+              ) : (
+                <select
+                  className={`
+                    input-field
+                    ${errors.assignedToId ? 'border-red-500 focus:ring-red-500' : ''}
+                  `}
+                  {...register('assignedToId')}
+                >
+                  <option value="">Selecione um funcionário</option>
+                  {employeesData?.employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name} ({employee.email})
+                      {employee._count?.assignedTasks > 0 && 
+                        ` - ${employee._count.assignedTasks} tarefa(s) ativa(s)`
+                      }
+                    </option>
+                  ))}
+                </select>
+              )}
+              
+              {loadingEmployees && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-rose-500"></div>
+                  Carregando funcionários...
+                </div>
+              )}
+              
+              {errors.assignedToId && (
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.assignedToId.message}
                 </p>
               )}
             </div>
 
-            {/* Campo: Prioridade */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <AlertTriangle className="inline h-4 w-4 mr-1" />
-                Prioridade
-              </label>
-              
-              <select
-                className={`
-                  input-field
-                  ${errors.priority ? 'border-red-500 focus:ring-red-500' : ''}
-                `}
-                {...register('priority')} // Conecta o campo ao React Hook Form
-              >
-                <option value="BAIXA">Baixa</option>
-                <option value="MÉDIA">Média</option>
-                <option value="ALTA">Alta</option>
-                <option value="URGENTE">Urgente</option>
-              </select>
-              
-              {errors.priority && (
-                <p className="text-sm text-red-600 mt-1">
-                  {errors.priority.message}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Data de vencimento */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  <Calendar className="inline h-4 w-4 mr-2" />
+                  Data de Vencimento
+                </label>
+                <input
+                  type="date"
+                  className={`
+                    input-field
+                    ${errors.dueDate ? 'border-red-500 focus:ring-red-500' : ''}
+                  `}
+                  min={new Date().toISOString().split('T')[0]}
+                  {...register('dueDate')}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Deixe em branco se não houver prazo específico
                 </p>
-              )}
+                {errors.dueDate && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.dueDate.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Prioridade */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  <AlertTriangle className="inline h-4 w-4 mr-2" />
+                  Nível de Prioridade
+                </label>
+                
+                <select
+                  className={`
+                    input-field
+                    ${errors.priority ? 'border-red-500 focus:ring-red-500' : ''}
+                  `}
+                  {...register('priority')}
+                >
+                  <option value="LOW">📝 Baixa</option>
+                  <option value="MEDIUM">📋 Média</option>
+                  <option value="HIGH">⚡ Alta</option>
+                  <option value="URGENT">🚨 Urgente</option>
+                </select>
+                
+                {errors.priority && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.priority.message}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Indicador visual de prioridade */}
           {selectedPriority && (
             <div className={`
-              p-3 rounded-lg border
-              ${priorityColors[selectedPriority]}
+              p-4 rounded-xl border animate-scale-in
+              ${priorityConfig[selectedPriority].color}
             `}>
-              <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                <span className="font-medium">
-                  Prioridade: {priorityLabels[selectedPriority]}
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">
+                  {priorityConfig[selectedPriority].icon}
                 </span>
+                <div>
+                  <p className="font-semibold">
+                    Prioridade: {priorityConfig[selectedPriority].label}
+                  </p>
+                  <p className="text-sm opacity-80">
+                    {selectedPriority === 'URGENT' && 'Esta tarefa será marcada como urgente e receberá destaque especial.'}
+                    {selectedPriority === 'HIGH' && 'Esta tarefa terá prioridade alta na lista de tarefas.'}
+                    {selectedPriority === 'MEDIUM' && 'Esta tarefa terá prioridade normal.'}
+                    {selectedPriority === 'LOW' && 'Esta tarefa pode ser feita quando houver tempo disponível.'}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
           {/* Botões de ação */}
-          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-            {/* Botão Cancelar */}
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-gray-200">
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               onClick={() => navigate('/tasks')}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
             
-            {/* Botão Criar Tarefa */}
             <Button
               type="submit"
-              loading={createTaskMutation.isPending} // Mostra loading durante requisição
+              loading={createTaskMutation.isPending}
+              disabled={loadingEmployees || !!employeesError}
+              className="w-full sm:w-auto interactive-glow"
+              size="lg"
             >
               <Save size={16} />
-              Criar Tarefa
+              {createTaskMutation.isPending ? 'Criando...' : 'Criar Tarefa'}
             </Button>
           </div>
         </form>
+      </Card>
+
+      {/* Dica útil */}
+      <Card className="bg-blue-50 border-blue-200">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <AlertTriangle className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-blue-900 mb-1">
+              Dica para uma boa tarefa
+            </h4>
+            <p className="text-blue-700 text-sm">
+              Seja específico no título e descrição. Inclua critérios de aceitação e 
+              informações que ajudem o funcionário a entender exatamente o que deve ser feito.
+            </p>
+          </div>
+        </div>
       </Card>
     </div>
   )
