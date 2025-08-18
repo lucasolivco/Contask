@@ -9,7 +9,6 @@ import dotenv from 'dotenv'
 // Importa nossas rotas
 import authRoutes from './routes/authRoutes'
 import taskRoutes from './routes/taskRoutes'
-import departmentRoutes from './routes/departmentRoutes'
 
 // Carrega variáveis de ambiente
 dotenv.config()
@@ -39,8 +38,6 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 // Rotas da aplicação
 app.use('/api/auth', authRoutes) // Todas as rotas de auth começam com /api/auth
 app.use('/api/tasks', taskRoutes) // Todas as rotas de tarefas começam com /api/tasks
-
-app.use('/api/departments', departmentRoutes)
 
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/api/health', (req, res) => {
