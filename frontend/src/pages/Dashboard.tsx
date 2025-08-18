@@ -29,12 +29,12 @@ const Dashboard: React.FC = () => {
 
   // Calcula estatísticas
   const stats = React.useMemo(() => {
-    const pending = tasks.filter(t => t.status === 'PENDING').length
-    const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS').length
-    const completed = tasks.filter(t => t.status === 'COMPLETED').length
+    const pending = tasks.filter(t => t.status === 'PENDENTE').length
+    const inProgress = tasks.filter(t => t.status === 'EM_PROGRESSO').length
+    const completed = tasks.filter(t => t.status === 'COMPLETADO').length
     const overdue = tasks.filter(t => {
       if (!t.dueDate) return false
-      return new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED'
+      return new Date(t.dueDate) < new Date() && t.status !== 'COMPLETADO'
     }).length
 
     return { pending, inProgress, completed, overdue, total: tasks.length }
@@ -70,17 +70,17 @@ const Dashboard: React.FC = () => {
 
   const TaskItem: React.FC<{ task: Task }> = ({ task }) => {
     const priorityColors = {
-      LOW: 'bg-green-100 text-green-800',
-      MEDIUM: 'bg-yellow-100 text-yellow-800',
-      HIGH: 'bg-orange-100 text-orange-800',
-      URGENT: 'bg-red-100 text-red-800'
+      BAIXA: 'bg-green-100 text-green-800',
+      MÉDIA: 'bg-yellow-100 text-yellow-800',
+      ALTA: 'bg-orange-100 text-orange-800',
+      URGENTE: 'bg-red-100 text-red-800'
     }
 
     const statusColors = {
-      PENDING: 'bg-gray-100 text-gray-800',
-      IN_PROGRESS: 'bg-blue-100 text-blue-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800'
+      PENDENTE: 'bg-gray-100 text-gray-800',
+      EM_PROGRESSO: 'bg-blue-100 text-blue-800',
+      COMPLETADO: 'bg-green-100 text-green-800',
+      CANCELADO: 'bg-red-100 text-red-800'
     }
 
     return (
@@ -97,10 +97,10 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${priorityColors[task.priority]}`}>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${priorityColors[task.priority!]}`}>
             {task.priority}
           </span>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[task.status]}`}>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[task.status!]}`}>
             {task.status}
           </span>
         </div>

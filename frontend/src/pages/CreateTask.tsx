@@ -37,7 +37,7 @@ const createTaskSchema = z.object({
     .optional(), // Data de vencimento é opcional
   
   priority: z
-    .enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const)
+    .enum(['BAIXA', 'MÉDIA', 'ALTA', 'URGENTE'] as const)
     .describe('Prioridade é obrigatória'),
 })
 
@@ -53,7 +53,7 @@ const CreateTask: React.FC = () => {
   } = useForm<CreateTaskForm>({
     resolver: zodResolver(createTaskSchema), // Usa o Zod para validação
     defaultValues: {
-      priority: 'MEDIUM' // Valor padrão para prioridade
+      priority: 'MÉDIA' // Valor padrão para prioridade
     }
   })
 
@@ -102,18 +102,18 @@ const CreateTask: React.FC = () => {
 
   // Mapeamento de cores para cada prioridade
   const priorityColors = {
-    LOW: 'text-green-600 bg-green-50 border-green-200',
-    MEDIUM: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    HIGH: 'text-orange-600 bg-orange-50 border-orange-200',
-    URGENT: 'text-red-600 bg-red-50 border-red-200'
+    BAIXA: 'text-green-600 bg-green-50 border-green-200',
+    MÉDIA: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+    ALTA: 'text-orange-600 bg-orange-50 border-orange-200',
+    URGENTE: 'text-red-600 bg-red-50 border-red-200'
   }
 
   // Mapeamento de labels para cada prioridade
   const priorityLabels = {
-    LOW: 'Baixa',
-    MEDIUM: 'Média',
-    HIGH: 'Alta',
-    URGENT: 'Urgente'
+    BAIXA: 'Baixa',
+    MÉDIA: 'Média',
+    ALTA: 'Alta',
+    URGENTE: 'Urgente'
   }
 
   return (
@@ -258,10 +258,10 @@ const CreateTask: React.FC = () => {
                 `}
                 {...register('priority')} // Conecta o campo ao React Hook Form
               >
-                <option value="LOW">Baixa</option>
-                <option value="MEDIUM">Média</option>
-                <option value="HIGH">Alta</option>
-                <option value="URGENT">Urgente</option>
+                <option value="BAIXA">Baixa</option>
+                <option value="MÉDIA">Média</option>
+                <option value="ALTA">Alta</option>
+                <option value="URGENTE">Urgente</option>
               </select>
               
               {errors.priority && (

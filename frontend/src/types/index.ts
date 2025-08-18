@@ -11,8 +11,8 @@ export interface Task {
     id: string; // Identificador único da tarefa
     title: string; // Título da tarefa
     description: string; // Descrição da tarefa
-    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'; // Status da tarefa
-    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; // Prioridade da tarefa
+    status?: 'PENDENTE' | 'EM_PROGRESSO' | 'COMPLETADO' | 'CANCELADO';
+    priority?: 'BAIXA' | 'MÉDIA' | 'ALTA' | 'URGENTE';
     dueDate?: string; // Data de vencimento da tarefa (opcional)
     createdAt: string; // Data de criação da tarefa
     updatedAt: string; // Data da última atualização da tarefa
@@ -77,13 +77,13 @@ export interface CreateTaskForm {
     description?: string;
     assignedToId: string; // ID do usuário a quem a tarefa será atribuída
     dueDate?: string;
-    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; // Prioridade da tarefa
+    priority: 'BAIXA' | 'MÉDIA' | 'ALTA' | 'URGENTE'; // Prioridade da tarefa
 }
 
 // Tipos para filtros - MELHORADOS
 export interface TaskFilter {
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    status?: 'PENDENTE' | 'EM_PROGRESSO' | 'COMPLETADO' | 'CANCELADO';
+    priority?: 'BAIXA' | 'MÉDIA' | 'ALTA' | 'URGENTE';
     search?: string;
     assignedToId?: string;
     dueDate?: string;

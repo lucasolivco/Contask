@@ -1,6 +1,5 @@
-// Layout principal - como a "moldura" de todas as páginas
 import React from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
     Home,
     CheckSquare,
@@ -18,6 +17,7 @@ import Button from '../components/ui/Button'
 const DashboardLayout: React.FC = () => {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
     const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
     const handleLogout = () => {
@@ -25,7 +25,7 @@ const DashboardLayout: React.FC = () => {
         navigate('/login')
     }
 
-    // Itens do menu baseados no tipo de usuário
+    // Itens do menu
     const menuItems = [
         {
             name: 'Dashboard',
@@ -34,7 +34,7 @@ const DashboardLayout: React.FC = () => {
             show: true
         },
         {
-            name: 'Minhas Tarefas',
+            name: user?.role === 'MANAGER' ? 'Todas as Tarefas' : 'Minhas Tarefas',
             icon: CheckSquare,
             path: '/tasks',
             show: true
@@ -43,7 +43,7 @@ const DashboardLayout: React.FC = () => {
             name: 'Funcionários',
             icon: Users,
             path: '/employees',
-            show: user?.role === 'MANAGER' // Só gerentes veem
+            show: user?.role === 'MANAGER'
         },
         {
             name: 'Notificações',
@@ -53,121 +53,192 @@ const DashboardLayout: React.FC = () => {
         }
     ].filter(item => item.show)
 
+    const isActivePath = (path: string) => location.pathname === path
 
-    return (
-        <div className="flex h-screen bg-gray-50">
-        {/* Sidebar Desktop */}
-        <div className="hidden md:flex md:w-64 md:flex-col">
-            <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-            {/* Logo */}
-            <div className="flex items-center px-6 py-4 border-b border-gray-200">
-                <CheckSquare className="h-8 w-8 text-primary-600" />
-                <span className="ml-2 text-xl font-bold text-gray-900">
-                TaskOrganizer
-                </span>
-            </div>
-
-            {/* Menu Navigation */}
-            <nav className="flex-1 px-4 py-6 space-y-2">
-                {menuItems.map((item) => (
+    // Componente de navegação reutilizável
+    const NavigationItems = ({ onItemClick }: { onItemClick?: () => void }) => (
+        <>
+            {menuItems.map((item) => (
                 <button
                     key={item.path}
-                    onClick={() => navigate(item.path)}
-                    className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    onClick={() => {
+                        navigate(item.path)
+                        onItemClick?.()
+                    }}
+                    className={`
+                        w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
+                        ${isActivePath(item.path)
+                            ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                            : 'text-gray-700 hover:bg-rose-50 hover:text-rose-600'
+                        }
+                    `}
                 >
                     <item.icon className="h-5 w-5 mr-3" />
                     {item.name}
                 </button>
-                ))}
+            ))}
 
-                {/* Botão Criar Tarefa (só para gerentes) */}
-                {user?.role === 'MANAGER' && (
+            {/* Botão Criar Tarefa */}
+            {user?.role === 'MANAGER' && (
                 <Button
-                    onClick={() => navigate('/tasks/create')}
+                    onClick={() => {
+                        navigate('/tasks/create')
+                        onItemClick?.()
+                    }}
                     className="w-full mt-4"
                     size="sm"
                 >
                     <Plus size={16} />
                     Nova Tarefa
                 </Button>
-                )}
-            </nav>
+            )}
+        </>
+    )
 
-            {/* User Info */}
-            <div className="px-4 py-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">
-                        {user?.name?.charAt(0).toUpperCase()}
-                    </span>
+    return (
+        <div className="flex h-screen bg-gray-50">
+            {/* Sidebar Desktop */}
+            <div className="hidden md:flex md:w-64 md:flex-col">
+                <div className="flex flex-col flex-grow bg-white border-r border-gray-200 shadow-sm">
+                    {/* Logo */}
+                    <div className="flex items-center px-6 py-5 border-b border-gray-200 gradient-rose">
+                        <CheckSquare className="h-8 w-8 text-rose-600" />
+                        <span className="ml-2 text-xl font-bold text-rose-700">
+                            TaskManager
+                        </span>
                     </div>
-                    <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-700">
-                        {user?.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                        {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
-                    </p>
+
+                    {/* Navigation */}
+                    <nav className="flex-1 px-4 py-6 space-y-2 scrollbar-thin overflow-y-auto">
+                        <NavigationItems />
+                    </nav>
+
+                    {/* User Info */}
+                    <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center min-w-0 flex-1">
+                                <div className="h-9 w-9 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span className="text-sm font-semibold text-white">
+                                        {user?.name?.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                                <div className="ml-3 min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-gray-700 truncate">
+                                        {user?.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleLogout}
+                                className="flex-shrink-0 p-2"
+                            >
+                                <LogOut size={16} />
+                            </Button>
+                        </div>
                     </div>
                 </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleLogout}
-                >
-                    <LogOut size={16} />
-                </Button>
+            </div>
+
+            {/* Sidebar Mobile Overlay */}
+            {sidebarOpen && (
+                <div className="fixed inset-0 z-40 md:hidden">
+                    <div 
+                        className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity" 
+                        onClick={() => setSidebarOpen(false)} 
+                    />
+                    <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl">
+                        {/* Close button */}
+                        <div className="absolute top-0 right-0 -mr-12 pt-2">
+                            <button
+                                onClick={() => setSidebarOpen(false)}
+                                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                            >
+                                <X className="h-6 w-6 text-white" />
+                            </button>
+                        </div>
+
+                        {/* Logo */}
+                        <div className="flex items-center px-6 py-5 border-b border-gray-200 gradient-rose">
+                            <CheckSquare className="h-8 w-8 text-rose-600" />
+                            <span className="ml-2 text-xl font-bold text-rose-700">
+                                TaskManager
+                            </span>
+                        </div>
+
+                        {/* Navigation */}
+                        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                            <NavigationItems onItemClick={() => setSidebarOpen(false)} />
+                        </nav>
+
+                        {/* User Info Mobile */}
+                        <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className="h-9 w-9 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center">
+                                        <span className="text-sm font-semibold text-white">
+                                            {user?.name?.charAt(0).toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="ml-3">
+                                        <p className="text-sm font-medium text-gray-700">
+                                            {user?.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        handleLogout()
+                                        setSidebarOpen(false)
+                                    }}
+                                    className="p-2"
+                                >
+                                    <LogOut size={16} />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            </div>
-        </div>
+            )}
 
-        {/* Sidebar Mobile */}
-        {sidebarOpen && (
-            <div className="fixed inset-0 z-40 md:hidden">
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-                <div className="absolute top-0 right-0 -mr-12 pt-2">
-                <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                >
-                    <X className="h-6 w-6 text-white" />
-                </button>
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Top Bar Mobile */}
+                <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="text-gray-500 hover:text-gray-600 p-2"
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <span className="text-lg font-bold text-rose-600">TaskManager</span>
+                        <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center">
+                                <span className="text-xs font-semibold text-white">
+                                    {user?.name?.charAt(0).toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                {/* Mesmo conteúdo da sidebar desktop */}
-            </div>
-            </div>
-        )}
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Top Bar Mobile */}
-            <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
-            <div className="flex items-center justify-between">
-                <button
-                onClick={() => setSidebarOpen(true)}
-                className="text-gray-500 hover:text-gray-600"
-                >
-                <Menu size={24} />
-                </button>
-                <span className="text-lg font-semibold">TaskOrganizer</span>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut size={16} />
-                </Button>
+                {/* Page Content */}
+                <main className="flex-1 overflow-y-auto bg-gray-50 scrollbar-thin">
+                    <Outlet />
+                </main>
             </div>
-            </div>
-
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto">
-            <Outlet />
-            </main>
-        </div>
         </div>
     )
 }
 
 export default DashboardLayout
-
-
