@@ -81,9 +81,11 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 // Função para listar tarefas (cada usuário vê apenas suas tarefas)
 export const getTasks = async (req: AuthRequest, res: Response) => {
   try {
-    const { status, priority, search } = req.query
+    const { status, priority, search, assignedToId, dueDate, overdue } = req.query
     const userId = req.user!.userId
     const userRole = req.user!.role
+
+    console.log('🔍 Filtros recebidos:', { status, priority, search, assignedToId, dueDate, overdue })
 
     // Condições de busca baseadas no que o usuário digitou
     let whereCondition: any = {}
@@ -97,21 +99,49 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
     }
 
     // Filtros opcionais
-    if (status) {
+    if (status && status !== 'all') {
       whereCondition.status = status
     }
 
-    if (priority) {
+    if (priority && priority !== 'all') {
       whereCondition.priority = priority
     }
 
+    // Se é gerente e quer filtrar por funcionário específico
+    if (userRole === 'MANAGER' && assignedToId && assignedToId !== 'all') {
+      whereCondition.assignedToId = assignedToId
+    }
+
+    // Filtro por data de vencimento
+    if (dueDate) {
+      const date = new Date(dueDate as string)
+      whereCondition.dueDate = {
+        gte: new Date(date.setHours(0, 0, 0, 0)),
+        lt: new Date(date.setHours(23, 59, 59, 999))
+      }
+    }
+
+    // Filtro para tarefas atrasadas
+    if (overdue === 'true') {
+      const now = new Date()
+      whereCondition.dueDate = {
+        lt: now
+      }
+      whereCondition.status = {
+        in: ['PENDING', 'IN_PROGRESS']
+      }
+    }
+
     // Busca por palavra-chave no título ou descrição
-    if (search) {
+    const searchTerm = search as string;
+    if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim() !== '') {
       whereCondition.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } }
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } }
       ]
     }
+
+    console.log('🔍 Condição final de busca:', JSON.stringify(whereCondition, null, 2))
 
     // Busca as tarefas no banco
     const tasks = await prisma.task.findMany({
@@ -132,6 +162,8 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         createdAt: 'desc' // Mais recentes primeiro
       }
     })
+
+    console.log('📋 Tarefas encontradas:', tasks.length)
 
     res.json({ tasks })
 
@@ -268,7 +300,7 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Erro ao atualizar tarefa:', error)
     res.status(500).json({ 
-      error: 'Erro interno do servidor' 
+      error: 'Erro interno do servidor'
     })
   }
 }

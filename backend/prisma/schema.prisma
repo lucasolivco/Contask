@@ -7,41 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Atualize o modelo User
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(EMPLOYEE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  password     String
+  role         Role      @default(EMPLOYEE)
+  isVerified   Boolean   @default(false)
+  verificationToken String?
+  departmentId String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relacionamentos
-  createdTasks Task[] @relation("CreatedBy")
-  assignedTasks Task[] @relation("AssignedTo")
-  notifications Notification[]
+  department     Department? @relation(fields: [departmentId], references: [id])
+  createdTasks   Task[]      @relation("TaskCreator")
+  assignedTasks  Task[]      @relation("TaskAssignee")
+  notifications  Notification[]
+  attachments    Attachment[]
 
   @@map("users")
 }
 
+// Atualize o modelo Task
 model Task {
-  id          String     @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus @default(PENDING)
-  priority    Priority   @default(MEDIUM)
-  dueDate     DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus  @default(PENDING)
+  priority     Priority    @default(MEDIUM)
+  dueDate      DateTime?
+  departmentId String?
+  createdById  String
+  assignedToId String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   // Relacionamentos
-  createdById String
-  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
-  
-  assignedToId String
-  assignedTo   User   @relation("AssignedTo", fields: [assignedToId], references: [id])
-  
-  attachments Attachment[]
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  createdBy    User           @relation("TaskCreator", fields: [createdById], references: [id])
+  assignedTo   User           @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  attachments  Attachment[]
   notifications Notification[]
 
   @@map("tasks")
@@ -58,6 +65,9 @@ model Attachment {
   taskId   String
   task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
+  userId  String
+  user    User  @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
 
   @@map("attachments")
@@ -106,3 +116,20 @@ enum NotificationType {
   TASK_COMPLETED
   TASK_OVERDUE
 }
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relacionamentos
+  users User[]
+  tasks Task[]
+  
+  @@map("departments")
+}
+
+
+
