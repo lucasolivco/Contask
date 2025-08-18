@@ -1,8 +1,8 @@
-// Serviços para tarefas - como "formulários" que ajudam a criar, atualizar e buscar tarefas
+// Serviços para tarefas - CORRIGIDO
 import api from './api'
-import type { Task, CreateTaskForm, TaskFilter, TaskResponse, EmployeesResponse  } from '../types'
+import type { Task, CreateTaskForm, TaskFilter, TaskResponse, EmployeesResponse } from '../types'
 
-// Buscar lista de tarefas (com filros opcionais)
+// Buscar lista de tarefas (com filtros opcionais) - CORRIGIDO
 export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
     const params = new URLSearchParams();
 
@@ -12,7 +12,11 @@ export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
     if (filters?.assignedToId) params.append('assignedToId', filters.assignedToId)
     if (filters?.dueDate) params.append('dueDate', filters.dueDate)
     
-    const response = await api.get('/tasks?${params.toString()}');
+    // BUG CORRIGIDO: Template literals em vez de aspas simples
+    const queryString = params.toString()
+    const url = queryString ? `/tasks?${queryString}` : '/tasks'
+    
+    const response = await api.get(url);
     return response.data;
 }
 
@@ -23,7 +27,7 @@ export const getTask = async (id: string): Promise<{ task: Task }> => {
 }
 
 // Criar nova tarefa (só gerentes)
-export const createTask = async (data: CreateTaskForm): Promise<{ task: Task }> => {
+export const createTask = async (data: CreateTaskForm): Promise<{ task: Task; message: string }> => {
     const response = await api.post('/tasks', data);
     return response.data
 }
@@ -32,7 +36,7 @@ export const createTask = async (data: CreateTaskForm): Promise<{ task: Task }> 
 export const updateTaskStatus = async (
     id: string,
     status: Task['status']
-): Promise<{ task: Task }> => {
+): Promise<{ task: Task; message: string }> => {
     const response = await api.patch(`/tasks/${id}/status`, { status });
     return response.data;
 }

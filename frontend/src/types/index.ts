@@ -29,32 +29,33 @@ export interface Task {
         email: string; // Email do usuário a quem a tarefa está atribuída
     }
 
-    attachments?: attachment[]; // Lista de anexos da tarefa (opcional)
+    attachments?: Attachment[]; // Lista de anexos da tarefa (opcional)
     _count?: {
         attachments: number; // Contagem de anexos na tarefa
     }
 }
 
-export interface attachment {
+export interface Attachment {
     id: string; // Identificador único do anexo
     filename: string; // Nome do arquivo anexado
     originalName: string; // Nome original do arquivo
-    mimetype: string; // Tipo MIME do arquivo
+    mimeType: string; // Tipo MIME do arquivo
     size: number; // Tamanho do arquivo em bytes
     path: string; // Caminho do arquivo no servidor
     createdAt: string; // Data de criação do anexo
 }
 
 export interface Notification {
-    id: string; // Identificador único da notificação
-    type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE'; // Tipo da notificação
-    title: string; // Título da notificação
-    message: string; // Mensagem da notificação
-    read: boolean; // Indica se a notificação foi lida
-    createdAt: string; // Data de criação da notificação
-    taskId?:  {
+    id: string;
+    type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE';
+    title: string;
+    message: string;
+    read: boolean;
+    createdAt: string;
+    taskId?: string; // CORRIGIDO: era objeto complexo
+    task?: {
         id: string;
-        title: string // Título da tarefa associada (opcional)
+        title: string;
     }
 }
 
@@ -79,13 +80,14 @@ export interface CreateTaskForm {
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; // Prioridade da tarefa
 }
 
-// Tipos para filtros
+// Tipos para filtros - MELHORADOS
 export interface TaskFilter {
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'; // Filtro por status da tarefa
-    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; // Filtro por prioridade da tarefa
-    search?: string; // Filtro por texto no título ou descrição
-    assignedToId?: string; // Filtro por ID do usuário a quem a tarefa está atribuída
-    dueDate?: string; // Filtro por data de vencimento
+    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    search?: string;
+    assignedToId?: string;
+    dueDate?: string;
+    overdue?: boolean; // ADICIONADO
 }
 
 // Tipos para API responses
