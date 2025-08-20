@@ -2,14 +2,14 @@ import React from 'react'
 import { Loader2 } from 'lucide-react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'blue'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: React.ReactNode
 }
 
 const Button = ({ 
-  variant = 'primary', 
+  variant = 'primary',
   size = 'md', 
   loading = false, 
   children, 
@@ -21,9 +21,10 @@ const Button = ({
   
   const variants = {
     primary: 'bg-rose-500 hover:bg-rose-600 text-white shadow-sm focus:ring-rose-500 disabled:bg-rose-300',
-    secondary: 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 focus:ring-rose-500',
+    secondary: 'bg-blue-50 hover:bg-blue-100 text-grey-700 border border-blue-200 focus:ring-blue-500',
     ghost: 'hover:bg-rose-50 text-rose-600 hover:text-rose-700 focus:ring-rose-500',
-    danger: 'bg-red-500 hover:bg-red-600 text-white shadow-sm focus:ring-red-500 disabled:bg-red-300'
+    danger: 'bg-red-500 hover:bg-red-600 text-white shadow-sm focus:ring-red-500 disabled:bg-red-300',
+    blue: 'hover:bg-blue-200 text-dark shadow-sm focus:ring-blue-500 disabled:bg-blue-300'
   }
   
   const sizes = {

@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import { 
   CheckSquare, 
   Plus,
-  TrendingUp,
   Clock,
   AlertTriangle,
   Target
@@ -65,12 +64,26 @@ const Tasks: React.FC = () => {
     return filtered
   }, [tasks, filters])
 
-  const handleStatusChange = (taskId: string, newStatus: Task['status']) => {
-    updateStatusMutation.mutate({ id: taskId, status: newStatus })
+// ✅ CORRIGIDO: Função com tipo correto
+const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+  if (user?.role !== 'EMPLOYEE') return
+  
+  try {
+    await updateTaskStatus(taskId, newStatus)
+    queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    toast.success('Status atualizado com sucesso!')
+  } catch (error: any) {
+    toast.error(error.response?.data?.error || 'Erro ao atualizar status')
   }
+}
 
   const handleTaskClick = (taskId: string) => {
     navigate(`/tasks/${taskId}`)
+  }
+
+  // ✅ NOVO: Função de editar para MANAGER
+  const handleEditTask = (taskId: string) => {
+    navigate(`/tasks/${taskId}/edit`)
   }
 
   // Estatísticas - CORRIGIDO: usando valores em inglês
@@ -99,7 +112,7 @@ const Tasks: React.FC = () => {
 
   return (
     <div className="p-6 space-y-8 scrollbar-modern">
-      {/* Header */}
+      {/* Header - Rosa apenas nos ícones */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div className="animate-fade-in">
           <h1 className="heading-xl flex items-center gap-4">
@@ -120,7 +133,7 @@ const Tasks: React.FC = () => {
           <Button 
             onClick={() => navigate('/tasks/create')} 
             size="lg"
-            className="interactive-glow"
+            className="btn-primary interactive-glow"
           >
             <Plus className="h-5 w-5" />
             Nova Tarefa
@@ -128,7 +141,7 @@ const Tasks: React.FC = () => {
         )}
       </div>
 
-      {/* Estatísticas - DESIGN ELEGANTE SEM GRADIENTES */}
+      {/* Estatísticas - CORES CORRETAS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-slide-up">
         <Card className="text-center stat-card-total card-hover">
           <div className="flex items-center justify-center mb-3">
@@ -142,12 +155,12 @@ const Tasks: React.FC = () => {
         
         <Card className="text-center stat-card-pending card-hover">
           <div className="flex items-center justify-center mb-3">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <Clock className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-slate-100 rounded-xl">
+              <Clock className="h-6 w-6 text-slate-600" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-blue-700 mb-1">{stats.pending}</div>
-          <div className="text-blue-600 text-sm font-medium">Pendentes</div>
+          <div className="text-2xl font-bold text-slate-700 mb-1">{stats.pending}</div>
+          <div className="text-slate-600 text-sm font-medium">Pendentes</div>
         </Card>
         
         <Card className="text-center stat-card-completed card-hover">
@@ -162,12 +175,12 @@ const Tasks: React.FC = () => {
         
         <Card className="text-center stat-card-overdue card-hover">
           <div className="flex items-center justify-center mb-3">
-            <div className="p-3 bg-amber-100 rounded-xl">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
+            <div className="p-3 bg-red-100 rounded-xl">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-amber-700 mb-1">{stats.overdue}</div>
-          <div className="text-amber-600 text-sm font-medium">Atrasadas</div>
+          <div className="text-2xl font-bold text-red-700 mb-1">{stats.overdue}</div>
+          <div className="text-red-600 text-sm font-medium">Atrasadas</div>
         </Card>
       </div>
 
@@ -193,6 +206,7 @@ const Tasks: React.FC = () => {
                 task={task}
                 onClick={() => handleTaskClick(task.id)}
                 onStatusChange={handleStatusChange}
+                onEdit={handleEditTask} // ✅ ADICIONADO: Prop onEdit
                 userRole={user?.role || ''}
               />
             </div>

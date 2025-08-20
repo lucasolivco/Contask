@@ -5,7 +5,8 @@ import {
   getTasks, 
   getTask, 
   updateTaskStatus, 
-  getEmployees 
+  getEmployees,
+  editTarefa
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 
@@ -17,6 +18,7 @@ router.use(authenticateToken)
 // Rotas para gerentes
 router.get('/employees', requireManager, getEmployees) // Listar funcionários
 router.post('/', requireManager, createTask) // Criar tarefa
+router.put('/:id', editTarefa) // atualizar tarefa
 
 // Rotas para todos os usuários autenticados
 router.get('/', getTasks) // Listar tarefas

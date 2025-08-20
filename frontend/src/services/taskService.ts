@@ -33,16 +33,27 @@ export const createTask = async (data: CreateTaskForm): Promise<{ task: Task; me
 }
 
 // Atualizar status de uma tarefa
-export const updateTaskStatus = async (
-    id: string,
-    status: Task['status']
-): Promise<{ task: Task; message: string }> => {
-    const response = await api.patch(`/tasks/${id}/status`, { status });
-    return response.data;
+// ✅ CORRIGIDO: Função com tipo específico
+export const updateTaskStatus = async (id: string, status: Task['status']) => {
+  const response = await api.put(`/tasks/${id}/status`, { status })
+  return response.data
 }
 
 // Buscar lista de funcionários (só gerentes)
 export const getEmployees = async (): Promise<EmployeesResponse> => {
     const response = await api.get('/tasks/employees');
     return response.data;
+}
+
+// Atualizar tarefa
+export const updateTask = async (id: string, data: {
+  title: string
+  description?: string
+  priority: Task['priority']
+  status: Task['status']
+  dueDate?: string
+  assignedToId: string
+}) => {
+  const response = await api.put(`/tasks/${id}`, data)
+  return response.data
 }

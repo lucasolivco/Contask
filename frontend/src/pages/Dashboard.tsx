@@ -9,7 +9,9 @@ import {
   TrendingUp,
   Calendar,
   Bell,
-  Target
+  Target,
+  CalendarPlus,
+  AlertTriangle
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
@@ -82,19 +84,39 @@ const Dashboard: React.FC = () => {
           <h4 className="text-sm font-semibold text-gray-900 truncate group-hover:text-rose-600 transition-colors">
             {task.title}
           </h4>
-          <p className="text-xs text-gray-500 mt-1">
-            {user?.role === 'MANAGER' 
-              ? `Atribuída para: ${task.assignedTo.name}`
-              : `Criada por: ${task.createdBy.name}`
-            }
-          </p>
+          
+          {/* Informações da tarefa */}
+          <div className="space-y-1 mt-2">
+            <p className="text-xs text-gray-500">
+              {user?.role === 'MANAGER' 
+                ? `Atribuída para: ${task.assignedTo.name}`
+                : `Criada por: ${task.createdBy.name}`
+              }
+            </p>
+            
+            {/* Data de criação e vencimento */}
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <CalendarPlus className="h-3 w-3" />
+                Criada: {new Date(task.createdAt).toLocaleDateString('pt-BR')}
+              </span>
+              {task.dueDate && (
+                <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                  <Calendar className="h-3 w-3" />
+                  {isOverdue ? 'Venceu' : 'Vence'}: {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                </span>
+              )}
+            </div>
+          </div>
+          
           {isOverdue && (
             <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
+              <AlertTriangle className="h-3 w-3" />
               Atrasada
             </p>
           )}
         </div>
+        
         <div className="flex items-center gap-2 ml-4">
           {/* Badge de Prioridade */}
           <span className={`

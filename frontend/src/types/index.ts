@@ -212,9 +212,9 @@ export const TaskPriorityColors = {
     border: 'border-orange-200'
   },
   URGENT: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    border: 'border-red-200'
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    border: 'border-purple-200'
   }
 } as const;
 
@@ -240,3 +240,5 @@ export const TaskStatusColors = {
     border: 'border-gray-200'
   }
 } as const;
+
+export type StatusChangeCallback = (taskId: string, newStatus: Task['status']) => void

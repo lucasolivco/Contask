@@ -13,6 +13,7 @@ import Tasks from './pages/Tasks'
 import CreateTask from './pages/CreateTask'
 import Employees from './pages/Employees'
 import Notifications from './pages/Notifications'
+import EditTask from './pages/EditTask'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -112,6 +113,15 @@ function App() {
                 </ProtectedRoute>
               }
             >
+
+            <Route 
+              path="/tasks/:id/edit" 
+              element={
+                <ProtectedRoute>
+                  <EditTask />
+                </ProtectedRoute>
+              } 
+            />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="tasks/create" element={<CreateTask />} />

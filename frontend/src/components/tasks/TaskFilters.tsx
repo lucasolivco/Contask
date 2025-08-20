@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Search, Filter, X, AlertTriangle, Calendar, Settings } from 'lucide-react'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
-import Input from '../ui/Input'
 import type { TaskFilter } from '../../types'
 
 interface TaskFiltersProps {
@@ -60,7 +59,7 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
             <Button
               variant={filters.overdue ? 'danger' : 'ghost'}
               onClick={() => updateFilter('overdue', !filters.overdue)}
-              className={`interactive-scale ${!filters.overdue ? 'hover:bg-amber-50 text-amber-700 border border-amber-200' : 'bg-amber-100 text-amber-800 border-amber-300'}`}
+              className={`interactive-scale ${!filters.overdue ? 'hover:bg-amber-50' : 'bg-amber-100 text-amber-800 border-amber-300'}`}
             >
               <AlertTriangle className="h-4 w-4" />
               <span className="hidden sm:inline font-medium">Atrasadas</span>
@@ -68,7 +67,7 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
             
             {/* Toggle Filtros Avançados */}
             <Button
-              variant={showAdvanced ? 'secondary' : 'ghost'}
+              variant={showAdvanced ? 'secondary' : 'blue'}
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="interactive-scale relative"
             >
@@ -203,12 +202,12 @@ const TaskFilters = ({ onFiltersChange, userRole }: TaskFiltersProps) => {
           )}
           
           {filters.overdue && (
-            <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border border-amber-200 animate-pulse">
+            <span className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl text-sm font-medium shadow-sm border">
               <AlertTriangle className="h-3 w-3" />
               Atrasadas
               <button
                 onClick={() => updateFilter('overdue', false)}
-                className="hover:bg-amber-200 rounded-full p-1 transition-colors interactive-scale"
+                className="hover:bg-yellow-400 rounded-full p-1 transition-colors interactive-scale"
               >
                 <X className="h-3 w-3" />
               </button>

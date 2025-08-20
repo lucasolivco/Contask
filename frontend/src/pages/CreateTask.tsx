@@ -307,7 +307,7 @@ const CreateTask: React.FC = () => {
             </div>
           )}
 
-          {/* Botões de ação */}
+          {/* Botões de ação - PALETA VIBRANTE */}
           <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-gray-200">
             <Button
               type="button"
@@ -322,7 +322,7 @@ const CreateTask: React.FC = () => {
               type="submit"
               loading={createTaskMutation.isPending}
               disabled={loadingEmployees || !!employeesError}
-              className="w-full sm:w-auto interactive-glow"
+              className="w-full sm:w-auto btn-primary interactive-glow"
               size="lg"
             >
               <Save size={16} />

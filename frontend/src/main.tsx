@@ -4,7 +4,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import './App.css' // ADICIONADO: Import do tema rosa
 
 // Busca o elemento HTML com id 'root' no index.html
 // É onde nossa aplicação React vai ser "montada"

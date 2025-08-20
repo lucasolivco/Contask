@@ -1,8 +1,9 @@
-import { Calendar, User, AlertTriangle, Clock, CheckCircle2, XCircle, Pause, ArrowRight } from 'lucide-react'
+import { Calendar, User, AlertTriangle, Clock, CheckCircle2, XCircle, Pause, ArrowRight, CalendarPlus, Edit3 } from 'lucide-react'
 import {  
   TaskStatusLabels, 
   TaskPriorityLabels, 
   TaskStatusIcons,
+  TaskPriorityIcons
 } from '../../types'
 import type { Task } from '../../types'
 
@@ -11,9 +12,10 @@ interface TaskCardProps {
   onClick?: () => void
   onStatusChange: (taskId: string, newStatus: Task["status"]) => void
   userRole: string
+  onEdit?: (taskId: string) => void // ✅ CORRIGIDO: Adicionada prop onEdit
 }
 
-const TaskCard = ({ task, onClick, onStatusChange, userRole }: TaskCardProps) => {
+const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardProps) => {
   // CORRIGIDO: verificação usando valor em inglês
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
   
@@ -94,46 +96,81 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole }: TaskCardProps) =>
         </div>
       </div>
 
-      {/* Título da tarefa */}
-      <h3 className="heading-sm mb-3 line-clamp-2 group-hover:text-rose-700 transition-colors">
-        {task.title}
-      </h3>
+      {/* Título da tarefa - CLICÁVEL PARA DETALHES */}
+      <div onClick={onClick} className="cursor-pointer">
+        <h3 className="heading-sm mb-3 line-clamp-2 group-hover:text-rose-700 transition-colors">
+          {task.title}
+        </h3>
 
-      {/* Descrição */}
-      {task.description && (
-        <p className="text-muted text-sm mb-4 line-clamp-2">
-          {task.description}
-        </p>
-      )}
-
-      {/* Informações detalhadas */}
-      <div className="space-y-3 mb-4">
-        {/* Data de vencimento */}
-        {task.dueDate && (
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <span className={isOverdue ? 'text-red-600 font-medium' : 'text-subtle'}>
-              {isOverdue ? 'Venceu em' : 'Vence em'} {new Date(task.dueDate).toLocaleDateString('pt-BR')}
-            </span>
-          </div>
+        {/* Descrição */}
+        {task.description && (
+          <p className="text-muted text-sm mb-4 line-clamp-2">
+            {task.description}
+          </p>
         )}
 
-        {/* Atribuído para */}
-        <div className="flex items-center gap-2 text-sm text-subtle">
-          <User className="h-4 w-4 text-gray-400" />
-          <span>
-            {userRole === 'MANAGER' ? (
-              `Atribuído para ${task.assignedTo.name}`
-            ) : (
-              `Criado por ${task.createdBy.name}`
-            )}
-          </span>
+        {/* Informações detalhadas */}
+        <div className="space-y-3 mb-4">
+          {/* Data de criação */}
+          <div className="flex items-center gap-2 text-sm text-subtle">
+            <CalendarPlus className="h-4 w-4 text-gray-400" />
+            <span>
+              Criada em {new Date(task.createdAt).toLocaleDateString('pt-BR')}
+            </span>
+          </div>
+
+          {/* Data de vencimento */}
+          {task.dueDate && (
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <span className={isOverdue ? 'text-red-600 font-medium' : 'text-subtle'}>
+                {isOverdue ? 'Venceu em' : 'Vence em'} {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+              </span>
+            </div>
+          )}
+
+          {/* Atribuído para */}
+          <div className="flex items-center gap-2 text-sm text-subtle">
+            <User className="h-4 w-4 text-gray-400" />
+            <span>
+              {userRole === 'MANAGER' ? (
+                `Atribuído para ${task.assignedTo.name}`
+              ) : (
+                `Criado por ${task.createdBy.name}`
+              )}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Status selector para funcionários - CORRIGIDO: valores em inglês */}
-      {userRole === 'EMPLOYEE' && onStatusChange && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
+       {/* Ações - DIFERENTES PARA MANAGER E EMPLOYEE */}
+      <div className="mt-4 pt-4 border-t border-gray-100">
+        {userRole === 'MANAGER' ? (
+          /* Ações do Manager */
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onClick?.()
+              }}
+              className="flex-1 text-sm text-gray-600 hover:text-blue-600 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+            >
+              Ver Detalhes
+            </button>
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit?.(task.id)
+              }}
+              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium interactive-scale"
+            >
+              <Edit3 className="h-3 w-3" />
+              Editar
+            </button>
+          </div>
+        ) : (
+          /* Ações do Employee */
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
               Atualizar Status:
@@ -142,7 +179,7 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole }: TaskCardProps) =>
               value={task.status}
               onChange={(e) => {
                 e.stopPropagation()
-                onStatusChange(task.id, e.target.value as Task["status"])
+                onStatusChange?.(task.id, e.target.value as Task['status'])
               }}
               className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:border-rose-300 focus:ring-2 focus:ring-rose-100 focus:outline-none transition-all"
               onClick={(e) => e.stopPropagation()}
@@ -152,8 +189,8 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole }: TaskCardProps) =>
               <option value="COMPLETED">{TaskStatusIcons.COMPLETED} {TaskStatusLabels.COMPLETED}</option>
             </select>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Indicador de interação */}
       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">

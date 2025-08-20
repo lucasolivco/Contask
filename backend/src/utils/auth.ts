@@ -22,8 +22,8 @@ export const comparePassword = async (
 // Função para criar um "token" (como um ingresso de cinema)
 export const generateToken = (userId: string): string => {
   // Cria um código especial que prova que o usuário fez login
-  // Esse código expira em 7 dias (como definido no .env)
-  const expiresIn = '7d'
+  // Esse código expira em 3 dias (como definido no .env)
+  const expiresIn = '3d'
   return jwt.sign(
     { userId },
     process.env.JWT_SECRET!,

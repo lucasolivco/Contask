@@ -20,9 +20,9 @@ body {
 
 /* Componentes modernos */
 @layer components {
-  /* Botões com melhor hierarquia */
+  /* Botões - MUDANÇA: Primary agora é AZUL */
   .btn-primary {
-    @apply bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed;
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
@@ -51,9 +51,9 @@ body {
     @apply hover:shadow-md hover:border-gray-200 transition-all duration-300 cursor-pointer;
   }
   
-  /* Sistema de prioridades REDESENHADO - APENAS BORDAS */
+  /* Sistema de prioridades - MUDANÇA: Urgente agora é ROXO */
   .priority-urgent {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 border border-red-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200;
   }
   
   .priority-high {
@@ -68,9 +68,9 @@ body {
     @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200;
   }
   
-  /* Cards com indicação de prioridade - APENAS BORDAS LATERAIS */
+  /* Cards com indicação de prioridade - MUDANÇA: Urgente ROXO */
   .card-urgent {
-    @apply border-l-4 border-l-red-500 bg-white;
+    @apply border-l-4 border-l-purple-500 bg-white;
   }
   
   .card-high {
@@ -85,13 +85,13 @@ body {
     @apply border-l-4 border-l-slate-400 bg-white;
   }
   
-  /* Tarefas atrasadas - COR DIFERENCIADA (LARANJA) */
+  /* Tarefas atrasadas - MUDANÇA: agora é VERMELHO */
   .card-overdue {
-    @apply border-2 border-amber-400 bg-amber-50/30;
+    @apply border-2 border-red-400 bg-red-50/30;
   }
   
   .badge-overdue {
-    @apply inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-300 animate-pulse;
+    @apply inline-flex items-center gap-1.5 bg-red-100 text-red-800 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-300 animate-pulse;
   }
   
   /* Status badges REFORMULADOS */
@@ -113,13 +113,13 @@ body {
 }
 
 @layer utilities {
-  /* Cores elegantes para estatísticas - SEM GRADIENTES */
+  /* Cores para estatísticas - MUDANÇAS: Total e Pendente CINZA, Atrasadas VERMELHO */
   .stat-card-total {
-    @apply bg-slate-50 border-slate-200 text-slate-700;
+    @apply bg-slate-50 border-blue-200 text-blue-700;
   }
   
   .stat-card-pending {
-    @apply bg-blue-50 border-blue-200 text-blue-700;
+    @apply bg-slate-50 border-slate-200 text-slate-700;
   }
   
   .stat-card-completed {
@@ -127,7 +127,7 @@ body {
   }
   
   .stat-card-overdue {
-    @apply bg-amber-50 border-amber-200 text-amber-700;
+    @apply bg-red-50 border-red-200 text-red-700;
   }
   
   /* Animações suaves */
@@ -236,5 +236,18 @@ body {
   
   .text-subtle {
     @apply text-gray-500;
+  }
+  
+  /* Headers com rosa - para elementos específicos */
+  .header-accent {
+    @apply text-rose-600;
+  }
+  
+  .icon-accent {
+    @apply text-rose-500;
+  }
+  
+  .border-accent {
+    @apply border-rose-200;
   }
 }

@@ -1,6 +1,7 @@
 // "Cérebro" que gerencia todas as operações com tarefas
 import { Request, Response } from 'express'
 import prisma from '../config/database'
+import { Prisma } from '@prisma/client' // para checar erros do Prisma
 
 // Interface para tipar as requisições com usuário autenticado
 interface AuthRequest extends Request {
@@ -332,5 +333,121 @@ export const getEmployees = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
+  }
+}
+
+
+export const editTarefa = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+    const { title, description, priority, status, dueDate, assignedToId } = req.body
+
+    // Verifica autenticação
+    if (!req.user) {
+      return res.status(401).json({ error: 'Usuário não autenticado' })
+    }
+
+    const userRole = req.user.role
+    const userId = req.user.userId
+
+    // Verificar se é MANAGER
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ error: 'Apenas gerentes podem editar tarefas' })
+    }
+
+    // Verificar se a tarefa existe
+    const existingTask = await prisma.task.findUnique({
+      where: { id }
+    })
+
+    if (!existingTask) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    // Verificar se o funcionário existe (se enviado)
+    if (assignedToId) {
+      const assignedUser = await prisma.user.findUnique({
+        where: { id: assignedToId }
+      })
+
+      if (!assignedUser || assignedUser.role !== 'EMPLOYEE') {
+        return res.status(400).json({ error: 'Funcionário não encontrado' })
+      }
+    }
+
+    // Monta o objeto de atualização apenas com campos enviados
+    const data: any = {
+      updatedAt: new Date()
+    }
+
+    if (title !== undefined && title !== null) data.title = title
+    // permitir descrição vazia (string), por isso checamos !== undefined
+    if (description !== undefined) data.description = description
+    if (priority !== undefined && priority !== null) data.priority = priority
+    if (status !== undefined && status !== null) data.status = status
+
+    // dueDate: undefined = sem mudança, '' or null = limpar (set null), string válida = new Date(...)
+    if (dueDate !== undefined) {
+      if (dueDate === '' || dueDate === null) {
+        data.dueDate = null
+      } else {
+        const parsed = new Date(dueDate)
+        if (isNaN(parsed.getTime())) {
+          return res.status(400).json({ error: 'Formato de dueDate inválido' })
+        }
+        data.dueDate = parsed
+      }
+    }
+
+    if (assignedToId !== undefined) {
+      // permitir atribuir null para desatribuir
+      data.assignedToId = assignedToId || null
+    }
+
+    // Executa update
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data,
+      include: {
+        assignedTo: {
+          select: { id: true, name: true, email: true }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    })
+
+    // Se mudou o assignedTo, cria notificação para o novo responsável
+    if (assignedToId && assignedToId !== existingTask.assignedToId) {
+      await prisma.notification.create({
+        data: {
+          type: 'TASK_ASSIGNED',
+          title: 'Tarefa atribuída',
+          message: `Você foi atribuído à tarefa "${updatedTask.title}"`,
+          userId: assignedToId,
+          taskId: updatedTask.id
+        }
+      })
+    }
+
+    res.json({
+      message: 'Tarefa atualizada com sucesso!',
+      task: updatedTask
+    })
+  } catch (error: any) {
+    console.error('Erro ao atualizar tarefa:', error)
+
+    // Tratamento específico para erros do Prisma
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'Dados duplicados' })
+      }
+      if (error.code === 'P2025') {
+        return res.status(404).json({ error: 'Tarefa não encontrada' })
+      }
+    }
+
+    res.status(500).json({ error: 'Erro interno do servidor' })
   }
 }
