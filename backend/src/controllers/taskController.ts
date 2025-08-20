@@ -14,7 +14,16 @@ interface AuthRequest extends Request {
 // Função para criar uma nova tarefa (só gerentes podem)
 export const createTask = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, assignedToId, dueDate, priority } = req.body
+    const { title, description, assignedToId, dueDate, targetDate, priority } = req.body
+
+    // ✅ DEBUG: Log para ver se targetDate está chegando
+    console.log('📝 Criando tarefa com dados:', {
+      title,
+      assignedToId,
+      dueDate,
+      targetDate, // ✅ VERIFICAR SE ESTÁ CHEGANDO
+      priority
+    })
 
     // Verifica se os campos obrigatórios foram preenchidos
     if (!title || !assignedToId) {
@@ -34,18 +43,18 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       })
     }
 
-    // Cria a tarefa no banco de dados
+    // ✅ CORRIGIDO: Cria a tarefa no banco de dados INCLUINDO targetDate
     const task = await prisma.task.create({
       data: {
         title,
         description,
         assignedToId,
-        createdById: req.user!.userId, // O gerente que está criando
+        createdById: req.user!.userId,
         dueDate: dueDate ? new Date(dueDate) : null,
-        priority: priority || 'MÉDIA'
+        targetDate: targetDate ? new Date(targetDate) : null, // ✅ ADICIONADO: targetDate
+        priority: priority || 'MEDIUM' // ✅ CORRIGIDO: usar inglês
       },
       include: {
-        // Inclui informações do criador e responsável
         createdBy: {
           select: { id: true, name: true, email: true }
         },
@@ -53,6 +62,14 @@ export const createTask = async (req: AuthRequest, res: Response) => {
           select: { id: true, name: true, email: true }
         }
       }
+    })
+
+    // ✅ DEBUG: Log para ver se foi salvo
+    console.log('✅ Tarefa criada:', {
+      id: task.id,
+      title: task.title,
+      targetDate: task.targetDate,
+      dueDate: task.dueDate
     })
 
     // Cria uma notificação para o funcionário
@@ -340,7 +357,7 @@ export const getEmployees = async (req: AuthRequest, res: Response) => {
 export const editTarefa = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
-    const { title, description, priority, status, dueDate, assignedToId } = req.body
+    const { title, description, priority, status, dueDate, targetDate, assignedToId } = req.body
 
     // Verifica autenticação
     if (!req.user) {
@@ -396,6 +413,19 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
           return res.status(400).json({ error: 'Formato de dueDate inválido' })
         }
         data.dueDate = parsed
+      }
+    }
+
+     // ✅ ADICIONADO: Tratar targetDate (ESTAVA FALTANDO!)
+    if (targetDate !== undefined) {
+      if (targetDate === '' || targetDate === null) {
+        data.targetDate = null
+      } else {
+        const parsed = new Date(targetDate)
+        if (isNaN(parsed.getTime())) {
+          return res.status(400).json({ error: 'Formato de targetDate inválido' })
+        }
+        data.targetDate = parsed
       }
     }
 

@@ -1,8 +1,8 @@
-import { Calendar, User, AlertTriangle, Clock, CheckCircle2, XCircle, Pause, ArrowRight, CalendarPlus, Edit3 } from 'lucide-react'
+import { Calendar, User, AlertTriangle, Clock, CheckCircle2, XCircle, Pause, ArrowRight, CalendarPlus, Edit3, Target } from 'lucide-react'
 import {  
   TaskStatusLabels, 
   TaskPriorityLabels, 
-  TaskStatusIcons,
+  TaskStatusIcons, 
   TaskPriorityIcons
 } from '../../types'
 import type { Task } from '../../types'
@@ -10,14 +10,16 @@ import type { Task } from '../../types'
 interface TaskCardProps {
   task: Task
   onClick?: () => void
-  onStatusChange: (taskId: string, newStatus: Task["status"]) => void
+  onStatusChange?: (taskId: string, newStatus: Task['status']) => void
   userRole: string
-  onEdit?: (taskId: string) => void // ✅ CORRIGIDO: Adicionada prop onEdit
+  onEdit?: (taskId: string) => void
 }
 
 const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardProps) => {
-  // CORRIGIDO: verificação usando valor em inglês
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
+  
+  // ✅ NOVO: Verificar se está próximo da data meta
+  const isNearTarget = task.targetDate && new Date(task.targetDate) < new Date() && task.status !== 'COMPLETED'
   
   // Função para obter classes de prioridade
   const getPriorityClasses = (priority: Task['priority']) => {
@@ -50,7 +52,6 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
     }
   }
 
-  // Ícones por status - CORRIGIDO: usando valores em inglês
   const getStatusIcon = (status: Task['status']) => {
     switch (status) {
       case 'COMPLETED': return <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -71,7 +72,6 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
         ${task.status === 'COMPLETED' ? 'opacity-75' : ''}
         group
       `}
-      onClick={onClick}
     >
       {/* Header com status e prioridade */}
       <div className="flex items-start justify-between mb-4">
@@ -87,6 +87,13 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
             <span className="badge-overdue">
               <AlertTriangle className="h-3 w-3" />
               Atrasada
+            </span>
+          )}
+          {/* ✅ NOVO: Badge para data meta próxima */}
+          {isNearTarget && !isOverdue && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">
+              <Target className="h-3 w-3" />
+              Meta
             </span>
           )}
           <span className={priorityClasses.badge}>
@@ -109,7 +116,7 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
           </p>
         )}
 
-        {/* Informações detalhadas */}
+        {/* ✅ CORRIGIDO: Informações detalhadas com data meta */}
         <div className="space-y-3 mb-4">
           {/* Data de criação */}
           <div className="flex items-center gap-2 text-sm text-subtle">
@@ -118,6 +125,17 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
               Criada em {new Date(task.createdAt).toLocaleDateString('pt-BR')}
             </span>
           </div>
+
+          {/* ✅ CORRIGIDO: Data meta - mostrar se existir */}
+          {task.targetDate && (
+            <div className="flex items-center gap-2 text-sm">
+              <Target className="h-4 w-4 text-blue-500" />
+              <span className={isNearTarget ? 'text-amber-600 font-medium' : 'text-blue-600'}>
+                Meta: {new Date(task.targetDate).toLocaleDateString('pt-BR')}
+                {isNearTarget && ' (próxima)'}
+              </span>
+            </div>
+          )}
 
           {/* Data de vencimento */}
           {task.dueDate && (
@@ -143,7 +161,7 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
         </div>
       </div>
 
-       {/* Ações - DIFERENTES PARA MANAGER E EMPLOYEE */}
+      {/* Ações - DIFERENTES PARA MANAGER E EMPLOYEE */}
       <div className="mt-4 pt-4 border-t border-gray-100">
         {userRole === 'MANAGER' ? (
           /* Ações do Manager */

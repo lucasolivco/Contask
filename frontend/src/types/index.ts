@@ -15,6 +15,7 @@ export interface Task {
     status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
     dueDate?: string;
+    targetDate?: string; // ✅ NOVA: Data meta/objetivo
     createdAt: string;
     updatedAt: string;
 
@@ -79,6 +80,7 @@ export interface CreateTaskForm {
     description?: string;
     assignedToId: string;
     dueDate?: string;
+    targetDate?: string;
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 }
 
@@ -89,6 +91,7 @@ export interface TaskFilter {
     search?: string;
     assignedToId?: string;
     dueDate?: string;
+    targetDate?: string;
     overdue?: boolean;
 }
 

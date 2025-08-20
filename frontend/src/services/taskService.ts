@@ -52,6 +52,7 @@ export const updateTask = async (id: string, data: {
   priority: Task['priority']
   status: Task['status']
   dueDate?: string
+  targetDate?: string
   assignedToId: string
 }) => {
   const response = await api.put(`/tasks/${id}`, data)

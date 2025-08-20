@@ -9,7 +9,8 @@ import {
   Calendar,
   User,
   AlertTriangle,
-  FileText
+  FileText,
+  Target
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
@@ -26,6 +27,7 @@ interface UpdateTaskData {
   priority: Task['priority']
   status: Task['status']
   dueDate?: string
+  targetDate?: string
   assignedToId: string
 }
 
@@ -42,6 +44,7 @@ const EditTask: React.FC = () => {
     priority: 'MEDIUM',
     status: 'PENDING',
     dueDate: '',
+    targetDate: '',
     assignedToId: ''
   })
 
@@ -77,6 +80,7 @@ const EditTask: React.FC = () => {
         priority: task.priority,
         status: task.status,
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+        targetDate: task.targetDate ? new Date(task.targetDate).toISOString().split('T')[0] : '', // ✅ ADICIONADO
         assignedToId: task.assignedTo.id
       })
     }
@@ -109,9 +113,21 @@ const EditTask: React.FC = () => {
       return
     }
 
+    // ✅ NOVA: Validar datas
+    if (formData.dueDate && formData.targetDate) {
+      const dueDate = new Date(formData.dueDate)
+      const targetDate = new Date(formData.targetDate)
+      
+      if (targetDate > dueDate) {
+        toast.error('A data meta não pode ser posterior à data de vencimento')
+        return
+      }
+    }
+
     const submitData = {
       ...formData,
-      dueDate: formData.dueDate || undefined
+      dueDate: formData.dueDate || undefined,
+      targetDate: formData.targetDate || undefined // ✅ NOVA
     }
 
     updateTaskMutation.mutate(submitData)
@@ -251,6 +267,24 @@ const EditTask: React.FC = () => {
                     <option value="COMPLETED">✅ {TaskStatusLabels.COMPLETED}</option>
                     <option value="CANCELLED">❌ {TaskStatusLabels.CANCELLED}</option>
                   </select>
+                </div>
+
+                {/* ✅ ADICIONADO: Data Meta */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <Target className="inline h-4 w-4 mr-2 text-blue-600" />
+                    Data Meta (Objetivo)
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.targetDate}
+                    onChange={(e) => handleInputChange('targetDate', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    disabled={updateTaskMutation.isPending}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Data desejada para conclusão da tarefa
+                  </p>
                 </div>
 
                 {/* Data de Vencimento */}
