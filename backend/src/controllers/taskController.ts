@@ -2,6 +2,8 @@
 import { Request, Response } from 'express'
 import prisma from '../config/database'
 import { Prisma } from '@prisma/client' // para checar erros do Prisma
+import fs from 'fs-extra'
+import path from 'path'
 
 // Interface para tipar as requisições com usuário autenticado
 interface AuthRequest extends Request {
@@ -478,6 +480,246 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// Buscar comentários de uma tarefa
+export const getTaskComments = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    // Verificar se a tarefa existe e o usuário tem acesso
+    const task = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        OR: [
+          { createdById: userId },
+          { assignedToId: userId }
+        ]
+      }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    const comments = await prisma.comment.findMany({
+      where: { taskId },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true, role: true }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    })
+
+    console.log('💬 Comentários encontrados:', comments.length)
+
+    res.json({ comments })
+  } catch (error) {
+    console.error('Erro ao buscar comentários:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// Criar novo comentário
+export const createComment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    const { message } = req.body
+    const userId = req.user!.userId
+
+    if (!message || message.trim().length === 0) {
+      return res.status(400).json({ error: 'Mensagem é obrigatória' })
+    }
+
+    // Verificar se a tarefa existe e o usuário tem acesso
+    const task = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        OR: [
+          { createdById: userId },
+          { assignedToId: userId }
+        ]
+      }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        message: message.trim(),
+        taskId,
+        authorId: userId
+      },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true, role: true }
+        }
+      }
+    })
+
+    console.log('✅ Comentário criado:', comment.id)
+
+    res.status(201).json({
+      message: 'Comentário adicionado com sucesso',
+      comment
+    })
+  } catch (error) {
+    console.error('Erro ao criar comentário:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// ===== FUNÇÕES PARA ANEXOS =====
+
+// Buscar anexos de uma tarefa
+export const getTaskAttachments = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    const userId = req.user!.userId
+
+    // Verificar se a tarefa existe e o usuário tem acesso
+    const task = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        OR: [
+          { createdById: userId },
+          { assignedToId: userId }
+        ]
+      }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    const attachments = await prisma.attachment.findMany({
+      where: { taskId },
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    console.log('📎 Anexos encontrados:', attachments.length)
+
+    res.json({ attachments })
+  } catch (error) {
+    console.error('Erro ao buscar anexos:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// Upload de anexos
+export const uploadAttachment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    const files = req.files as Express.Multer.File[]
+    const userId = req.user!.userId
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' })
+    }
+
+    // Verificar se a tarefa existe e o usuário tem acesso
+    const task = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        OR: [
+          { createdById: userId },
+          { assignedToId: userId }
+        ]
+      }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    const attachments = []
+
+    for (const file of files) {
+      const attachment = await prisma.attachment.create({
+        data: {
+          fileName: file.filename,
+          originalName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          taskId,
+          uploadedById: userId
+        },
+        include: {
+          uploadedBy: {
+            select: { id: true, name: true, email: true }
+          }
+        }
+      })
+
+      attachments.push(attachment)
+    }
+
+    console.log('✅ Anexos criados:', attachments.length)
+
+    res.status(201).json({
+      message: `${attachments.length} arquivo(s) enviado(s) com sucesso`,
+      attachments
+    })
+  } catch (error) {
+    console.error('Erro ao fazer upload:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// Download de anexo
+export const downloadAttachment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { attachmentId } = req.params
+    const userId = req.user!.userId
+
+    const attachment = await prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        task: {
+          select: {
+            id: true,
+            createdById: true,
+            assignedToId: true
+          }
+        }
+      }
+    })
+
+    if (!attachment) {
+      return res.status(404).json({ error: 'Anexo não encontrado' })
+    }
+
+    // Verificar se o usuário tem acesso à tarefa
+    const hasAccess = attachment.task.createdById === userId || 
+                     attachment.task.assignedToId === userId
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Sem permissão para acessar este anexo' })
+    }
+
+    // Verificar se o arquivo existe
+    if (!fs.existsSync(attachment.filePath)) {
+      return res.status(404).json({ error: 'Arquivo não encontrado no servidor' })
+    }
+
+    console.log('📥 Download do anexo:', attachment.originalName)
+
+    res.download(attachment.filePath, attachment.originalName)
+  } catch (error) {
+    console.error('Erro ao fazer download:', error)
     res.status(500).json({ error: 'Erro interno do servidor' })
   }
 }

@@ -16,11 +16,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relacionamentos
+  // Relacionamentos existentes
   createdTasks Task[] @relation("CreatedBy")
   assignedTasks Task[] @relation("AssignedTo")
   notifications Notification[]
   attachments    Attachment[]
+  
+  // ✅ NOVO: Relacionamento com comentários
+  comments Comment[] @relation("CommentAuthor")
 
   @@map("users")
 }
@@ -36,7 +39,7 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  // Relacionamentos
+  // Relacionamentos existentes
   createdById String
   createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
   
@@ -45,23 +48,46 @@ model Task {
   
   attachments Attachment[]
   notifications Notification[]
+  
+  // ✅ NOVO: Relacionamento com comentários
+  comments Comment[]
 
   @@map("tasks")
 }
 
-model Attachment {
-  id       String @id @default(cuid())
-  filename String
-  originalName String
-  mimeType String
-  size     Int
-  path     String
-
-  userId  String
-  taskId   String
-  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+// ✅ NOVO MODEL: Comentários
+model Comment {
+  id        String   @id @default(cuid())
+  message   String   @db.Text
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  authorId String
+  author   User   @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  @@map("comments")
+}
+
+// ✅ AJUSTAR Model Attachment para ser consistente
+model Attachment {
+  id           String @id @default(cuid())
+  fileName     String    // Renomeado de filename para fileName
+  originalName String
+  mimeType     String
+  fileSize     Int       // Renomeado de size para fileSize
+  filePath     String    // Renomeado de path para filePath
+  createdAt    DateTime @default(now())
+
+  // Relacionamentos
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  uploadedById String   // Renomeado de userId para uploadedById
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
 
   @@map("attachments")
 }
@@ -84,6 +110,7 @@ model Notification {
   @@map("notifications")
 }
 
+// Enums permanecem iguais
 enum Role {
   MANAGER
   EMPLOYEE

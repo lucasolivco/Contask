@@ -5,6 +5,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
+import path from 'path'
 
 // Importa nossas rotas
 import authRoutes from './routes/authRoutes'
@@ -16,6 +17,9 @@ dotenv.config()
 // Cria o aplicativo Express
 const app = express()
 const PORT = process.env.PORT || 3001
+
+// Servir arquivos de upload estaticamente
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
 // Middleware de segurança
 app.use(helmet()) // Adiciona cabeçalhos de segurança
@@ -32,8 +36,8 @@ const limiter = rateLimit({
 app.use(limiter) // Aplica o limite de requisições
 
 // Middleware para interpretar JSON
-app.use(express.json({ limit: '10kb' }))
-app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 // Rotas da aplicação
 app.use('/api/auth', authRoutes) // Todas as rotas de auth começam com /api/auth

@@ -6,6 +6,9 @@ import axios from 'axios'
 const api = axios.create({
     baseURL: 'http://localhost:3001/api', // URL base do backend
     timeout: 10000, // Tempo máximo de espera por uma resposta
+    headers: {
+        'Content-Type': 'application/json'
+    }
 })
 
 // "Interceptor" - como um secretário que adiciona informações automáticas
@@ -25,5 +28,17 @@ api.interceptors.request.use((config) => {
     console.error('Erro na requisição:', error)
     return Promise.reject(error) // Rejeita a promessa com o erro
 })
+
+// Interceptor para lidar com respostas
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
 
 export default api // Exporta o "telefone" para ser usado em outros lugares

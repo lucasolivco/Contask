@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query' // ✅ REMOVIDO useMutation não usado
 import { toast } from 'sonner'
 import { 
   CheckSquare, 
@@ -13,6 +13,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import TaskFilters from '../components/tasks/TaskFilters'
 import TaskCard from '../components/tasks/TaskCard'
+import TaskDetailsModal from '../components/tasks/TaskDetailsModal'
 import { useAuth } from '../contexts/AuthContext'
 import { getTasks, updateTaskStatus } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
@@ -24,25 +25,14 @@ const Tasks: React.FC = () => {
   const navigate = useNavigate()
   
   const [filters, setFilters] = useState<TaskFilter>({})
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   // Busca tarefas com filtros
   const { data: tasksData, isLoading, error } = useQuery({
     queryKey: ['tasks', filters],
     queryFn: () => getTasks(filters),
     retry: 1
-  })
-
-  // Mutation para atualizar status
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: Task['status'] }) =>
-      updateTaskStatus(id, status),
-    onSuccess: (data) => {
-      toast.success(data.message || 'Status atualizado com sucesso!')
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Erro ao atualizar status')
-    }
   })
 
   const tasks = tasksData?.tasks || []
@@ -64,29 +54,43 @@ const Tasks: React.FC = () => {
     return filtered
   }, [tasks, filters])
 
-// ✅ CORRIGIDO: Função com tipo correto
-const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
-  if (user?.role !== 'EMPLOYEE') return
-  
-  try {
-    await updateTaskStatus(taskId, newStatus)
-    queryClient.invalidateQueries({ queryKey: ['tasks'] })
-    toast.success('Status atualizado com sucesso!')
-  } catch (error: any) {
-    toast.error(error.response?.data?.error || 'Erro ao atualizar status')
-  }
-}
-
-  const handleTaskClick = (taskId: string) => {
-    navigate(`/tasks/${taskId}`)
+  // ✅ CORRIGIDO: Função de atualizar status
+  const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+    if (user?.role !== 'EMPLOYEE') return
+    
+    try {
+      await updateTaskStatus(taskId, newStatus)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      toast.success('Status atualizado com sucesso!')
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Erro ao atualizar status')
+    }
   }
 
-  // ✅ NOVO: Função de editar para MANAGER
+  // ✅ CORRIGIDO: Função para abrir modal de detalhes
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task)
+    setIsDetailsModalOpen(true)
+  }
+
+  // ✅ CORRIGIDO: Função para editar tarefa
   const handleEditTask = (taskId: string) => {
     navigate(`/tasks/${taskId}/edit`)
   }
 
-  // Estatísticas - CORRIGIDO: usando valores em inglês
+  // ✅ CORRIGIDO: Função para ver detalhes
+  const handleViewDetails = (task: Task) => {
+    setSelectedTask(task)
+    setIsDetailsModalOpen(true)
+  }
+
+  // ✅ CORRIGIDO: Função para fechar modal
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false)
+    setSelectedTask(null)
+  }
+
+  // Estatísticas
   const stats = useMemo(() => {
     const pending = tasks.filter(t => t.status === 'PENDING').length
     const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS').length
@@ -112,7 +116,7 @@ const handleStatusChange = async (taskId: string, newStatus: Task['status']) => 
 
   return (
     <div className="p-6 space-y-8 scrollbar-modern">
-      {/* Header - Rosa apenas nos ícones */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div className="animate-fade-in">
           <h1 className="heading-xl flex items-center gap-4">
@@ -141,7 +145,7 @@ const handleStatusChange = async (taskId: string, newStatus: Task['status']) => 
         )}
       </div>
 
-      {/* Estatísticas - CORES CORRETAS */}
+      {/* Estatísticas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-slide-up">
         <Card className="text-center stat-card-total card-hover">
           <div className="flex items-center justify-center mb-3">
@@ -204,9 +208,10 @@ const handleStatusChange = async (taskId: string, newStatus: Task['status']) => 
             >
               <TaskCard
                 task={task}
-                onClick={() => handleTaskClick(task.id)}
+                onClick={() => handleTaskClick(task)}
                 onStatusChange={handleStatusChange}
-                onEdit={handleEditTask} // ✅ ADICIONADO: Prop onEdit
+                onEdit={handleEditTask}
+                onViewDetails={handleViewDetails}
                 userRole={user?.role || ''}
               />
             </div>
@@ -238,6 +243,21 @@ const handleStatusChange = async (taskId: string, newStatus: Task['status']) => 
             )}
           </div>
         </Card>
+      )}
+
+      {/* Modal de Detalhes */}
+      {selectedTask && (
+        <TaskDetailsModal
+          task={selectedTask}
+          isOpen={isDetailsModalOpen}
+          onClose={handleCloseDetails}
+          userRole={user?.role || ''}
+          currentUser={{
+            id: user?.id || '',
+            name: user?.name || '',
+            email: user?.email || ''
+          }}
+        />
       )}
     </div>
   )

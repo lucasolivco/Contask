@@ -6,9 +6,15 @@ import {
   getTask, 
   updateTaskStatus, 
   getEmployees,
-  editTarefa
+  editTarefa,
+  getTaskComments,
+  createComment,
+  getTaskAttachments,
+  uploadAttachment,
+  downloadAttachment
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
+import { upload } from '../middleware/upload'
 
 const router = Router()
 
@@ -24,5 +30,14 @@ router.put('/:id', editTarefa) // atualizar tarefa
 router.get('/', getTasks) // Listar tarefas
 router.get('/:id', getTask) // Ver tarefa específica
 router.patch('/:id/status', updateTaskStatus) // Atualizar status
+
+// ✅ NOVAS ROTAS - Comentários
+router.get('/:taskId/comments', getTaskComments)        // Buscar comentários
+router.post('/:taskId/comments', createComment)         // Criar comentário
+
+// ✅ NOVAS ROTAS - Anexos
+router.get('/:taskId/attachments', getTaskAttachments)  // Buscar anexos
+router.post('/:taskId/attachments', upload.array('files', 5), uploadAttachment) // Upload
+router.get('/attachments/:attachmentId/download', downloadAttachment) // Download
 
 export default router

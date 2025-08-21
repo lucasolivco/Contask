@@ -245,3 +245,35 @@ export const TaskStatusColors = {
 } as const;
 
 export type StatusChangeCallback = (taskId: string, newStatus: Task['status']) => void
+
+export interface Comment {
+  id: string
+  message: string
+  createdAt: string
+  updatedAt: string
+  taskId: string
+  authorId: string
+  author: {
+    id: string
+    name: string
+    email: string
+    role: string
+  }
+}
+
+export interface Attachment {
+  id: string
+  fileName: string
+  originalName: string
+  filePath: string
+  fileSize: number
+  mimeType: string
+  createdAt: string
+  taskId: string
+  uploadedById: string
+  uploadedBy: {
+    id: string
+    name: string
+    email: string
+  }
+}

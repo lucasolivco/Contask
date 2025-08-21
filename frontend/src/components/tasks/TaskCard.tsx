@@ -1,4 +1,4 @@
-import { Calendar, User, AlertTriangle, Clock, CheckCircle2, XCircle, Pause, ArrowRight, CalendarPlus, Edit3, Target } from 'lucide-react'
+import { Calendar, User, AlertTriangle, Clock, CheckCircle2, XCircle, Pause, ArrowRight, CalendarPlus, Edit3, Target, MessageCircle } from 'lucide-react'
 import {  
   TaskStatusLabels, 
   TaskPriorityLabels, 
@@ -6,6 +6,7 @@ import {
   TaskPriorityIcons
 } from '../../types'
 import type { Task } from '../../types'
+import TaskDetailsModal from './TaskDetailsModal'
 
 interface TaskCardProps {
   task: Task
@@ -13,9 +14,10 @@ interface TaskCardProps {
   onStatusChange?: (taskId: string, newStatus: Task['status']) => void
   userRole: string
   onEdit?: (taskId: string) => void
+  onViewDetails?: (task: Task) => void // ✅ NOVO
 }
 
-const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardProps) => {
+const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit, onViewDetails }: TaskCardProps) => {
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
   
   // ✅ NOVO: Verificar se está próximo da data meta
@@ -163,36 +165,32 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
 
       {/* Ações - DIFERENTES PARA MANAGER E EMPLOYEE */}
       <div className="mt-4 pt-4 border-t border-gray-100">
-        {userRole === 'MANAGER' ? (
-          /* Ações do Manager */
-          <div className="flex items-center justify-between gap-3">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onClick?.()
-              }}
-              className="flex-1 text-sm text-gray-600 hover:text-blue-600 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-            >
-              Ver Detalhes
-            </button>
-            
+        <div className="flex items-center justify-between gap-3">
+          {/* ✅ Ver Detalhes - Disponível para AMBOS */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onViewDetails?.(task)
+            }}
+            className="flex-1 text-sm text-blue-600 hover:text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Ver Detalhes
+          </button>
+          
+          {/* ✅ Ações específicas por papel */}
+          {userRole === 'MANAGER' ? (
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit?.(task.id)
               }}
-              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium interactive-scale"
+              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium"
             >
               <Edit3 className="h-3 w-3" />
               Editar
             </button>
-          </div>
-        ) : (
-          /* Ações do Employee */
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              Atualizar Status:
-            </label>
+          ) : (
             <select
               value={task.status}
               onChange={(e) => {
@@ -202,12 +200,12 @@ const TaskCard = ({ task, onClick, onStatusChange, userRole, onEdit }: TaskCardP
               className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:border-rose-300 focus:ring-2 focus:ring-rose-100 focus:outline-none transition-all"
               onClick={(e) => e.stopPropagation()}
             >
-              <option value="PENDING">{TaskStatusIcons.PENDING} {TaskStatusLabels.PENDING}</option>
-              <option value="IN_PROGRESS">{TaskStatusIcons.IN_PROGRESS} {TaskStatusLabels.IN_PROGRESS}</option>
-              <option value="COMPLETED">{TaskStatusIcons.COMPLETED} {TaskStatusLabels.COMPLETED}</option>
+              <option value="PENDING">⏳ Pendente</option>
+              <option value="IN_PROGRESS">🔄 Em Progresso</option>
+              <option value="COMPLETED">✅ Completada</option>
             </select>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Indicador de interação */}
