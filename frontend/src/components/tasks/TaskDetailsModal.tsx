@@ -239,6 +239,38 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  // ✅ FUNÇÃO PARA FORMATAR DATAS NO MODAL
+  const formatDateLocal = (dateString: string) => {
+    if (!dateString) return ''
+    
+    try {
+      // Extrair apenas a parte da data (YYYY-MM-DD) se vier no formato ISO completo
+      const dateOnly = dateString.split('T')[0]
+      
+      // Separar ano, mês e dia
+      const [year, month, day] = dateOnly.split('-')
+      
+      // Criar data local explicitamente (mês - 1 porque Date usa índice 0-11)
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      
+      // Verificar se a data é válida
+      if (isNaN(date.getTime())) {
+        console.warn('Data inválida:', dateString)
+        return 'Data inválida'
+      }
+      
+      // Retornar formatação brasileira
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric'
+      })
+    } catch (error) {
+      console.error('Erro ao formatar data:', error)
+      return 'Erro na data'
+    }
+  }
+
   return (
     <Portal>
       {/* ✅ OVERLAY COM PORTAL - COBERTURA TOTAL GARANTIDA */}
@@ -341,16 +373,31 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Data de criação */}
-                    <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
-                      <CalendarPlus className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-600">Criada em</p>
-                        <p className="font-medium text-xs md:text-sm">
-                          {new Date(task.createdAt).toLocaleDateString('pt-BR')}
-                        </p>
+                    {/* ✅ DATA DE VENCIMENTO FORMATADA CORRETAMENTE */}
+                    {task.dueDate ? (
+                      <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
+                        <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-600">Vence em</p>
+                          <p className={`font-medium text-xs md:text-sm ${isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
+                            {formatDateLocal(task.dueDate)}
+                            {isOverdue && (
+                              <span className="ml-1 text-red-600 animate-pulse">⚠️</span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
+                        <CalendarPlus className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-600">Sem prazo</p>
+                          <p className="font-medium text-xs md:text-sm text-gray-500">
+                            Não definido
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Data meta */}
                     {task.targetDate && (
@@ -359,7 +406,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <div className="min-w-0">
                           <p className="text-xs text-blue-600">Data Meta</p>
                           <p className={`font-medium text-xs md:text-sm ${isNearTarget ? 'text-orange-600' : 'text-blue-700'}`}>
-                            {new Date(task.targetDate).toLocaleDateString('pt-BR')}
+                            {formatDateLocal(task.targetDate)}
                             {isNearTarget && (
                               <span className="ml-1 text-orange-600 animate-pulse">🎯</span>
                             )}

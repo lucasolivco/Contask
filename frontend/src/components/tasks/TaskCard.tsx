@@ -37,8 +37,87 @@ const TaskCard = ({
   isSelected,
   onToggleSelect
 }: TaskCardProps) => {
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
-  const isNearTarget = task.targetDate && new Date(task.targetDate) < new Date() && task.status !== 'COMPLETED'
+  
+  // ✅ FUNÇÃO CORRIGIDA PARA FORMATAR DATAS SEM PROBLEMA DE TIMEZONE
+  const formatDateLocal = (dateString: string) => {
+    if (!dateString) return ''
+    
+    try {
+      // Extrair apenas a parte da data (YYYY-MM-DD) se vier no formato ISO completo
+      const dateOnly = dateString.split('T')[0]
+      
+      // Separar ano, mês e dia
+      const [year, month, day] = dateOnly.split('-')
+      
+      // Criar data local explicitamente (mês - 1 porque Date usa índice 0-11)
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      
+      // Verificar se a data é válida
+      if (isNaN(date.getTime())) {
+        console.warn('Data inválida:', dateString)
+        return 'Data inválida'
+      }
+      
+      // Retornar formatação brasileira
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric'
+      })
+    } catch (error) {
+      console.error('Erro ao formatar data:', error)
+      return 'Erro na data'
+    }
+  }
+
+  // ✅ FUNÇÃO CORRIGIDA PARA COMPARAÇÃO DE DATAS
+  const isDatePast = (dateString: string) => {
+    if (!dateString) return false
+    
+    try {
+      // Extrair apenas a parte da data
+      const dateOnly = dateString.split('T')[0]
+      const [year, month, day] = dateOnly.split('-')
+      
+      // Criar data local
+      const targetDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      return targetDate < today
+    } catch (error) {
+      console.error('Erro ao comparar data:', error)
+      return false
+    }
+  }
+
+  // ✅ FUNÇÃO CORRIGIDA PARA VERIFICAR PROXIMIDADE
+  const isDateNear = (dateString: string) => {
+    if (!dateString) return false
+    
+    try {
+      // Extrair apenas a parte da data
+      const dateOnly = dateString.split('T')[0]
+      const [year, month, day] = dateOnly.split('-')
+      
+      // Criar data local
+      const targetDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      const threeDaysFromNow = new Date(today)
+      threeDaysFromNow.setDate(today.getDate() + 3)
+      
+      return targetDate >= today && targetDate <= threeDaysFromNow
+    } catch (error) {
+      console.error('Erro ao verificar proximidade da data:', error)
+      return false
+    }
+  }
+
+  // ✅ USANDO AS NOVAS FUNÇÕES PARA VERIFICAR DATAS
+  const isOverdue = task.dueDate && isDatePast(task.dueDate) && task.status !== 'COMPLETED'
+  const isNearTarget = task.targetDate && isDateNear(task.targetDate) && task.status !== 'COMPLETED'
   
   // ✅ CORES DE PRIORIDADE RESTAURADAS
   const getPriorityStyles = (priority: Task['priority']) => {
@@ -141,7 +220,7 @@ const TaskCard = ({
           </span>
         </div>
 
-        {/* ✅ DATAS SEM LEGENDA EXPLICATIVA */}
+        {/* ✅ DATAS FORMATADAS CORRETAMENTE */}
         <div className="space-y-1">
           {/* Data de vencimento */}
           {task.dueDate && (
@@ -149,7 +228,7 @@ const TaskCard = ({
               <Calendar className="h-4 w-4 text-gray-400" />
               <span className="text-xs text-gray-500">Vencimento:</span>
               <span className={isOverdue ? 'text-red-600 font-medium' : 'text-gray-700'}>
-                {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                {formatDateLocal(task.dueDate)}
                 {isOverdue && (
                   <span className="ml-1 text-red-600 text-xs font-bold animate-pulse">⚠️ Atrasada</span>
                 )}
@@ -162,8 +241,8 @@ const TaskCard = ({
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-blue-500" />
               <span className="text-xs text-gray-500">Meta:</span>
-              <span className={isNearTarget ? 'text-orange-600 font-medium' : 'text-grey-600'}>
-                {new Date(task.targetDate).toLocaleDateString('pt-BR')}
+              <span className={isNearTarget ? 'text-orange-600 font-medium' : 'text-gray-600'}>
+                {formatDateLocal(task.targetDate)}
                 {isNearTarget && (
                   <span className="ml-1 text-orange-600 text-xs font-bold animate-pulse">🎯 Próxima</span>
                 )}
