@@ -11,7 +11,9 @@ import {
   createComment,
   getTaskAttachments,
   uploadAttachment,
-  downloadAttachment
+  downloadAttachment,
+  getTaskStatsByPeriod,
+  debugDates
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
@@ -39,5 +41,10 @@ router.post('/:taskId/comments', createComment)         // Criar comentário
 router.get('/:taskId/attachments', getTaskAttachments)  // Buscar anexos
 router.post('/:taskId/attachments', upload.array('files', 5), uploadAttachment) // Upload
 router.get('/attachments/:attachmentId/download', downloadAttachment) // Download
+
+//rota de estatística
+router.get('/stats/period', getTaskStatsByPeriod)
+
+router.get('/debug/dates', debugDates)
 
 export default router

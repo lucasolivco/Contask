@@ -101,24 +101,35 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 // Função para listar tarefas (cada usuário vê apenas suas tarefas)
 export const getTasks = async (req: AuthRequest, res: Response) => {
   try {
-    const { status, priority, search, assignedToId, dueDate, overdue } = req.query
+    const { 
+      status, 
+      priority, 
+      search, 
+      assignedToId, 
+      dueDate, 
+      overdue,
+      dueDateMonth,
+      dueDateYear
+    } = req.query
+    
     const userId = req.user!.userId
     const userRole = req.user!.role
 
-    console.log('🔍 Filtros recebidos:', { status, priority, search, assignedToId, dueDate, overdue })
+    console.log('🔍 Filtros recebidos:', { 
+      status, priority, search, assignedToId, dueDate, overdue,
+      dueDateMonth, dueDateYear 
+    })
 
-    // Condições de busca baseadas no que o usuário digitou
     let whereCondition: any = {}
 
-    // Se for funcionário, só vê tarefas atribuídas a ele
-    // Se for gerente, vê todas as tarefas que criou
+    // Filtros de permissão
     if (userRole === 'EMPLOYEE') {
       whereCondition.assignedToId = userId
     } else if (userRole === 'MANAGER') {
       whereCondition.createdById = userId
     }
 
-    // Filtros opcionais
+    // Filtros básicos
     if (status && status !== 'all') {
       whereCondition.status = status
     }
@@ -127,32 +138,100 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       whereCondition.priority = priority
     }
 
-    // Se é gerente e quer filtrar por funcionário específico
     if (userRole === 'MANAGER' && assignedToId && assignedToId !== 'all') {
       whereCondition.assignedToId = assignedToId
     }
 
-    // Filtro por data de vencimento
-    if (dueDate) {
-      const date = new Date(dueDate as string)
-      whereCondition.dueDate = {
-        gte: new Date(date.setHours(0, 0, 0, 0)),
-        lt: new Date(date.setHours(23, 59, 59, 999))
+    // ✅ CORRIGIR FILTRO POR MÊS/ANO DA DATA DE VENCIMENTO
+    if (dueDateMonth || dueDateYear) {
+      console.log('📅 Processando filtro de mês/ano:', { dueDateMonth, dueDateYear })
+      
+      if (dueDateMonth && dueDateYear) {
+        // Filtrar por mês e ano específicos
+        const year = Number(dueDateYear)
+        const month = Number(dueDateMonth)
+        
+        // ✅ CORRIGIR: Criar datas em UTC para evitar problemas de timezone
+        const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
+        const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
+        
+        console.log(`📅 Filtro ${month}/${year}:`, {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          startLocal: startDate.toLocaleString('pt-BR'),
+          endLocal: endDate.toLocaleString('pt-BR')
+        })
+        
+        whereCondition.dueDate = {
+          gte: startDate,
+          lte: endDate
+        }
+      } else if (dueDateYear) {
+        // Filtrar apenas por ano
+        const year = Number(dueDateYear)
+        const startDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0))
+        const endDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999))
+        
+        console.log(`📅 Filtro ano ${year}:`, {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        })
+        
+        whereCondition.dueDate = {
+          gte: startDate,
+          lte: endDate
+        }
+      } else if (dueDateMonth) {
+        // Filtrar apenas por mês (ano atual)
+        const currentYear = new Date().getFullYear()
+        const month = Number(dueDateMonth)
+        const startDate = new Date(Date.UTC(currentYear, month - 1, 1, 0, 0, 0, 0))
+        const endDate = new Date(Date.UTC(currentYear, month, 0, 23, 59, 59, 999))
+        
+        console.log(`📅 Filtro mês ${month}/${currentYear}:`, {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        })
+        
+        whereCondition.dueDate = {
+          gte: startDate,
+          lte: endDate
+        }
       }
     }
 
-    // Filtro para tarefas atrasadas
+    // ✅ Data específica de vencimento (prioritária sobre mês/ano)
+    if (dueDate && !dueDateMonth && !dueDateYear) {
+      const inputDate = new Date(dueDate as string)
+      // ✅ CORRIGIR: Garantir que seja o dia completo
+      const startOfDay = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate(), 0, 0, 0, 0)
+      const endOfDay = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate(), 23, 59, 59, 999)
+      
+      whereCondition.dueDate = {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+      
+      console.log(`📅 Filtro data específica:`, {
+        input: dueDate,
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString()
+      })
+    }
+
+    // ✅ Filtro para tarefas atrasadas (prioritário sobre outros filtros de data)
     if (overdue === 'true') {
       const now = new Date()
       whereCondition.dueDate = {
         lt: now
       }
       whereCondition.status = {
-        in: ['PENDENTE', 'EM_PROGRESSO']
+        in: ['PENDING', 'IN_PROGRESS']
       }
+      console.log(`⚠️ Filtrando apenas tarefas atrasadas antes de:`, now.toISOString())
     }
 
-    // Busca por palavra-chave no título ou descrição
+    // Busca por palavra-chave
     const searchTerm = search as string;
     if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim() !== '') {
       whereCondition.OR = [
@@ -163,7 +242,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
 
     console.log('🔍 Condição final de busca:', JSON.stringify(whereCondition, null, 2))
 
-    // Busca as tarefas no banco
+    // ✅ ADICIONAR: Busca as tarefas com logs
     const tasks = await prisma.task.findMany({
       where: whereCondition,
       include: {
@@ -175,20 +254,33 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         },
         attachments: true,
         _count: {
-          select: { attachments: true }
+          select: { 
+            attachments: true,
+            comments: true
+          }
         }
       },
       orderBy: {
-        createdAt: 'desc' // Mais recentes primeiro
+        dueDate: 'asc' // ✅ MELHORAR: Ordenar por data de vencimento quando filtrando por data
       }
     })
 
     console.log('📋 Tarefas encontradas:', tasks.length)
+    
+    // ✅ ADICIONAR: Log das datas encontradas para debug
+    if (dueDateMonth || dueDateYear) {
+      console.log('📅 Datas de vencimento encontradas:')
+      tasks.forEach((task, index) => {
+        if (task.dueDate) {
+          console.log(`${index + 1}. ${task.title}: ${task.dueDate.toISOString()} (${task.dueDate.toLocaleDateString('pt-BR')})`)
+        }
+      })
+    }
 
     res.json({ tasks })
 
   } catch (error) {
-    console.error('Erro ao buscar tarefas:', error)
+    console.error('❌ Erro ao buscar tarefas:', error)
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
@@ -721,5 +813,137 @@ export const downloadAttachment = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Erro ao fazer download:', error)
     res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+export const getTaskStatsByPeriod = async (req: AuthRequest, res: Response) => {
+  try {
+    const { month, year, dateField = 'createdAt' } = req.query
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    let whereCondition: any = {}
+
+    // Filtro de permissão
+    if (userRole === 'EMPLOYEE') {
+      whereCondition.assignedToId = userId
+    } else if (userRole === 'MANAGER') {
+      whereCondition.createdById = userId
+    }
+
+    // Filtro por período
+    if (month && year) {
+      const startDate = new Date(Number(year), Number(month) - 1, 1)
+      const endDate = new Date(Number(year), Number(month), 0, 23, 59, 59, 999)
+      
+      whereCondition[dateField as string] = {
+        gte: startDate,
+        lte: endDate
+      }
+    }
+
+    const stats = await prisma.task.groupBy({
+      by: ['status'],
+      where: whereCondition,
+      _count: {
+        id: true
+      }
+    })
+
+    const priorityStats = await prisma.task.groupBy({
+      by: ['priority'],
+      where: whereCondition,
+      _count: {
+        id: true
+      }
+    })
+
+    res.json({ 
+      statusStats: stats,
+      priorityStats,
+      period: { month, year, dateField }
+    })
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+export const debugDates = async (req: AuthRequest, res: Response) => {
+  try {
+    const { month, year } = req.query
+    
+    if (!month || !year) {
+      return res.status(400).json({ error: 'Month and year required' })
+    }
+    
+    const monthNum = Number(month)
+    const yearNum = Number(year)
+    
+    // Testar criação de datas
+    const startDate = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0))
+    const endDate = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999))
+    
+    // Buscar tarefas nesse período
+    const tasks = await prisma.task.findMany({
+      where: {
+        dueDate: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      select: {
+        id: true,
+        title: true,
+        dueDate: true
+      }
+    })
+    
+    // Buscar TODAS as tarefas para comparar
+    const allTasks = await prisma.task.findMany({
+      where: {
+        dueDate: { not: null }
+      },
+      select: {
+        id: true,
+        title: true,
+        dueDate: true
+      },
+      orderBy: {
+        dueDate: 'asc'
+      }
+    })
+    
+    res.json({
+      debug: {
+        input: { month: monthNum, year: yearNum },
+        range: {
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+          startLocal: startDate.toLocaleString('pt-BR'),
+          endLocal: endDate.toLocaleString('pt-BR')
+        },
+        found: tasks.length,
+        tasks: tasks.map(t => ({
+          id: t.id,
+          title: t.title,
+          dueDate: t.dueDate?.toISOString(),
+          dueDateLocal: t.dueDate?.toLocaleString('pt-BR')
+        }))
+      },
+      allTasks: allTasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        dueDate: t.dueDate ? t.dueDate.toISOString() : null,
+        dueDateLocal: t.dueDate ? t.dueDate.toLocaleString('pt-BR') : null,
+        month: t.dueDate ? t.dueDate.getMonth() + 1 : null,
+        year: t.dueDate ? t.dueDate.getFullYear() : null
+      }))
+    })
+    
+  } catch (error) {
+    console.error('❌ Erro no debug:', error)
+    res.status(500).json({ error: 'Erro interno' })
   }
 }

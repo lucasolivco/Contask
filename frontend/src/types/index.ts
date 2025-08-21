@@ -86,13 +86,15 @@ export interface CreateTaskForm {
 
 // CORRIGIDO: TaskFilter com valores em inglês
 export interface TaskFilter {
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-    search?: string;
-    assignedToId?: string;
-    dueDate?: string;
-    targetDate?: string;
-    overdue?: boolean;
+    status?: string;
+    priority?: string;
+    search?: string
+    assignedToId?: string
+    dueDate?: string
+    overdue?: boolean
+    // ✅ NOVOS FILTROS
+    dueDateMonth?: number
+    dueDateYear?: number
 }
 
 // Tipos para API responses

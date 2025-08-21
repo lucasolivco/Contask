@@ -6,15 +6,46 @@ import type { Task, CreateTaskForm, TaskFilter, TaskResponse, EmployeesResponse 
 export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
     const params = new URLSearchParams();
 
-    if (filters?.status) params.append('status', filters.status)
-    if (filters?.priority) params.append('priority', filters.priority)
-    if (filters?.search) params.append('search', filters.search)
-    if (filters?.assignedToId) params.append('assignedToId', filters.assignedToId)
-    if (filters?.dueDate) params.append('dueDate', filters.dueDate)
+    // Filtros básicos
+    if (filters?.status && filters.status !== 'all') {
+        params.append('status', filters.status)
+    }
     
-    // BUG CORRIGIDO: Template literals em vez de aspas simples
+    if (filters?.priority && filters.priority !== 'all') {
+        params.append('priority', filters.priority)
+    }
+    
+    if (filters?.search && filters.search.trim()) {
+        params.append('search', filters.search)
+    }
+    
+    if (filters?.assignedToId && filters.assignedToId !== 'all') {
+        params.append('assignedToId', filters.assignedToId)
+    }
+    
+    if (filters?.dueDate) {
+        params.append('dueDate', filters.dueDate)
+    }
+
+    // ✅ PARÂMETROS QUE ESTAVAM FALTANDO
+    if (filters?.dueDateMonth) {
+        params.append('dueDateMonth', filters.dueDateMonth.toString())
+    }
+    
+    if (filters?.dueDateYear) {
+        params.append('dueDateYear', filters.dueDateYear.toString())
+    }
+    
+    if (filters?.overdue) {
+        params.append('overdue', 'true')
+    }
+    
     const queryString = params.toString()
     const url = queryString ? `/tasks?${queryString}` : '/tasks'
+    
+    // ✅ LOG PARA DEBUG
+    console.log('🚀 taskService chamando URL:', url)
+    console.log('🚀 taskService com filtros:', filters)
     
     const response = await api.get(url);
     return response.data;
