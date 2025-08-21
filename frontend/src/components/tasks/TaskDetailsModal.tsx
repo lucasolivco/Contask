@@ -1,24 +1,30 @@
-import { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { 
   X, 
   Calendar, 
   User, 
   Clock, 
   Target, 
-  CalendarPlus, 
-  Paperclip, 
-  Send, 
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Pause,
+  MessageSquare,
+  Paperclip,
+  Send,
   Download,
   FileText,
   Image,
   File,
-  MessageCircle,
-  Loader2
+  Loader2,
+  CalendarPlus
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { TaskStatusLabels, TaskPriorityLabels } from '../../types'
 import type { Task } from '../../types'
 import { getTaskComments, createComment, type Comment } from '../../services/commentService'
 import { getTaskAttachments, uploadAttachments, downloadAttachment, type Attachment } from '../../services/attachmentService'
+import Portal from '../ui/Portal'
 
 interface TaskDetailsModalProps {
   task: Task
@@ -28,7 +34,13 @@ interface TaskDetailsModalProps {
   currentUser?: { id: string; name: string; email: string }
 }
 
-const TaskDetailsModal = ({ task, isOpen, onClose, userRole, currentUser }: TaskDetailsModalProps) => {
+const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
+  task,
+  isOpen,
+  onClose,
+  userRole,
+  currentUser
+}) => {
   const [newComment, setNewComment] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [comments, setComments] = useState<Comment[]>([])
@@ -39,7 +51,35 @@ const TaskDetailsModal = ({ task, isOpen, onClose, userRole, currentUser }: Task
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
 
-  if (!isOpen) return null
+  // ✅ PREVENIR SCROLL DO BODY QUANDO MODAL ABERTO
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
+
+  // ✅ FECHAR COM ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
 
   // ✅ CARREGAR dados ao abrir modal
   useEffect(() => {
@@ -48,6 +88,8 @@ const TaskDetailsModal = ({ task, isOpen, onClose, userRole, currentUser }: Task
       loadAttachments()
     }
   }, [isOpen, task.id])
+
+  if (!isOpen) return null
 
   // Carregar comentários
   const loadComments = async () => {
@@ -80,49 +122,43 @@ const TaskDetailsModal = ({ task, isOpen, onClose, userRole, currentUser }: Task
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
   const isNearTarget = task.targetDate && new Date(task.targetDate) < new Date() && task.status !== 'COMPLETED'
 
-  const getStatusBadge = () => {
-    const statusClasses = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      IN_PROGRESS: 'bg-blue-100 text-blue-800', 
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-gray-100 text-gray-800'
+  // Função para obter ícone de status
+  const getStatusIcon = (status: Task['status']) => {
+    switch (status) {
+      case 'COMPLETED': return <CheckCircle2 className="h-5 w-5 text-green-600" />
+      case 'IN_PROGRESS': return <Clock className="h-5 w-5 text-blue-600" />
+      case 'CANCELLED': return <XCircle className="h-5 w-5 text-gray-600" />
+      default: return <Pause className="h-5 w-5 text-gray-600" />
     }
-    
-    return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusClasses[task.status]}`}>
-        {task.status === 'PENDING' && '⏳ Pendente'}
-        {task.status === 'IN_PROGRESS' && '🔄 Em Progresso'}
-        {task.status === 'COMPLETED' && '✅ Completada'}
-        {task.status === 'CANCELLED' && '❌ Cancelada'}
-      </span>
-    )
   }
 
-  const getPriorityBadge = () => {
-    const priorityClasses = {
-      LOW: 'bg-gray-100 text-gray-700',
-      MEDIUM: 'bg-blue-100 text-blue-700',
-      HIGH: 'bg-orange-100 text-orange-700',
-      URGENT: 'bg-red-100 text-red-700'
+  // Função para obter cores de prioridade
+  const getPriorityStyles = (priority: Task['priority']) => {
+    switch (priority) {
+      case 'URGENT': return {
+        text: 'text-purple-700 bg-purple-50 border-purple-200',
+        icon: '🚨'
+      }
+      case 'HIGH': return {
+        text: 'text-orange-700 bg-orange-50 border-orange-200',
+        icon: '⚡'
+      }
+      case 'MEDIUM': return {
+        text: 'text-blue-700 bg-blue-50 border-blue-200',
+        icon: '📋'
+      }
+      case 'LOW': return {
+        text: 'text-slate-700 bg-slate-50 border-slate-200',
+        icon: '📝'
+      }
+      default: return {
+        text: 'text-blue-700 bg-blue-50 border-blue-200',
+        icon: '📋'
+      }
     }
-
-    const priorityIcons = {
-      LOW: '📝',
-      MEDIUM: '📋', 
-      HIGH: '⚡',
-      URGENT: '🚨'
-    }
-    
-    return (
-      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${priorityClasses[task.priority]}`}>
-        <span>{priorityIcons[task.priority]}</span>
-        {task.priority === 'LOW' && 'Baixa'}
-        {task.priority === 'MEDIUM' && 'Média'}
-        {task.priority === 'HIGH' && 'Alta'}
-        {task.priority === 'URGENT' && 'Urgente'}
-      </span>
-    )
   }
+
+  const priorityStyles = getPriorityStyles(task.priority)
 
   // ✅ UPLOAD REAL de arquivo
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,12 +222,12 @@ const TaskDetailsModal = ({ task, isOpen, onClose, userRole, currentUser }: Task
     const extension = fileName.split('.').pop()?.toLowerCase()
     
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '')) {
-      return <Image className="h-5 w-5 text-blue-500" />
+      return <Image className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
     }
     if (['pdf'].includes(extension || '')) {
-      return <FileText className="h-5 w-5 text-red-500" />
+      return <FileText className="h-4 w-4 md:h-5 md:w-5 text-red-500" />
     }
-    return <File className="h-5 w-5 text-gray-500" />
+    return <File className="h-4 w-4 md:h-5 md:w-5 text-gray-500" />
   }
 
   // ✅ FUNÇÃO para formatar tamanho do arquivo
@@ -204,273 +240,299 @@ const TaskDetailsModal = ({ task, isOpen, onClose, userRole, currentUser }: Task
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-bold text-gray-900">{task.title}</h2>
-            <div className="flex items-center gap-2">
-              {getStatusBadge()}
-              {getPriorityBadge()}
+    <Portal>
+      {/* ✅ OVERLAY COM PORTAL - COBERTURA TOTAL GARANTIDA */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+        onClick={onClose}
+      />
+
+      {/* ✅ MODAL RESPONSIVO COM PORTAL */}
+      <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4">
+        <div 
+          className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* ✅ HEADER RESPONSIVO */}
+          <div className="flex items-start md:items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-white">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 min-w-0 flex-1 mr-4">
+              <h2 className="text-lg md:text-2xl font-bold text-gray-900 line-clamp-2">{task.title}</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(task.status)}
+                  <span className={`status-${task.status.toLowerCase().replace('_', '-')} text-xs md:text-sm font-medium`}>
+                    {TaskStatusLabels[task.status]}
+                  </span>
+                </div>
+                <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded-lg text-xs md:text-sm font-semibold border ${priorityStyles.text}`}>
+                  <span className="mr-1">{priorityStyles.icon}</span>
+                  {TaskPriorityLabels[task.priority]}
+                </span>
+              </div>
             </div>
+            
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            >
+              <X className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="h-6 w-6 text-gray-500" />
-          </button>
-        </div>
 
-        <div className="flex h-[calc(90vh-120px)]">
-          {/* Conteúdo Principal */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            {/* Alertas */}
-            {isOverdue && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2 text-red-700">
-                  <Clock className="h-5 w-5" />
-                  <span className="font-medium">Tarefa em atraso!</span>
-                </div>
-              </div>
-            )}
+          {/* ✅ CONTEÚDO RESPONSIVO - LAYOUT MELHORADO PARA MOBILE */}
+          <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+            
+            {/* ✅ CONTEÚDO PRINCIPAL - ALTURA REDUZIDA EM MOBILE */}
+            <div className="flex-1 lg:flex-1 overflow-y-auto max-h-[40vh] lg:max-h-none">
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+                
+                {/* ✅ ALERTAS DE DATAS */}
+                {(isOverdue || isNearTarget) && (
+                  <div className="space-y-2">
+                    {isOverdue && (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 text-red-600 animate-pulse flex-shrink-0" />
+                        <span className="text-red-700 font-medium text-sm">
+                          Esta tarefa está atrasada!
+                        </span>
+                      </div>
+                    )}
+                    {isNearTarget && !isOverdue && (
+                      <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <Target className="h-5 w-5 text-orange-600 animate-pulse flex-shrink-0" />
+                        <span className="text-orange-700 font-medium text-sm">
+                          Meta próxima do vencimento!
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-            {isNearTarget && !isOverdue && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-700">
-                  <Target className="h-5 w-5" />
-                  <span className="font-medium">Próximo da data meta!</span>
-                </div>
-              </div>
-            )}
-
-            {/* Descrição */}
-            {task.description && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
-                <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">
-                  {task.description}
-                </p>
-              </div>
-            )}
-
-            {/* Informações da Tarefa */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <CalendarPlus className="h-5 w-5 text-gray-500" />
+                {/* Título e Descrição - COMPACTO EM MOBILE */}
+                {task.description && (
                   <div>
-                    <p className="text-sm text-gray-600">Criada em</p>
-                    <p className="font-medium">
-                      {new Date(task.createdAt).toLocaleDateString('pt-BR')}
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">Descrição</h3>
+                    <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg line-clamp-3 lg:line-clamp-none">
+                      {task.description}
                     </p>
                   </div>
-                </div>
-
-                {task.targetDate && (
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                    <Target className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Data meta</p>
-                      <p className={`font-medium ${isNearTarget ? 'text-amber-600' : 'text-blue-600'}`}>
-                        {new Date(task.targetDate).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
                 )}
 
-                {task.dueDate && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Vence em</p>
-                      <p className={`font-medium ${isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
-                        {new Date(task.dueDate).toLocaleDateString('pt-BR')}
-                      </p>
+                {/* ✅ INFORMAÇÕES PRINCIPAIS - MAIS COMPACTO EM MOBILE */}
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3">Informações</h3>
+                  <div className="grid grid-cols-2 gap-2 md:gap-4">
+                    
+                    {/* Responsável */}
+                    <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg">
+                      <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-blue-600">Responsável</p>
+                        <p className="font-medium text-xs md:text-sm text-blue-700 truncate">{task.assignedTo.name}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <User className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Criado por</p>
-                    <p className="font-medium">{task.createdBy.name}</p>
-                  </div>
-                </div>
+                    {/* Criado por */}
+                    <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
+                      <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-600">Criado por</p>
+                        <p className="font-medium text-xs md:text-sm text-gray-900 truncate">{task.createdBy.name}</p>
+                      </div>
+                    </div>
 
-                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                  <User className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Atribuído para</p>
-                    <p className="font-medium text-blue-600">{task.assignedTo.name}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    {/* Data de criação */}
+                    <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
+                      <CalendarPlus className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-600">Criada em</p>
+                        <p className="font-medium text-xs md:text-sm">
+                          {new Date(task.createdAt).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
 
-            {/* ✅ ANEXOS COM API REAL */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Paperclip className="h-5 w-5" />
-                  Anexos ({attachments.length})
-                  {isLoadingAttachments && <Loader2 className="h-4 w-4 animate-spin" />}
-                </h3>
-                <label className={`cursor-pointer text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                  isUploadingFile 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}>
-                  {isUploadingFile ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Paperclip className="h-4 w-4" />
-                      Adicionar Arquivo
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    disabled={isUploadingFile}
-                    className="hidden"
-                    accept="*/*"
-                  />
-                </label>
-              </div>
-
-              {isLoadingAttachments ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                  <span className="ml-2 text-gray-500">Carregando anexos...</span>
-                </div>
-              ) : attachments.length > 0 ? (
-                <div className="space-y-2">
-                  {attachments.map((attachment) => (
-                    <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-3">
-                        {getFileIcon(attachment.originalName)}
-                        <div>
-                          <p className="font-medium text-gray-900">{attachment.originalName}</p>
-                          <p className="text-sm text-gray-500">
-                            {formatFileSize(attachment.fileSize)} • 
-                            Enviado por {attachment.uploadedBy.name} • 
-                            {new Date(attachment.createdAt).toLocaleDateString('pt-BR')}
+                    {/* Data meta */}
+                    {task.targetDate && (
+                      <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg">
+                        <Target className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-blue-600">Data Meta</p>
+                          <p className={`font-medium text-xs md:text-sm ${isNearTarget ? 'text-orange-600' : 'text-blue-700'}`}>
+                            {new Date(task.targetDate).toLocaleDateString('pt-BR')}
+                            {isNearTarget && (
+                              <span className="ml-1 text-orange-600 animate-pulse">🎯</span>
+                            )}
                           </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => handleDownload(attachment)}
-                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* ✅ ANEXOS COMPACTOS EM MOBILE */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                      <Paperclip className="h-4 w-4" />
+                      Anexos ({attachments.length})
+                      {isLoadingAttachments && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </h3>
+                    <label className={`cursor-pointer text-white px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm ${
+                      isUploadingFile 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}>
+                      {isUploadingFile ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Paperclip className="h-3 w-3" />
+                          <span className="hidden sm:inline">Adicionar</span>
+                          <span className="sm:hidden">+</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileUpload}
+                        disabled={isUploadingFile}
+                        className="hidden"
+                        accept="*/*"
+                      />
+                    </label>
+                  </div>
+
+                  {isLoadingAttachments ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      <span className="ml-2 text-sm text-gray-500">Carregando...</span>
                     </div>
-                  ))}
+                  ) : attachments.length > 0 ? (
+                    <div className="space-y-2 max-h-32 lg:max-h-none overflow-y-auto">
+                      {attachments.map((attachment) => (
+                        <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {getFileIcon(attachment.originalName)}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-gray-900 text-sm truncate">{attachment.originalName}</p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {formatFileSize(attachment.fileSize)}
+                              </p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => handleDownload(attachment)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+                          >
+                            <Download className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                      <Paperclip className="h-6 w-6 mx-auto mb-2 text-gray-300" />
+                      <p className="font-medium text-sm">Nenhum anexo</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                  <Paperclip className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p className="font-medium">Nenhum anexo encontrado</p>
-                  <p className="text-sm">Adicione arquivos para compartilhar com a equipe</p>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
 
-          {/* ✅ CHAT COM API REAL */}
-          <div className="w-96 border-l border-gray-200 flex flex-col bg-gray-50">
-            {/* Header do Chat */}
-            <div className="p-4 border-b border-gray-200 bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Comentários ({comments.length})
-                {isLoadingComments && <Loader2 className="h-4 w-4 animate-spin" />}
-              </h3>
-              <p className="text-sm text-gray-500">Conversa da equipe sobre esta tarefa</p>
-            </div>
+            {/* ✅ CHAT COM MUITO MAIS ESPAÇO EM MOBILE */}
+            <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col bg-gray-50 flex-1 lg:flex-none min-h-[50vh] lg:min-h-0">
+              
+              {/* Header do Chat - COMPACTO */}
+              <div className="p-3 border-b border-gray-200 bg-white">
+                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Comentários ({comments.length})
+                  {isLoadingComments && <Loader2 className="h-4 w-4 animate-spin" />}
+                </h3>
+                <p className="text-xs text-gray-500">Conversa da equipe</p>
+              </div>
 
-            {/* Lista de Comentários */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {isLoadingComments ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                  <span className="ml-2 text-gray-500">Carregando comentários...</span>
-                </div>
-              ) : comments.length > 0 ? (
-                comments.map((comment) => (
-                  <div key={comment.id} className="bg-white rounded-lg p-3 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{comment.author.name}</span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          comment.author.role === 'MANAGER' 
-                            ? 'bg-purple-100 text-purple-700' 
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {comment.author.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+              {/* ✅ LISTA DE COMENTÁRIOS COM MUITO MAIS ESPAÇO EM MOBILE */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {isLoadingComments ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-sm text-gray-500">Carregando comentários...</span>
+                  </div>
+                ) : comments.length > 0 ? (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="bg-white rounded-lg p-3 shadow-sm">
+                      <div className="flex items-start justify-between mb-2 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-medium text-gray-900 text-sm truncate">{comment.author.name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            comment.author.role === 'MANAGER' 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {comment.author.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500 flex-shrink-0">
+                          {new Date(comment.createdAt).toLocaleString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(comment.createdAt).toLocaleString('pt-BR')}
-                      </span>
+                      <p className="text-gray-700 text-sm leading-relaxed">{comment.message}</p>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed">{comment.message}</p>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageSquare className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+                    <p className="font-medium text-sm">Nenhum comentário ainda</p>
+                    <p className="text-xs">Seja o primeiro a comentar!</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p className="font-medium">Nenhum comentário ainda</p>
-                  <p className="text-sm">Seja o primeiro a comentar!</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Form de Novo Comentário */}
-            <div className="p-4 border-t border-gray-200 bg-white">
-              <form onSubmit={handleSubmitComment} className="space-y-3">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Escreva um comentário..."
-                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || isSubmittingComment}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {isSubmittingComment ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      Enviar Comentário
-                    </>
-                  )}
-                </button>
-              </form>
+              {/* ✅ FORM DE COMENTÁRIO OTIMIZADO */}
+              <div className="p-3 border-t border-gray-200 bg-white">
+                <form onSubmit={handleSubmitComment} className="space-y-2">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Escreva um comentário..."
+                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    rows={3}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || isSubmittingComment}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                  >
+                    {isSubmittingComment ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Enviar Comentário
+                      </>
+                    )}
+                  </button>
+                </form>
               
-              <p className="text-xs text-gray-500 mt-2">
-                💡 Tanto gerentes quanto funcionários podem adicionar anexos e comentários
-              </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }
 
