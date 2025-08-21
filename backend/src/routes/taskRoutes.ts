@@ -13,7 +13,9 @@ import {
   uploadAttachment,
   downloadAttachment,
   getTaskStatsByPeriod,
-  debugDates
+  debugDates,
+  deleteTask,      // ✅ NOVO
+  bulkDeleteTasks  // ✅ NOVO
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
@@ -45,6 +47,8 @@ router.get('/attachments/:attachmentId/download', downloadAttachment) // Downloa
 //rota de estatística
 router.get('/stats/period', getTaskStatsByPeriod)
 
-router.get('/debug/dates', debugDates)
+// Rotas de exclusão (só gerentes)
+router.delete('/bulk', requireManager, bulkDeleteTasks)  // ✅ BULK deve vir ANTES do /:id
+router.delete('/:id', requireManager, deleteTask)       // ✅ Individual
 
 export default router

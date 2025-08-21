@@ -947,3 +947,171 @@ export const debugDates = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Erro interno' })
   }
 }
+
+// ✅ EXCLUIR TAREFA INDIVIDUAL
+export const deleteTask = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    // Verificar se é MANAGER
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ 
+        error: 'Apenas gerentes podem excluir tarefas' 
+      })
+    }
+
+    // Verificar se a tarefa existe
+    const task = await prisma.task.findUnique({
+      where: { id },
+      include: { 
+        assignedTo: { select: { name: true } },
+        attachments: true
+      }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    // Verificar se o manager é dono da tarefa
+    if (task.createdById !== userId) {
+      return res.status(403).json({ 
+        error: 'Você só pode excluir tarefas que criou' 
+      })
+    }
+
+    // Excluir arquivos físicos dos anexos
+    for (const attachment of task.attachments) {
+      try {
+        if (fs.existsSync(attachment.filePath)) {
+          await fs.remove(attachment.filePath)
+          console.log(`🗑️ Arquivo removido: ${attachment.filePath}`)
+        }
+      } catch (fileError) {
+        console.warn(`⚠️ Erro ao remover arquivo: ${attachment.filePath}`, fileError)
+      }
+    }
+
+    // Excluir anexos do banco
+    await prisma.attachment.deleteMany({
+      where: { taskId: id }
+    })
+
+    // Excluir comentários
+    await prisma.comment.deleteMany({
+      where: { taskId: id }
+    })
+
+    // Excluir notificações relacionadas
+    await prisma.notification.deleteMany({
+      where: { taskId: id }
+    })
+
+    // Excluir a tarefa
+    await prisma.task.delete({
+      where: { id }
+    })
+
+    console.log(`🗑️ Tarefa "${task.title}" excluída por ${req.user!.userId}`)
+
+    res.json({ 
+      message: 'Tarefa excluída com sucesso',
+      taskId: id,
+      taskTitle: task.title
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao excluir tarefa:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// ✅ EXCLUIR MÚLTIPLAS TAREFAS
+export const bulkDeleteTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskIds } = req.body
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    // Verificar se é MANAGER
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ 
+        error: 'Apenas gerentes podem excluir tarefas' 
+      })
+    }
+
+    if (!Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({ 
+        error: 'Lista de IDs de tarefas é obrigatória' 
+      })
+    }
+
+    // Buscar tarefas que existem e pertencem ao manager
+    const tasks = await prisma.task.findMany({
+      where: { 
+        id: { in: taskIds },
+        createdById: userId  // Só suas próprias tarefas
+      },
+      include: { 
+        attachments: true,
+        assignedTo: { select: { name: true } }
+      }
+    })
+
+    if (tasks.length === 0) {
+      return res.status(404).json({ 
+        error: 'Nenhuma tarefa válida encontrada para exclusão' 
+      })
+    }
+
+    const foundIds = tasks.map(t => t.id)
+    const notFoundIds = taskIds.filter(id => !foundIds.includes(id))
+
+    // Excluir arquivos físicos dos anexos
+    for (const task of tasks) {
+      for (const attachment of task.attachments) {
+        try {
+          if (fs.existsSync(attachment.filePath)) {
+            await fs.remove(attachment.filePath)
+          }
+        } catch (fileError) {
+          console.warn(`⚠️ Erro ao remover arquivo: ${attachment.filePath}`)
+        }
+      }
+    }
+
+    // Excluir em cascata (anexos, comentários, notificações)
+    await prisma.attachment.deleteMany({
+      where: { taskId: { in: foundIds } }
+    })
+
+    await prisma.comment.deleteMany({
+      where: { taskId: { in: foundIds } }
+    })
+
+    await prisma.notification.deleteMany({
+      where: { taskId: { in: foundIds } }
+    })
+
+    // Excluir as tarefas
+    const deleteResult = await prisma.task.deleteMany({
+      where: { id: { in: foundIds } }
+    })
+
+    console.log(`🗑️ ${deleteResult.count} tarefas excluídas em lote por ${userId}`)
+
+    res.json({ 
+      message: `${deleteResult.count} tarefa(s) excluída(s) com sucesso`,
+      deletedCount: deleteResult.count,
+      deletedIds: foundIds,
+      skippedIds: notFoundIds.length > 0 ? notFoundIds : undefined,
+      deletedTasks: tasks.map(t => ({ id: t.id, title: t.title }))
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao excluir tarefas em lote:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}

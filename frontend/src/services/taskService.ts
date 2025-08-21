@@ -89,3 +89,21 @@ export const updateTask = async (id: string, data: {
   const response = await api.put(`/tasks/${id}`, data)
   return response.data
 }
+
+// ✅ EXCLUIR TAREFA INDIVIDUAL
+export const deleteTask = async (id: string): Promise<{ message: string }> => {
+  const response = await api.delete(`/tasks/${id}`)
+  return response.data
+}
+
+// ✅ EXCLUIR MÚLTIPLAS TAREFAS
+export const bulkDeleteTasks = async (taskIds: string[]): Promise<{ 
+  message: string; 
+  deletedCount: number; 
+  deletedTasks: { id: string; title: string }[]
+}> => {
+  const response = await api.delete('/tasks/bulk', {
+    data: { taskIds }
+  })
+  return response.data
+}

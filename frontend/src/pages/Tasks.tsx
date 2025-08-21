@@ -1,12 +1,15 @@
 import React, { useState, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query' // ✅ REMOVIDO useMutation não usado
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { 
   CheckSquare, 
   Plus,
   Clock,
   AlertTriangle,
-  Target
+  Target,
+  Trash2, 
+  CheckSquare2,
+  X
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
@@ -15,7 +18,7 @@ import TaskFilters from '../components/tasks/TaskFilters'
 import TaskCard from '../components/tasks/TaskCard'
 import TaskDetailsModal from '../components/tasks/TaskDetailsModal'
 import { useAuth } from '../contexts/AuthContext'
-import { getTasks, updateTaskStatus } from '../services/taskService'
+import { getTasks, updateTaskStatus, deleteTask, bulkDeleteTasks } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
 import { useNavigate } from 'react-router-dom'
 
@@ -27,6 +30,8 @@ const Tasks: React.FC = () => {
   const [filters, setFilters] = useState<TaskFilter>({})
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Busca tarefas com filtros
   const { data: tasksData, isLoading, error } = useQuery({
@@ -37,7 +42,7 @@ const Tasks: React.FC = () => {
 
   const tasks = tasksData?.tasks || []
 
-  // Aplicar filtros adicionais no frontend
+  // ✅ ORDENAÇÃO POR PRIORIDADE + Filtros adicionais
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks]
 
@@ -51,10 +56,28 @@ const Tasks: React.FC = () => {
       )
     }
 
+    // ✅ ORDENAÇÃO POR PRIORIDADE: URGENT > HIGH > MEDIUM > LOW
+    const priorityOrder = { 'URGENT': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 }
+    
+    filtered.sort((a, b) => {
+      const priorityA = priorityOrder[a.priority] ?? 4
+      const priorityB = priorityOrder[b.priority] ?? 4
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB
+      }
+      
+      // Se mesma prioridade, ordenar por data de vencimento
+      const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
+      const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
+      
+      return dateA - dateB
+    })
+
     return filtered
   }, [tasks, filters])
 
-  // ✅ CORRIGIDO: Função de atualizar status
+  // Funções existentes (não alteradas)
   const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
     if (user?.role !== 'EMPLOYEE') return
     
@@ -67,27 +90,90 @@ const Tasks: React.FC = () => {
     }
   }
 
-  // ✅ CORRIGIDO: Função para abrir modal de detalhes
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task)
-    setIsDetailsModalOpen(true)
-  }
-
-  // ✅ CORRIGIDO: Função para editar tarefa
   const handleEditTask = (taskId: string) => {
     navigate(`/tasks/${taskId}/edit`)
   }
 
-  // ✅ CORRIGIDO: Função para ver detalhes
   const handleViewDetails = (task: Task) => {
     setSelectedTask(task)
     setIsDetailsModalOpen(true)
   }
 
-  // ✅ CORRIGIDO: Função para fechar modal
   const handleCloseDetails = () => {
     setIsDetailsModalOpen(false)
     setSelectedTask(null)
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    const task = filteredTasks.find(t => t.id === taskId)
+    const taskName = task ? task.title : 'esta tarefa'
+    
+    if (!window.confirm(`Tem certeza que deseja excluir "${taskName}"?`)) {
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      const result = await deleteTask(taskId)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      setSelectedTaskIds(prev => prev.filter(id => id !== taskId))
+      toast.success(result.message || 'Tarefa excluída com sucesso!')
+    } catch (error: any) {
+      console.error('Erro ao excluir tarefa:', error)
+      toast.error(error.response?.data?.error || 'Erro ao excluir tarefa')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedTaskIds.length === 0) {
+      toast.error('Selecione pelo menos uma tarefa')
+      return
+    }
+
+    const selectedTasks = filteredTasks.filter(t => selectedTaskIds.includes(t.id))
+    const taskNames = selectedTasks.slice(0, 3).map(t => t.title).join(', ')
+    const displayText = selectedTasks.length > 3 
+      ? `${taskNames} e mais ${selectedTasks.length - 3}` 
+      : taskNames
+
+    if (!window.confirm(`Tem certeza que deseja excluir ${selectedTaskIds.length} tarefa(s)?\n\n${displayText}`)) {
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      const result = await bulkDeleteTasks(selectedTaskIds)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      setSelectedTaskIds([])
+      toast.success(result.message || 'Tarefas excluídas com sucesso!')
+    } catch (error: any) {
+      console.error('Erro ao excluir tarefas:', error)
+      toast.error(error.response?.data?.error || 'Erro ao excluir tarefas')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleToggleSelect = (taskId: string) => {
+    setSelectedTaskIds(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedTaskIds.length === filteredTasks.length) {
+      setSelectedTaskIds([])
+    } else {
+      setSelectedTaskIds(filteredTasks.map(task => task.id))
+    }
+  }
+
+  const clearSelection = () => {
+    setSelectedTaskIds([])
   }
 
   // Estatísticas
@@ -120,7 +206,7 @@ const Tasks: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div className="animate-fade-in">
           <h1 className="heading-xl flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
               <CheckSquare className="h-8 w-8 text-white" />
             </div>
             {user?.role === 'MANAGER' ? 'Gerenciar Tarefas' : 'Minhas Tarefas'}
@@ -191,27 +277,85 @@ const Tasks: React.FC = () => {
       {/* Filtros */}
       <TaskFilters onFiltersChange={setFilters} userRole={user?.role || ''} />
 
+      {/* ✅ BARRA DE SELEÇÃO MELHORADA (APENAS MANAGER) */}
+      {user?.role === 'MANAGER' && filteredTasks.length > 0 && (
+        <div className={`
+          flex items-center justify-between p-4 rounded-xl border transition-all duration-300
+          ${selectedTaskIds.length > 0 
+            ? 'bg-blue-50 border-blue-200' 
+            : 'bg-gray-50 border-gray-200'}
+        `}>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedTaskIds.length === filteredTasks.length && filteredTasks.length > 0}
+                  onChange={handleSelectAll}
+                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                  disabled={isDeleting}
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  {selectedTaskIds.length === filteredTasks.length ? 'Desmarcar' : 'Selecionar'} Todas
+                </span>
+              </label>
+            </div>
+            
+            {selectedTaskIds.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-blue-700 font-medium bg-blue-100 px-3 py-1 rounded-full">
+                  {selectedTaskIds.length} selecionada(s)
+                </span>
+                <button
+                  onClick={clearSelection}
+                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+                  title="Limpar seleção"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {selectedTaskIds.length > 0 && (
+            <Button
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+              size="sm"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>
+                {isDeleting ? 'Excluindo...' : `Excluir ${selectedTaskIds.length}`}
+              </span>
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Lista de Tarefas */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 bg-gray-200 rounded-2xl animate-pulse"></div>
+            <div key={i} className="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
           ))}
         </div>
       ) : filteredTasks.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTasks.map((task, index) => (
             <div 
               key={task.id} 
               className="animate-fade-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <TaskCard
                 task={task}
-                onClick={() => handleTaskClick(task)}
                 onStatusChange={handleStatusChange}
                 onEdit={handleEditTask}
                 onViewDetails={handleViewDetails}
+                onDelete={handleDeleteTask}
+                isSelected={selectedTaskIds.includes(task.id)}
+                onToggleSelect={handleToggleSelect}
                 userRole={user?.role || ''}
               />
             </div>
