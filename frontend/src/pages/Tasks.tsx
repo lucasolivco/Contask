@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { 
@@ -33,11 +33,31 @@ const Tasks: React.FC = () => {
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Busca tarefas com filtros
+   // ✅ LIMPAR ESTADO QUANDO USUÁRIO MUDA
+  useEffect(() => {
+    if (user) {
+      console.log(`🔄 Usuário mudou para: ${user.email} (${user.role})`);
+      
+      // Limpar seleções e filtros
+      setSelectedTaskIds([]);
+      setFilters({});
+      setSelectedTask(null);
+      setIsDetailsModalOpen(false);
+      
+      // Invalidar cache específico
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      console.log('   ✅ Estado limpo para novo usuário');
+    }
+  }, [user?.id, queryClient]); // ✅ DEPENDÊNCIA NO user.id
+
+  // ✅ QUERY COM USER ID NA KEY
   const { data: tasksData, isLoading, error } = useQuery({
-    queryKey: ['tasks', filters],
+    queryKey: ['tasks', user?.id, filters], // ✅ INCLUIR user.id
     queryFn: () => getTasks(filters),
-    retry: 1
+    enabled: !!user, // ✅ Só executar se tiver usuário
+    staleTime: 0, // ✅ Sempre buscar dados frescos
+    gcTime: 1000 * 60 * 5, // ✅ Cache de 5 minutos apenas
   })
 
   const tasks = tasksData?.tasks || []
@@ -77,16 +97,23 @@ const Tasks: React.FC = () => {
     return filtered
   }, [tasks, filters])
 
-  // Funções existentes (não alteradas)
+  // ✅ CORRIGIR - INCLUIR user.id NA INVALIDAÇÃO
+  // ✅ MELHORAR LOADING STATES
   const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
     if (user?.role !== 'EMPLOYEE') return
     
     try {
+      // ✅ FEEDBACK VISUAL IMEDIATO
+      toast.loading('Atualizando status...', { id: `status-${taskId}` })
+      
       await updateTaskStatus(taskId, newStatus)
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Status atualizado com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['tasks', user.id] })
+      
+      // ✅ SUBSTITUIR LOADING POR SUCCESS
+      toast.success('Status atualizado com sucesso!', { id: `status-${taskId}` })
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erro ao atualizar status')
+      // ✅ SUBSTITUIR LOADING POR ERROR
+      toast.error(error.response?.data?.error || 'Erro ao atualizar status', { id: `status-${taskId}` })
     }
   }
 
@@ -104,7 +131,15 @@ const Tasks: React.FC = () => {
     setSelectedTask(null)
   }
 
+  // ✅ CORRIGIR - INCLUIR user.id NA INVALIDAÇÃO
   const handleDeleteTask = async (taskId: string) => {
+
+    // ✅ VERIFICAR SE USUÁRIO AINDA ESTÁ LOGADO
+    if (!user?.id) {
+      toast.error('Usuário não autenticado')
+      return
+    }
+
     const task = filteredTasks.find(t => t.id === taskId)
     const taskName = task ? task.title : 'esta tarefa'
     
@@ -115,7 +150,8 @@ const Tasks: React.FC = () => {
     try {
       setIsDeleting(true)
       const result = await deleteTask(taskId)
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      // ✅ INCLUIR user.id para invalidar cache específico
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] })
       setSelectedTaskIds(prev => prev.filter(id => id !== taskId))
       toast.success(result.message || 'Tarefa excluída com sucesso!')
     } catch (error: any) {
@@ -126,6 +162,7 @@ const Tasks: React.FC = () => {
     }
   }
 
+  // ✅ CORRIGIR - INCLUIR user.id NA INVALIDAÇÃO
   const handleBulkDelete = async () => {
     if (selectedTaskIds.length === 0) {
       toast.error('Selecione pelo menos uma tarefa')
@@ -145,7 +182,8 @@ const Tasks: React.FC = () => {
     try {
       setIsDeleting(true)
       const result = await bulkDeleteTasks(selectedTaskIds)
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      // ✅ INCLUIR user.id para invalidar cache específico
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] })
       setSelectedTaskIds([])
       toast.success(result.message || 'Tarefas excluídas com sucesso!')
     } catch (error: any) {
@@ -175,20 +213,6 @@ const Tasks: React.FC = () => {
   const clearSelection = () => {
     setSelectedTaskIds([])
   }
-
-  // Estatísticas
-  const stats = useMemo(() => {
-    const pending = tasks.filter(t => t.status === 'PENDING').length
-    const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS').length
-    const completed = tasks.filter(t => t.status === 'COMPLETED').length
-    const overdue = tasks.filter(t => 
-      t.dueDate && 
-      new Date(t.dueDate) < new Date() && 
-      ['PENDING', 'IN_PROGRESS'].includes(t.status)
-    ).length
-
-    return { pending, inProgress, completed, overdue, total: tasks.length }
-  }, [tasks])
 
   if (error) {
     return (
@@ -229,49 +253,6 @@ const Tasks: React.FC = () => {
             Nova Tarefa
           </Button>
         )}
-      </div>
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-slide-up">
-        <Card className="text-center stat-card-total card-hover">
-          <div className="flex items-center justify-center mb-3">
-            <div className="p-3 bg-slate-100 rounded-xl">
-              <Target className="h-6 w-6 text-slate-600" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-slate-700 mb-1">{stats.total}</div>
-          <div className="text-slate-600 text-sm font-medium">Total</div>
-        </Card>
-        
-        <Card className="text-center stat-card-pending card-hover">
-          <div className="flex items-center justify-center mb-3">
-            <div className="p-3 bg-slate-100 rounded-xl">
-              <Clock className="h-6 w-6 text-slate-600" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-slate-700 mb-1">{stats.pending}</div>
-          <div className="text-slate-600 text-sm font-medium">Pendentes</div>
-        </Card>
-        
-        <Card className="text-center stat-card-completed card-hover">
-          <div className="flex items-center justify-center mb-3">
-            <div className="p-3 bg-emerald-100 rounded-xl">
-              <CheckSquare className="h-6 w-6 text-emerald-600" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-emerald-700 mb-1">{stats.completed}</div>
-          <div className="text-emerald-600 text-sm font-medium">Concluídas</div>
-        </Card>
-        
-        <Card className="text-center stat-card-overdue card-hover">
-          <div className="flex items-center justify-center mb-3">
-            <div className="p-3 bg-red-100 rounded-xl">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-red-700 mb-1">{stats.overdue}</div>
-          <div className="text-red-600 text-sm font-medium">Atrasadas</div>
-        </Card>
       </div>
 
       {/* Filtros */}

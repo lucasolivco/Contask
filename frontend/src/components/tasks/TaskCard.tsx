@@ -330,7 +330,7 @@ const TaskCard = ({
           >
             <option value="PENDING">⏳ Pendente</option>
             <option value="IN_PROGRESS">🔄 Em Progresso</option>
-            <option value="COMPLETED">✅ Completada</option>
+            <option value="COMPLETED">✅ Concluído</option>
           </select>
         )}
       </div>

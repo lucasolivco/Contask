@@ -1,89 +1,97 @@
-// "Cofre" global que guarda informações do usuário logado
+// ✅ AUTHCONTEXT COM REACT QUERY
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 
-// Define o que nosso "cofre" pode guardar
 interface AuthContextType {
-    user: User | null; // Usuário logado ou nulo se não houver
-    token: string | null; // Token de autenticação ou nulo se não houver
-    login: (user: User, token: string) => void; // Função para fazer login
-    logout: () => void; // Função para fazer logout
-    isLoading: boolean; // Indica se o carregamento está em andamento
+    user: User | null;
+    token: string | null;
+    login: (user: User, token: string) => void;
+    logout: () => void;
+    isLoading: boolean;
 }
 
-//Cria o "Cofre" (mas ainda vazio)
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// "Gerente do Cofre" - componente que controla o estado global
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null); // Estado do usuário
-    const [token, setToken] = useState<string | null>(null); // Estado do token
-    const [isLoading, setIsLoading] = useState(true) // Estado de carregamento
+    const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient(); // ✅ ADICIONAR QUERY CLIENT
 
-    // Quando o site carrega, verifica se o usuário já estava logado
+    // ✅ VERIFICAR USUÁRIO SALVO AO INICIALIZAR
     useEffect(() => {
         const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
 
         if (savedToken && savedUser) {
             try {
-                // Restaura os dados salvos
-                setToken(savedToken)
-                setUser(JSON.parse(savedUser))
+                const parsedUser = JSON.parse(savedUser);
+                setToken(savedToken);
+                setUser(parsedUser);
+                console.log('✅ Usuário restaurado:', parsedUser.email);
             } catch (error) {
-                // Se os dados estão corrompidos, limpa tudo
-                console.error('Erro ao restaurar dados do usuário:', error)
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
+                console.error('❌ Erro ao restaurar dados:', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
             }
         }
-        setIsLoading(false); // Carregamento concluído
+        setIsLoading(false);
     }, []);
 
-
-    // Função para fazer login
+    // ✅ FUNÇÃO DE LOGIN CORRIGIDA
     const login = (userData: User, userToken: string) => {
-        setUser(userData); // Atualiza o usuário
-        setToken(userToken); // Atualiza o token
-
-        // Salva os dados no "cofre" do navegador
+        console.log('🔑 Fazendo login:', userData.email);
+        
+        // Limpar cache antes de definir novo usuário
+        queryClient.clear();
+        
+        setUser(userData);
+        setToken(userToken);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', userToken);
-    }
+        
+        console.log('✅ Login concluído');
+    };
 
-    // Função para fazer logout
+    // ✅ FUNÇÃO DE LOGOUT CORRIGIDA
     const logout = () => {
-        setUser(null); // Limpa o usuário
-        setToken(null); // Limpa o token
-
-        // Remove os dados do "cofre" do navegador
+        console.log('🚪 Fazendo logout...');
+        
+        // 1. Limpar estado
+        setUser(null);
+        setToken(null);
+        
+        // 2. Limpar localStorage
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-    }
+        
+        // 3. Limpar TODO o cache do React Query
+        queryClient.clear();
+        queryClient.invalidateQueries();
+        
+        console.log('✅ Logout completo');
+    };
 
-    // Valores que outros componentes podem acessar
     const value = {
         user,
         token,
         login,
         logout,
         isLoading,
-    }
+    };
 
     return (
         <AuthContext.Provider value={value}>
-            {children} {/* Renderiza os filhos dentro do "cofre" */}
-        </AuthContext.Provider> 
-    )
-}
+            {children}
+        </AuthContext.Provider>
+    );
+};
 
-// Hook para acessar o "cofre" de forma fácil
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
         throw new Error('useAuth deve ser usado dentro de AuthProvider');
     }
-    return context; // Retorna o "cofre" para quem chamar
-}
-
-
+    return context;
+};

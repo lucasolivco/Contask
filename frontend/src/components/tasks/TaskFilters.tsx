@@ -178,7 +178,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ onFiltersChange, userRole }) 
             <option value="all">📋 Todos os Status</option>
             <option value="PENDING">⏳ Pendente</option>
             <option value="IN_PROGRESS">🔄 Em Progresso</option>
-            <option value="COMPLETED">✅ Completada</option>
+            <option value="COMPLETED">✅ Concluída</option>
             <option value="CANCELLED">❌ Cancelada</option>
           </select>
         </div>
