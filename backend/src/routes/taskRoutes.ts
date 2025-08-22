@@ -14,8 +14,9 @@ import {
   downloadAttachment,
   getTaskStatsByPeriod,
   debugDates,
-  deleteTask,      // ✅ NOVO
-  bulkDeleteTasks  // ✅ NOVO
+  deleteTask,
+  bulkDeleteTasks,
+  getMyTasks  // ✅ NOVA FUNÇÃO
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
@@ -25,30 +26,33 @@ const router = Router()
 // Todas as rotas de tarefas precisam de autenticação
 router.use(authenticateToken)
 
+// ✅ NOVA ROTA ESPECÍFICA PARA FUNCIONÁRIOS (deve vir ANTES da rota /)
+router.get('/my-tasks', getMyTasks)
+
 // Rotas para gerentes
-router.get('/employees', requireManager, getEmployees) // Listar funcionários
-router.post('/', requireManager, createTask) // Criar tarefa
-router.put('/:id', editTarefa) // atualizar tarefa
+router.get('/employees', requireManager, getEmployees)
+router.post('/', requireManager, createTask)
+router.put('/:id', editTarefa)
 
 // Rotas para todos os usuários autenticados
-router.get('/', getTasks) // Listar tarefas
-router.get('/:id', getTask) // Ver tarefa específica
-router.patch('/:id/status', updateTaskStatus) // Atualizar status
+router.get('/', getTasks)
+router.patch('/:id/status', updateTaskStatus)
+router.get('/:id', getTask)
 
-// ✅ NOVAS ROTAS - Comentários
-router.get('/:taskId/comments', getTaskComments)        // Buscar comentários
-router.post('/:taskId/comments', createComment)         // Criar comentário
+// Comentários
+router.get('/:taskId/comments', getTaskComments)
+router.post('/:taskId/comments', createComment)
 
-// ✅ NOVAS ROTAS - Anexos
-router.get('/:taskId/attachments', getTaskAttachments)  // Buscar anexos
-router.post('/:taskId/attachments', upload.array('files', 5), uploadAttachment) // Upload
-router.get('/attachments/:attachmentId/download', downloadAttachment) // Download
+// Anexos
+router.get('/:taskId/attachments', getTaskAttachments)
+router.post('/:taskId/attachments', upload.array('files', 5), uploadAttachment)
+router.get('/attachments/:attachmentId/download', downloadAttachment)
 
-//rota de estatística
+// Estatísticas
 router.get('/stats/period', getTaskStatsByPeriod)
 
 // Rotas de exclusão (só gerentes)
-router.delete('/bulk', requireManager, bulkDeleteTasks)  // ✅ BULK deve vir ANTES do /:id
-router.delete('/:id', requireManager, deleteTask)       // ✅ Individual
+router.delete('/bulk', requireManager, bulkDeleteTasks)
+router.delete('/:id', requireManager, deleteTask)
 
 export default router

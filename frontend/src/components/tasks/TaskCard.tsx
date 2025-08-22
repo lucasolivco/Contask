@@ -115,11 +115,11 @@ const TaskCard = ({
     }
   }
 
-  // ✅ USANDO AS NOVAS FUNÇÕES PARA VERIFICAR DATAS
+  // ✅ CORRIGIR TODAS AS VERIFICAÇÕES PARA INGLÊS
   const isOverdue = task.dueDate && isDatePast(task.dueDate) && task.status !== 'COMPLETED'
   const isNearTarget = task.targetDate && isDateNear(task.targetDate) && task.status !== 'COMPLETED'
-  
-  // ✅ CORES POR STATUS (BORDA LATERAL) - NOVA LÓGICA
+
+  // ✅ CORRIGIR getStatusStyles PARA INGLÊS
   const getStatusStyles = (status: Task['status']) => {
     switch (status) {
       case 'COMPLETED': return {
@@ -171,6 +171,7 @@ const TaskCard = ({
     }
   }
 
+  // ✅ CORRIGIR getStatusIcon PARA INGLÊS
   const getStatusIcon = (status: Task['status']) => {
     switch (status) {
       case 'COMPLETED': return <CheckCircle2 className="h-4 w-4 text-green-600" />

@@ -335,6 +335,7 @@ export const getTask = async (req: AuthRequest, res: Response) => {
 }
 
 // Função para atualizar status da tarefa
+// ✅ FUNÇÃO CORRIGIDA PARA ATUALIZAR STATUS - FUNCIONÁRIOS
 export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
@@ -342,12 +343,14 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId
     const userRole = req.user!.role
 
-    // Lista de status válidos
-    const validStatuses = ['PENDENTE', 'EM_PROGRESSO', 'COMPLETADO', 'CANCELADO']
+    console.log(`🔄 Atualizando tarefa ${id} para status ${status} por ${userId} (${userRole})`)
+
+    // ✅ VALIDAR STATUS EM INGLÊS (SEM MAPEAMENTO)
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
     
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ 
-        error: 'Status inválido' 
+        error: `Status inválido. Use: ${validStatuses.join(', ')}` 
       })
     }
 
@@ -355,43 +358,42 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
     const task = await prisma.task.findUnique({
       where: { id },
       include: {
-        createdBy: true,
-        assignedTo: true
+        createdBy: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     })
 
     if (!task) {
-      return res.status(404).json({ 
-        error: 'Tarefa não encontrada' 
-      })
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
     }
 
-    // Verifica permissões
+    console.log(`📋 Tarefa: ${task.title} | Status: ${task.status} → ${status}`)
+    console.log(`   Criada por: ${task.createdBy.name} | Atribuída a: ${task.assignedTo.name}`)
+
+    // Verificar permissões
     const canUpdate = 
-      userRole === 'MANAGER' && task.createdById === userId ||
-      userRole === 'EMPLOYEE' && task.assignedToId === userId
+      (userRole === 'MANAGER' && task.createdById === userId) ||
+      (userRole === 'EMPLOYEE' && task.assignedToId === userId)
 
     if (!canUpdate) {
-      return res.status(403).json({ 
-        error: 'Você não tem permissão para atualizar esta tarefa' 
-      })
+      console.log(`❌ Sem permissão: ${userRole} tentou alterar tarefa criada por ${task.createdById} e atribuída a ${task.assignedToId}`)
+      return res.status(403).json({ error: 'Sem permissão para atualizar esta tarefa' })
     }
 
-    // Atualiza a tarefa
+    // ✅ ATUALIZAR DIRETO EM INGLÊS
     const updatedTask = await prisma.task.update({
       where: { id },
-      data: { status },
+      data: { 
+        status,  // ✅ USAR VALOR DIRETO EM INGLÊS
+        updatedAt: new Date()
+      },
       include: {
-        createdBy: {
-          select: { id: true, name: true, email: true }
-        },
-        assignedTo: {
-          select: { id: true, name: true, email: true }
-        }
+        createdBy: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     })
 
-    // Cria notificação para o gerente se um funcionário atualizou
+    // Criar notificação se funcionário atualizou
     if (userRole === 'EMPLOYEE') {
       await prisma.notification.create({
         data: {
@@ -404,16 +406,16 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       })
     }
 
+    console.log(`✅ Status atualizado com sucesso: ${task.title} → ${status}`)
+
     res.json({
       message: 'Status da tarefa atualizado com sucesso',
       task: updatedTask
     })
 
   } catch (error) {
-    console.error('Erro ao atualizar tarefa:', error)
-    res.status(500).json({ 
-      error: 'Erro interno do servidor'
-    })
+    console.error('❌ Erro ao atualizar tarefa:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
   }
 }
 
@@ -1113,5 +1115,63 @@ export const bulkDeleteTasks = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('❌ Erro ao excluir tarefas em lote:', error)
     res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// ✅ NOVA FUNÇÃO ESPECÍFICA PARA FUNCIONÁRIOS
+export const getMyTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    console.log(`🔍 Funcionário ${userId} buscando suas tarefas`)
+
+    // Garantir que apenas funcionários usem esta rota
+    if (userRole !== 'EMPLOYEE') {
+      return res.status(403).json({ 
+        error: 'Esta rota é apenas para funcionários' 
+      })
+    }
+
+    // Buscar apenas tarefas atribuídas ao funcionário
+    const tasks = await prisma.task.findMany({
+      where: {
+        assignedToId: userId  // ✅ APENAS tarefas atribuídas a este funcionário
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        },
+        assignedTo: {
+          select: { id: true, name: true, email: true }
+        },
+        attachments: true,
+        _count: {
+          select: { 
+            attachments: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: [
+        { status: 'asc' },      // Pendentes primeiro
+        { dueDate: 'asc' }      // Por data de vencimento
+      ]
+    })
+
+    console.log(`✅ Encontradas ${tasks.length} tarefas para funcionário ${userId}`)
+    
+    // ✅ LOG das tarefas para debug
+    tasks.forEach((task, index) => {
+      console.log(`${index + 1}. [${task.status}] ${task.title} - Atribuída a: ${task.assignedTo.name}`)
+    })
+
+    res.json({ tasks })
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar tarefas do funcionário:', error)
+    res.status(500).json({ 
+      error: 'Erro interno do servidor' 
+    })
   }
 }

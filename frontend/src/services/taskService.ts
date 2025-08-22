@@ -64,9 +64,14 @@ export const createTask = async (data: CreateTaskForm): Promise<{ task: Task; me
 }
 
 // Atualizar status de uma tarefa
-// ✅ CORRIGIDO: Função com tipo específico
+// ✅ CORRIGIR FUNÇÃO updateTaskStatus
 export const updateTaskStatus = async (id: string, status: Task['status']) => {
-  const response = await api.put(`/tasks/${id}/status`, { status })
+  console.log(`🔄 taskService: Atualizando tarefa ${id} para status ${status}`)
+  
+  // ✅ USAR PATCH ao invés de PUT e URL correta
+  const response = await api.patch(`/tasks/${id}/status`, { status })
+  
+  console.log(`✅ taskService: Resposta recebida:`, response.data)
   return response.data
 }
 
