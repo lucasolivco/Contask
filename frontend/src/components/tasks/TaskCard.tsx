@@ -119,32 +119,53 @@ const TaskCard = ({
   const isOverdue = task.dueDate && isDatePast(task.dueDate) && task.status !== 'COMPLETED'
   const isNearTarget = task.targetDate && isDateNear(task.targetDate) && task.status !== 'COMPLETED'
   
-  // ✅ CORES DE PRIORIDADE RESTAURADAS
+  // ✅ CORES POR STATUS (BORDA LATERAL) - NOVA LÓGICA
+  const getStatusStyles = (status: Task['status']) => {
+    switch (status) {
+      case 'COMPLETED': return {
+        border: 'border-r-green-500',
+        bgHover: 'hover:bg-green-50'
+      }
+      case 'CANCELLED': return {
+        border: 'border-r-red-500',
+        bgHover: 'hover:bg-red-50'
+      }
+      case 'IN_PROGRESS': return {
+        border: 'border-r-blue-500',
+        bgHover: 'hover:bg-blue-50'
+      }
+      case 'PENDING': return {
+        border: 'border-r-gray-400',
+        bgHover: 'hover:bg-gray-50'
+      }
+      default: return {
+        border: 'border-r-gray-400',
+        bgHover: 'hover:bg-gray-50'
+      }
+    }
+  }
+
+  // ✅ CORES DE PRIORIDADE (PARA OS BADGES) - MANTIDAS
   const getPriorityStyles = (priority: Task['priority']) => {
     switch (priority) {
       case 'URGENT': return {
         text: 'text-purple-700 bg-purple-50 border-purple-200',
-        border: 'border-r-purple-500',
         icon: '🚨'
       }
       case 'HIGH': return {
         text: 'text-orange-700 bg-orange-50 border-orange-200',
-        border: 'border-r-orange-500',
         icon: '⚡'
       }
       case 'MEDIUM': return {
         text: 'text-blue-700 bg-blue-50 border-blue-200',
-        border: 'border-r-blue-500',
         icon: '📋'
       }
       case 'LOW': return {
         text: 'text-slate-700 bg-slate-50 border-slate-200',
-        border: 'border-r-slate-400',
         icon: '📝'
       }
       default: return {
         text: 'text-blue-700 bg-blue-50 border-blue-200',
-        border: 'border-r-blue-500',
         icon: '📋'
       }
     }
@@ -154,17 +175,18 @@ const TaskCard = ({
     switch (status) {
       case 'COMPLETED': return <CheckCircle2 className="h-4 w-4 text-green-600" />
       case 'IN_PROGRESS': return <Clock className="h-4 w-4 text-blue-600" />
-      case 'CANCELLED': return <XCircle className="h-4 w-4 text-gray-600" />
+      case 'CANCELLED': return <XCircle className="h-4 w-4 text-red-600" />
       default: return <Pause className="h-4 w-4 text-gray-600" />
     }
   }
 
+  const statusStyles = getStatusStyles(task.status)
   const priorityStyles = getPriorityStyles(task.priority)
 
   return (
     <div className={`
-      bg-white rounded-xl border border-gray-200 border-r-4 ${priorityStyles.border} p-4 
-      transition-all duration-200 hover:shadow-lg hover:border-gray-300
+      bg-white rounded-xl border border-gray-200 border-r-4 ${statusStyles.border} p-4 
+      transition-all duration-200 hover:shadow-lg hover:border-gray-300 ${statusStyles.bgHover}
       ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
       ${task.status === 'COMPLETED' ? 'opacity-75' : ''}
     `}>
@@ -196,7 +218,7 @@ const TaskCard = ({
           </div>
         </div>
         
-        {/* ✅ PRIORIDADE COM CORES RESTAURADAS */}
+        {/* ✅ PRIORIDADE (BADGE) - CORES MANTIDAS */}
         <div className="flex items-center gap-2">
           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold border ${priorityStyles.text}`}>
             <span className="mr-1">{priorityStyles.icon}</span>
@@ -263,7 +285,7 @@ const TaskCard = ({
           className="flex-1 flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-blue-600 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium"
         >
           <MessageCircle className="h-4 w-4" />
-          Detalhes
+          Acessar
         </button>
         
         {/* Ações específicas por papel */}

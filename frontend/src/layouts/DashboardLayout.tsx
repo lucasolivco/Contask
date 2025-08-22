@@ -102,8 +102,8 @@ const DashboardLayout: React.FC = () => {
                 <div className="flex flex-col flex-grow bg-white border-r border-gray-200 shadow-sm">
                     {/* Logo */}
                     <div className="flex items-center px-6 py-5 border-b border-gray-200 gradient-rose">
-                        <CheckSquare className="h-8 w-8 text-blue-600" />
-                        <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                        <CheckSquare className="h-8 w-8 text-pink-600" />
+                        <span className="ml-2 text-xl font-bold bg-gradient-to-r from-pink-500 to-pink-600 bg-clip-text text-transparent">
                             TaskManager
                         </span>
                     </div>
