@@ -6,6 +6,7 @@ import {
   getTask, 
   updateTaskStatus, 
   getEmployees,
+  getEmployeeDetails,  // ✅ NOVA IMPORTAÇÃO
   editTarefa,
   getTaskComments,
   createComment,
@@ -16,7 +17,7 @@ import {
   debugDates,
   deleteTask,
   bulkDeleteTasks,
-  getMyTasks  // ✅ NOVA FUNÇÃO
+  getMyTasks
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
@@ -31,6 +32,7 @@ router.get('/my-tasks', getMyTasks)
 
 // Rotas para gerentes
 router.get('/employees', requireManager, getEmployees)
+router.get('/employees/:employeeId', requireManager, getEmployeeDetails)  // ✅ NOVA ROTA
 router.post('/', requireManager, createTask)
 router.put('/:id', editTarefa)
 
@@ -50,6 +52,9 @@ router.get('/attachments/:attachmentId/download', downloadAttachment)
 
 // Estatísticas
 router.get('/stats/period', getTaskStatsByPeriod)
+
+// Debug (remover em produção)
+router.get('/debug/dates', debugDates)
 
 // Rotas de exclusão (só gerentes)
 router.delete('/bulk', requireManager, bulkDeleteTasks)

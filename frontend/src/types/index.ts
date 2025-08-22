@@ -37,16 +37,6 @@ export interface Task {
     }
 }
 
-export interface Attachment {
-    id: string;
-    filename: string;
-    originalName: string;
-    mimeType: string;
-    size: number;
-    path: string;
-    createdAt: string;
-}
-
 export interface Notification {
     id: string;
     type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE';
@@ -278,4 +268,53 @@ export interface Attachment {
     name: string
     email: string
   }
+}
+
+// ✅ TIPOS CORRIGIDOS PARA FUNCIONÁRIOS
+export interface Employee {
+  id: string
+  name: string
+  email: string
+  role: 'EMPLOYEE' | 'MANAGER'
+  createdAt?: string
+  // Propriedades opcionais que podem vir do backend
+  totalTasks?: number
+  pendingTasks?: number
+  inProgressTasks?: number
+  completedTasks?: number
+  overdueTasks?: number
+  completionRate?: number
+  _count?: {
+    assignedTasks: number
+  }
+}
+
+export interface EmployeeDetailsStats {
+  totalTasks: number
+  pendingTasks: number
+  inProgressTasks: number
+  completedTasks: number
+  cancelledTasks?: number
+  overdueTasks: number
+  completionRate: number
+  priorityBreakdown?: {
+    urgent: number
+    high: number
+    medium: number
+    low: number
+  }
+  recentTasks?: number
+  avgTasksPerMonth?: number
+}
+
+export interface EmployeeDetailsResponse {
+  employee: {
+    id: string
+    name: string
+    email: string
+    role: string
+    createdAt: string
+  }
+  tasks: Task[]
+  stats: EmployeeDetailsStats
 }

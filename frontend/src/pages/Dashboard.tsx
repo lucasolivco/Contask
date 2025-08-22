@@ -498,14 +498,14 @@ const Dashboard: React.FC = () => {
           title="Pendentes"
           value={stats.pending}
           icon={Clock}
-          color="text-orange-500"
+          color="text-yellow-500"
           description="Aguardando início"
         />
         <StatCard
           title="Em Progresso"
           value={stats.inProgress}
           icon={Activity}
-          color="text-purple-500"
+          color="text-orange-500"
           description="Sendo executadas"
         />
       </div>

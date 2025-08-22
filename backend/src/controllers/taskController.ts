@@ -420,29 +420,231 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
 }
 
 // Função para buscar funcionários (para o gerente poder atribuir tarefas)
+// ✅ MELHORAR getEmployees para incluir estatísticas básicas
 export const getEmployees = async (req: AuthRequest, res: Response) => {
   try {
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    console.log(`🔍 Manager ${userId} buscando lista de funcionários`)
+
+    // Verificar se é MANAGER
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ 
+        error: 'Apenas gerentes podem acessar lista de funcionários' 
+      })
+    }
+
+    // Buscar funcionários com estatísticas das tarefas criadas pelo manager atual
     const employees = await prisma.user.findMany({
       where: { role: 'EMPLOYEE' },
       select: {
         id: true,
         name: true,
         email: true,
-        _count: {
-          select: { 
-            assignedTasks: {
-              where: { status: { in: ['PENDING', 'IN_PROGRESS'] } }
-            }
+        createdAt: true,
+        assignedTasks: {
+          where: {
+            createdById: userId  // ✅ Apenas tarefas criadas pelo manager atual
+          },
+          select: {
+            id: true,
+            status: true,
+            priority: true,
+            dueDate: true,
+            createdAt: true
           }
         }
       },
       orderBy: { name: 'asc' }
     })
 
-    res.json({ employees })
+    // ✅ CALCULAR ESTATÍSTICAS PARA CADA FUNCIONÁRIO
+    const employeesWithStats = employees.map(employee => {
+      const tasks = employee.assignedTasks
+      const totalTasks = tasks.length
+      const pendingTasks = tasks.filter(t => t.status === 'PENDING').length
+      const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length
+      const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length
+
+      // Tarefas atrasadas
+      const now = new Date()
+      const overdueTasks = tasks.filter(t => 
+        t.dueDate && 
+        new Date(t.dueDate) < now && 
+        ['PENDING', 'IN_PROGRESS'].includes(t.status)
+      ).length
+
+      // Taxa de conclusão
+      const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+      return {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        createdAt: employee.createdAt,
+        totalTasks,
+        pendingTasks,
+        inProgressTasks,
+        completedTasks,
+        overdueTasks,
+        completionRate,
+        // Manter compatibilidade com frontend atual
+        _count: {
+          assignedTasks: totalTasks
+        }
+      }
+    })
+
+    console.log(`✅ Encontrados ${employeesWithStats.length} funcionários`)
+
+    res.json({ 
+      employees: employeesWithStats 
+    })
 
   } catch (error) {
-    console.error('Erro ao buscar funcionários:', error)
+    console.error('❌ Erro ao buscar funcionários:', error)
+    res.status(500).json({ 
+      error: 'Erro interno do servidor' 
+    })
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Buscar detalhes de um funcionário específico
+export const getEmployeeDetails = async (req: AuthRequest, res: Response) => {
+  try {
+    const { employeeId } = req.params
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    console.log(`🔍 Manager ${userId} buscando detalhes do funcionário ${employeeId}`)
+
+    // Verificar se é MANAGER
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ 
+        error: 'Apenas gerentes podem acessar detalhes de funcionários' 
+      })
+    }
+
+    // Buscar o funcionário
+    const employee = await prisma.user.findUnique({
+      where: { 
+        id: employeeId,
+        role: 'EMPLOYEE' // Garantir que é funcionário
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
+    })
+
+    if (!employee) {
+      return res.status(404).json({ 
+        error: 'Funcionário não encontrado' 
+      })
+    }
+
+    // Buscar todas as tarefas atribuídas ao funcionário que foram criadas pelo manager atual
+    const tasks = await prisma.task.findMany({
+      where: {
+        assignedToId: employeeId,
+        createdById: userId  // ✅ Apenas tarefas criadas pelo manager atual
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        },
+        assignedTo: {
+          select: { id: true, name: true, email: true }
+        },
+        attachments: {
+          select: { id: true, fileName: true, originalName: true }
+        },
+        comments: {
+          select: { id: true, message: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        },
+        _count: {
+          select: { 
+            attachments: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: [
+        { status: 'asc' },      // Pendentes primeiro
+        { dueDate: 'asc' }      // Por data de vencimento
+      ]
+    })
+
+    // ✅ CALCULAR ESTATÍSTICAS DETALHADAS
+    const totalTasks = tasks.length
+    const pendingTasks = tasks.filter(t => t.status === 'PENDING').length
+    const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length
+    const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length
+    const cancelledTasks = tasks.filter(t => t.status === 'CANCELLED').length
+
+    // Calcular tarefas atrasadas
+    const now = new Date()
+    const overdueTasks = tasks.filter(t => 
+      t.dueDate && 
+      new Date(t.dueDate) < now && 
+      ['PENDING', 'IN_PROGRESS'].includes(t.status)
+    ).length
+
+    // Taxa de conclusão
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+    // Estatísticas por prioridade
+    const urgentTasks = tasks.filter(t => t.priority === 'URGENT').length
+    const highTasks = tasks.filter(t => t.priority === 'HIGH').length
+    const mediumTasks = tasks.filter(t => t.priority === 'MEDIUM').length
+    const lowTasks = tasks.filter(t => t.priority === 'LOW').length
+
+    // Tarefas recentes (últimas 30 dias)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const recentTasks = tasks.filter(t => new Date(t.createdAt) >= thirtyDaysAgo).length
+
+    // ✅ ESTRUTURAR RESPOSTA
+    const stats = {
+      totalTasks,
+      pendingTasks,
+      inProgressTasks,
+      completedTasks,
+      cancelledTasks,
+      overdueTasks,
+      completionRate,
+      priorityBreakdown: {
+        urgent: urgentTasks,
+        high: highTasks,
+        medium: mediumTasks,
+        low: lowTasks
+      },
+      recentTasks,
+      avgTasksPerMonth: totalTasks > 0 ? Math.round(totalTasks / Math.max(1, Math.ceil((Date.now() - new Date(employee.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))) : 0
+    }
+
+    console.log(`✅ Detalhes do funcionário ${employee.name}:`, {
+      totalTasks,
+      pendingTasks,
+      completedTasks,
+      overdueTasks,
+      completionRate: `${completionRate}%`
+    })
+
+    res.json({
+      employee,
+      tasks,
+      stats
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar detalhes do funcionário:', error)
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })

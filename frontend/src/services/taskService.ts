@@ -81,6 +81,29 @@ export const getEmployees = async (): Promise<EmployeesResponse> => {
     return response.data;
 }
 
+// ✅ NOVA FUNÇÃO: Buscar detalhes de um funcionário específico
+export const getEmployeeDetails = async (employeeId: string): Promise<{
+  employee: {
+    id: string
+    name: string
+    email: string
+  }
+  tasks: Task[]
+  stats: {
+    totalTasks: number
+    pendingTasks: number
+    completedTasks: number
+    overdueTasks: number
+    inProgressTasks: number
+    completionRate: number
+  }
+}> => {
+  console.log(`🔍 taskService: Buscando detalhes do funcionário ${employeeId}`)
+  const response = await api.get(`/tasks/employees/${employeeId}`)
+  console.log(`✅ taskService: Detalhes recebidos:`, response.data)
+  return response.data
+}
+
 // Atualizar tarefa
 export const updateTask = async (id: string, data: {
   title: string
