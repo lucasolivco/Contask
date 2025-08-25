@@ -25,7 +25,7 @@ const DashboardLayout: React.FC = () => {
         navigate('/login')
     }
 
-    // Itens do menu
+    // Itens do menU
     const menuItems = [
         {
             name: 'Dashboard',

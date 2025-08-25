@@ -196,7 +196,7 @@ const Employees: React.FC = () => {
             
             {totalTasks > 0 ? (
               <>
-                {/* Barra de progresso com dados reais */}
+                {/* Barra de progresso com dados reaiss */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>Progresso</span>

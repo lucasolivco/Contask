@@ -302,7 +302,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
                 {activeTab === 'tasks' && (
                   <div className="space-y-4 sm:space-y-6">
-                    {/* ✅ FILTROS RESPONSIVOS */}
+                    {/* ✅ FILTROS RESPONSIVOSs */}
                     <div className="flex flex-wrap gap-2">
                       {[
                         { key: 'all', label: 'Todas', count: tasks.length },
