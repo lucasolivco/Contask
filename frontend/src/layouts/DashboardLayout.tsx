@@ -40,7 +40,7 @@ const DashboardLayout: React.FC = () => {
             show: true
         },
         {
-            name: 'Funcionários',
+            name: 'Equipe',
             icon: Users,
             path: '/employees',
             show: user?.role === 'MANAGER'
