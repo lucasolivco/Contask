@@ -37,6 +37,7 @@ export interface Task {
     }
 }
 
+// ✅ NOTIFICATION CORRIGIDA
 export interface Notification {
     id: string;
     type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE';
@@ -44,11 +45,12 @@ export interface Notification {
     message: string;
     read: boolean;
     createdAt: string;
+    userId: string;
     taskId?: string;
     task?: {
         id: string;
         title: string;
-    }
+    } | null;
 }
 
 // Tipos para formulários
@@ -126,8 +128,23 @@ export interface EmployeesResponse {
     }>
 }
 
+// ✅ NOTIFICATIONS RESPONSE ÚNICA E CORRIGIDA
 export interface NotificationsResponse {
     notifications: Notification[];
+    unreadCount: number;
+}
+
+export interface MarkNotificationResponse {
+    message: string;
+    notification: Notification;
+}
+
+export interface DeleteNotificationResponse {
+    message: string;
+}
+
+export interface UnreadCountResponse {
+    unreadCount: number;
 }
 
 // Tipos utilitários para componentes

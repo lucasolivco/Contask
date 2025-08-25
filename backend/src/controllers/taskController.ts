@@ -4,6 +4,8 @@ import prisma from '../config/database'
 import { Prisma } from '@prisma/client' // para checar erros do Prisma
 import fs from 'fs-extra'
 import path from 'path'
+import { sendEmail } from '../services/emailService'
+import moment from 'moment-timezone'
 
 // Interface para tipar as requisições com usuário autenticado
 interface AuthRequest extends Request {
@@ -18,23 +20,36 @@ export const createTask = async (req: AuthRequest, res: Response) => {
   try {
     const { title, description, assignedToId, dueDate, targetDate, priority } = req.body
 
-    // ✅ DEBUG: Log para ver se targetDate está chegando
-    console.log('📝 Criando tarefa com dados:', {
-      title,
-      assignedToId,
-      dueDate,
-      targetDate, // ✅ VERIFICAR SE ESTÁ CHEGANDO
-      priority
-    })
-
-    // Verifica se os campos obrigatórios foram preenchidos
     if (!title || !assignedToId) {
       return res.status(400).json({ 
         error: 'Título e funcionário responsável são obrigatórios' 
       })
     }
 
-    // Verifica se o funcionário existe
+    // ✅ FUNÇÃO PARA CONVERTER DATA DO FRONTEND PARA UTC CORRETO
+    const parseLocalDateToUTC = (dateString: string | null) => {
+      if (!dateString) return null
+      
+      try {
+        // Se recebeu no formato DD/MM/YYYY
+        if (dateString.includes('/')) {
+          const [day, month, year] = dateString.split('/')
+          return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0, 0))
+        }
+        
+        // Se recebeu no formato YYYY-MM-DD
+        if (dateString.includes('-')) {
+          const [year, month, day] = dateString.split('-')
+          return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0, 0))
+        }
+        
+        return null
+      } catch (error) {
+        console.error('Erro ao converter data:', error)
+        return null
+      }
+    }
+
     const assignedUser = await prisma.user.findUnique({
       where: { id: assignedToId }
     })
@@ -45,16 +60,28 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       })
     }
 
-    // ✅ CORRIGIDO: Cria a tarefa no banco de dados INCLUINDO targetDate
+    const manager = await prisma.user.findUnique({
+      where: { id: req.user!.userId }
+    })
+
+    // ✅ CONVERTER DATAS CORRETAMENTE PARA UTC
+    const dueDateUTC = parseLocalDateToUTC(dueDate)
+    const targetDateUTC = parseLocalDateToUTC(targetDate)
+
+    console.log('📅 Debug criação de tarefa:')
+    console.log('   dueDate recebido:', dueDate)
+    console.log('   dueDate convertido UTC:', dueDateUTC?.toISOString())
+    console.log('   dueDate em Brasil:', dueDateUTC ? moment(dueDateUTC).tz('America/Sao_Paulo').format('DD/MM/YYYY') : null)
+
     const task = await prisma.task.create({
       data: {
         title,
         description,
         assignedToId,
         createdById: req.user!.userId,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        targetDate: targetDate ? new Date(targetDate) : null, // ✅ ADICIONADO: targetDate
-        priority: priority || 'MEDIUM' // ✅ CORRIGIDO: usar inglês
+        dueDate: dueDateUTC,
+        targetDate: targetDateUTC,
+        priority: priority || 'MEDIUM'
       },
       include: {
         createdBy: {
@@ -66,24 +93,32 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       }
     })
 
-    // ✅ DEBUG: Log para ver se foi salvo
-    console.log('✅ Tarefa criada:', {
-      id: task.id,
-      title: task.title,
-      targetDate: task.targetDate,
-      dueDate: task.dueDate
-    })
-
-    // Cria uma notificação para o funcionário
+    // ✅ CRIAR NOTIFICAÇÃO PARA O FUNCIONÁRIO
     await prisma.notification.create({
       data: {
         type: 'TASK_ASSIGNED',
         title: 'Nova tarefa atribuída',
-        message: `Você recebeu uma nova tarefa: ${title}`,
+        message: `Você recebeu uma nova tarefa: "${title}"`,
         userId: assignedToId,
         taskId: task.id
       }
     })
+
+    // ✅ ENVIAR EMAIL PARA O FUNCIONÁRIO COM DATA FORMATADA CORRETAMENTE
+    await sendEmail({
+      to: assignedUser.email,
+      subject: '📋 Nova tarefa atribuída',
+      template: 'task-assigned',
+      data: {
+        userName: assignedUser.name,
+        taskTitle: title,
+        taskDescription: description,
+        dueDate: dueDateUTC ? moment(dueDateUTC).tz('America/Sao_Paulo').format('DD/MM/YYYY') : null,
+        managerName: manager?.name
+      }
+    })
+
+    console.log(`✅ Tarefa criada e notificações enviadas: ${title}`)
 
     res.status(201).json({
       message: 'Tarefa criada com sucesso',
@@ -343,9 +378,6 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId
     const userRole = req.user!.role
 
-    console.log(`🔄 Atualizando tarefa ${id} para status ${status} por ${userId} (${userRole})`)
-
-    // ✅ VALIDAR STATUS EM INGLÊS (SEM MAPEAMENTO)
     const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
     
     if (!validStatuses.includes(status)) {
@@ -354,7 +386,6 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       })
     }
 
-    // Busca a tarefa atual
     const task = await prisma.task.findUnique({
       where: { id },
       include: {
@@ -367,24 +398,18 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Tarefa não encontrada' })
     }
 
-    console.log(`📋 Tarefa: ${task.title} | Status: ${task.status} → ${status}`)
-    console.log(`   Criada por: ${task.createdBy.name} | Atribuída a: ${task.assignedTo.name}`)
-
-    // Verificar permissões
     const canUpdate = 
       (userRole === 'MANAGER' && task.createdById === userId) ||
       (userRole === 'EMPLOYEE' && task.assignedToId === userId)
 
     if (!canUpdate) {
-      console.log(`❌ Sem permissão: ${userRole} tentou alterar tarefa criada por ${task.createdById} e atribuída a ${task.assignedToId}`)
       return res.status(403).json({ error: 'Sem permissão para atualizar esta tarefa' })
     }
 
-    // ✅ ATUALIZAR DIRETO EM INGLÊS
     const updatedTask = await prisma.task.update({
       where: { id },
       data: { 
-        status,  // ✅ USAR VALOR DIRETO EM INGLÊS
+        status,
         updatedAt: new Date()
       },
       include: {
@@ -393,20 +418,46 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       }
     })
 
-    // Criar notificação se funcionário atualizou
-    if (userRole === 'EMPLOYEE') {
+    // ✅ NOTIFICAÇÕES BASEADAS NO PAPEL E STATUS
+    if (userRole === 'EMPLOYEE' && status === 'COMPLETED') {
+      // Funcionário concluiu tarefa - notificar gerente
+      await prisma.notification.create({
+        data: {
+          type: 'TASK_COMPLETED',
+          title: 'Tarefa concluída',
+          message: `A tarefa "${task.title}" foi concluída por ${task.assignedTo.name}`,
+          userId: task.createdById,
+          taskId: task.id
+        }
+      })
+
+      // Enviar email para o gerente
+      await sendEmail({
+        to: task.createdBy.email,
+        subject: '✅ Tarefa concluída',
+        template: 'task-completed',
+        data: {
+          managerName: task.createdBy.name,
+          taskTitle: task.title,
+          employeeName: task.assignedTo.name,
+          completedDate: new Date().toLocaleDateString('pt-BR')
+        }
+      })
+
+      console.log(`✅ Notificação de conclusão enviada para gerente: ${task.title}`)
+    
+    } else if (userRole === 'EMPLOYEE') {
+      // Funcionário atualizou status - notificar gerente
       await prisma.notification.create({
         data: {
           type: 'TASK_UPDATED',
           title: 'Tarefa atualizada',
-          message: `A tarefa "${task.title}" foi marcada como ${status}`,
+          message: `${task.assignedTo.name} atualizou a tarefa "${task.title}" para ${status}`,
           userId: task.createdById,
           taskId: task.id
         }
       })
     }
-
-    console.log(`✅ Status atualizado com sucesso: ${task.title} → ${status}`)
 
     res.json({
       message: 'Status da tarefa atualizado com sucesso',

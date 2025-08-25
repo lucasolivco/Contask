@@ -11,8 +11,20 @@ import path from 'path'
 import authRoutes from './routes/authRoutes'
 import taskRoutes from './routes/taskRoutes'
 
+import notificationRoutes from './routes/notificationRoutes'
+import { startNotificationScheduler } from './services/notificationService'
+import { testEmailConnection } from './services/emailService'
+
 // Carrega variáveis de ambiente
 dotenv.config()
+
+// ✅ DEBUG: Log das variáveis de ambiente
+console.log('🔧 Variáveis de ambiente carregadas:')
+console.log('   NODE_ENV:', process.env.NODE_ENV)
+console.log('   PORT:', process.env.PORT)
+console.log('   SMTP_HOST:', process.env.SMTP_HOST)
+console.log('   SMTP_USER:', process.env.SMTP_USER ? 'Configurado ✅' : 'NÃO CONFIGURADO ❌')
+console.log('   SMTP_PASS:', process.env.SMTP_PASS ? 'Configurado ✅' : 'NÃO CONFIGURADO ❌')
 
 // Cria o aplicativo Express
 const app = express()
@@ -43,6 +55,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use('/api/auth', authRoutes) // Todas as rotas de auth começam com /api/auth
 app.use('/api/tasks', taskRoutes) // Todas as rotas de tarefas começam com /api/tasks
 
+// Rotas de notificações
+app.use('/api/notifications', notificationRoutes) // NOVA LINHA
+
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/api/health', (req, res) => {
     res.json({
@@ -66,6 +81,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     error: 'Erro interno do servidor' 
   })
 })
+
+// Inicializar serviços
+testEmailConnection()
+startNotificationScheduler()
 
 // Inicia o servidor
 app.listen(PORT, () => {

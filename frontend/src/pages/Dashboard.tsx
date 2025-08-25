@@ -35,6 +35,7 @@ import {
   TaskPriorityColors 
 } from '../types'
 import type { Task } from '../types'
+import moment from 'moment-timezone'
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth()
@@ -117,143 +118,167 @@ const Dashboard: React.FC = () => {
     ].filter(item => item.value > 0)
   }, [stats])
 
-  // ✅ COMPONENTE DE GRÁFICO PIZZA CSS COM TOOLTIP
+  // ✅ COMPONENTE DE GRÁFICO PIZZA CORRIGIDO - TODAS AS FATIAS VISÍVEIS
   const PieChartCSS: React.FC = () => {
-    const [hoveredSegment, setHoveredSegment] = React.useState<number | null>(null)
-
     if (chartData.length === 0) {
       return (
         <div className="h-64 flex items-center justify-center text-gray-500">
           <div className="text-center">
-            <PieChart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="font-medium">Nenhuma tarefa encontrada</p>
-            <p className="text-sm">Os dados aparecerão aqui</p>
+            <PieChart className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="font-medium text-sm">Nenhuma tarefa encontrada</p>
+            <p className="text-xs">Os dados aparecerão aqui</p>
           </div>
         </div>
       )
     }
 
-    // Calcular ângulos para cada segmento
+    // ✅ DEBUG: Mostrar dados no console
+    console.log('📊 Chart Data:', chartData)
+    console.log('📊 Stats:', stats)
+
+    // ✅ GARANTIR QUE FATIAS PEQUENAS SEJAM VISÍVEIS (MÍNIMO 5%)
+    const adjustedChartData = chartData.map(item => ({
+      ...item,
+      // Garantir que fatias pequenas tenham pelo menos 5% para serem visíveis
+      displayPercentage: Math.max(item.percentage, 5)
+    }))
+
+    // ✅ RECALCULAR TOTAL DOS PERCENTUAIS AJUSTADOS
+    const totalAdjusted = adjustedChartData.reduce((sum, item) => sum + item.displayPercentage, 0)
+
+    // ✅ NORMALIZAR PERCENTUAIS PARA TOTALIZAR 100%
+    const normalizedData = adjustedChartData.map(item => ({
+      ...item,
+      normalizedPercentage: (item.displayPercentage / totalAdjusted) * 100
+    }))
+
+    // ✅ CALCULAR ÂNGULOS CORRIGIDOS
     let currentAngle = 0
-    const segments = chartData.map(item => {
-      const angle = (item.percentage / 100) * 360
+    const segments = normalizedData.map((item, index) => {
+      const angle = (item.normalizedPercentage / 100) * 360
       const startAngle = currentAngle
       currentAngle += angle
-      return { ...item, startAngle, angle }
+      
+      console.log(`Fatia ${index}: ${item.name} - ${item.percentage}% real, ${item.normalizedPercentage}% exibido, ângulo: ${angle}°`)
+      
+      return { 
+        ...item, 
+        startAngle, 
+        angle: Math.max(angle, 18) // Mínimo 18 graus (5% de 360°)
+      }
     })
 
-    // Criar path SVG para cada segmento
+    // ✅ FUNÇÃO PARA CRIAR PATH MAIS ROBUSTA
     const createPath = (startAngle: number, angle: number) => {
-      const centerX = 120
-      const centerY = 120
-      const radius = 80
+      const centerX = 80
+      const centerY = 80
+      const radius = 55
       
-      const startAngleRad = (startAngle - 90) * (Math.PI / 180)
-      const endAngleRad = (startAngle + angle - 90) * (Math.PI / 180)
+      // Converter para radianos
+      const startRad = ((startAngle - 90) * Math.PI) / 180
+      const endRad = ((startAngle + angle - 90) * Math.PI) / 180
       
-      const x1 = centerX + radius * Math.cos(startAngleRad)
-      const y1 = centerY + radius * Math.sin(startAngleRad)
-      const x2 = centerX + radius * Math.cos(endAngleRad)
-      const y2 = centerY + radius * Math.sin(endAngleRad)
+      // Calcular pontos
+      const x1 = centerX + radius * Math.cos(startRad)
+      const y1 = centerY + radius * Math.sin(startRad)
+      const x2 = centerX + radius * Math.cos(endRad)
+      const y2 = centerY + radius * Math.sin(endRad)
       
-      const largeArc = angle > 180 ? 1 : 0
+      // Flag para arco grande (>180°)
+      const largeArcFlag = angle > 180 ? 1 : 0
       
-      return `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`
+      // Criar path
+      if (angle >= 360) {
+        // Círculo completo
+        return `M ${centerX} ${centerY} m -${radius} 0 a ${radius} ${radius} 0 1 1 ${radius * 2} 0 a ${radius} ${radius} 0 1 1 -${radius * 2} 0`
+      } else {
+        // Fatia normal
+        return `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
+      }
     }
 
     return (
-      <div className="h-64 relative">
-        <div className="flex items-center justify-center h-full">
-          <div className="relative">
-            {/* SVG Pie Chart */}
-            <svg width="240" height="240" className="transform rotate-0">
+      <div className="h-64">
+        <div className="flex flex-col h-full">
+          
+          {/* ✅ GRÁFICO COM FATIAS GARANTIDAMENTE VISÍVEIS */}
+          <div className="flex-1 flex items-center justify-center">
+            <svg width="160" height="160" className="drop-shadow-sm">
+              {/* ✅ RENDERIZAR FATIAS COM CORES DISTINTAS */}
               {segments.map((segment, index) => (
                 <path
-                  key={index}
+                  key={`segment-${index}`}
                   d={createPath(segment.startAngle, segment.angle)}
                   fill={segment.color}
-                  className="hover:opacity-80 transition-all duration-200 cursor-pointer"
+                  stroke="white"
+                  strokeWidth="2"
+                  className="transition-opacity duration-200"
                   style={{ 
-                    filter: hoveredSegment === index 
-                      ? 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))' 
-                      : 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
-                    transform: hoveredSegment === index ? 'scale(1.05)' : 'scale(1)',
-                    transformOrigin: '120px 120px'
+                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
                   }}
-                  onMouseEnter={() => setHoveredSegment(index)}
-                  onMouseLeave={() => setHoveredSegment(null)}
                 />
               ))}
-              {/* Centro branco */}
+              
+              {/* ✅ CENTRO BRANCO */}
               <circle
-                cx="120"
-                cy="120"
-                r="40"
+                cx="80"
+                cy="80"
+                r="30"
                 fill="white"
+                stroke="#e5e7eb"
+                strokeWidth="1"
                 className="drop-shadow-sm"
               />
-              {/* Texto central */}
+              
+              {/* ✅ TEXTO CENTRAL */}
               <text
-                x="120"
-                y="115"
+                x="80"
+                y="76"
                 textAnchor="middle"
                 className="text-xl font-bold fill-gray-700"
               >
                 {stats.total}
               </text>
               <text
-                x="120"
-                y="130"
+                x="80"
+                y="90"
                 textAnchor="middle"
                 className="text-xs fill-gray-500"
               >
                 Total
               </text>
             </svg>
-
-            {/* ✅ TOOLTIP COM NÚMEROS */}
-            {hoveredSegment !== null && (
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-10">
-                <div className="text-center">
-                  <div className="font-semibold">{chartData[hoveredSegment].name}</div>
-                  <div className="text-xs opacity-90">
-                    {chartData[hoveredSegment].value} tarefa{chartData[hoveredSegment].value !== 1 ? 's' : ''} ({chartData[hoveredSegment].percentage}%)
-                  </div>
-                </div>
-                {/* Seta do tooltip */}
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-              </div>
-            )}
           </div>
-        </div>
-        
-        {/* Legenda */}
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          {chartData.map((item, index) => (
-            <div 
-              key={index} 
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
-              onMouseEnter={() => setHoveredSegment(index)}
-              onMouseLeave={() => setHoveredSegment(null)}
-            >
+          
+          {/* ✅ LEGENDA COM DADOS REAIS (NÃO AJUSTADOS) */}
+          <div className="mt-3 space-y-2">
+            {chartData.map((item, index) => (
               <div 
-                className="w-3 h-3 rounded-full transition-transform"
-                style={{ 
-                  backgroundColor: item.color,
-                  transform: hoveredSegment === index ? 'scale(1.2)' : 'scale(1)'
-                }}
-              />
-              <span className="text-xs text-gray-600">
-                {item.name} ({item.value})
-              </span>
-            </div>
-          ))}
+                key={`legend-${index}`}
+                className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-3 h-3 rounded-full flex-shrink-0 border border-white"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-sm text-gray-700 font-medium">
+                    {item.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-bold text-gray-900">{item.value}</span>
+                  <span className="text-gray-500">({item.percentage}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
-
-  // ✅ TAREFAS PRIORITÁRIAS E RECENTES
+  
+// ✅ TAREFAS PRIORITÁRIAS E RECENTES (MANTIDAS)
   const priorityTasks = React.useMemo(() => {
     if (!user || !tasks.length) return [];
     
@@ -277,7 +302,8 @@ const Dashboard: React.FC = () => {
       .slice(0, 5)
   }, [tasks, user?.id])
 
-  // ✅ COMPONENTE DE ESTATÍSTICA NO ESTILO PREFERIDO (SEM HOVER)
+  // ✅ COMPONENTE DE ESTATÍSTICA MANTIDO
+  // ✅ COMPONENTE DE ESTATÍSTICA CORRIGIDO - ÍCONES COM FUNDO
   const StatCard: React.FC<{
     title: string
     value: number | string
@@ -285,34 +311,57 @@ const Dashboard: React.FC = () => {
     color: string
     description: string
     trend?: number
-  }> = ({ title, value, icon: Icon, color, description, trend }) => (
-    <Card className="relative overflow-hidden">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`p-2.5 rounded-xl bg-opacity-10 ${color.replace('text-', 'bg-')}`}>
-              <Icon className={`h-5 w-5 ${color}`} />
-            </div>
-            <h3 className="text-sm font-semibold text-gray-600">{title}</h3>
-          </div>
-          <div className="space-y-1">
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            <p className="text-xs text-gray-500">{description}</p>
-            {trend !== undefined && (
-              <div className={`flex items-center gap-1 text-xs ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                <TrendingUp className="h-3 w-3" />
-                <span>{trend > 0 ? '+' : ''}{trend}% vs semana passada</span>
+  }> = ({ title, value, icon: Icon, color, description, trend }) => {
+    
+    // ✅ MAPEAMENTO CORRETO DE CORES DE FUNDO PARA ÍCONES
+    const getIconBackground = (colorClass: string) => {
+      const colorMap: { [key: string]: string } = {
+        'text-blue-500': 'bg-blue-100',
+        'text-green-500': 'bg-green-100', 
+        'text-orange-500': 'bg-orange-100',
+        'text-purple-500': 'bg-purple-100',
+        'text-red-500': 'bg-red-100',
+        'text-yellow-500': 'bg-yellow-100',
+        'text-indigo-500': 'bg-indigo-100',
+        'text-pink-500': 'bg-pink-100',
+        'text-gray-500': 'bg-gray-100',
+      }
+      return colorMap[colorClass] || 'bg-gray-100'
+    }
+
+    return (
+      <Card className="relative overflow-hidden">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              {/* ✅ ÍCONE COM FUNDO GARANTIDO */}
+              <div className={`p-2.5 rounded-xl ${getIconBackground(color)} transition-transform hover:scale-105 duration-200`}>
+                <Icon className={`h-5 w-5 ${color}`} />
               </div>
-            )}
+              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                {title}
+              </h3>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-bold text-gray-900">{value}</p>
+              <p className="text-xs text-gray-500 font-medium">{description}</p>
+              {trend !== undefined && (
+                <div className={`flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <TrendingUp className={`h-3 w-3 ${trend < 0 ? 'rotate-180' : ''}`} />
+                  <span>{trend > 0 ? '+' : ''}{trend}% vs semana passada</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
-  )
-
-  // ✅ COMPONENTE DE TAREFA MELHORADO
+      </Card>
+    )
+  }
+  // ✅ COMPONENTE DE TAREFA MELHORADO (MANTIDO)
   const TaskItem: React.FC<{ task: Task; showPriority?: boolean }> = ({ task, showPriority = true }) => {
-    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
+    const isOverdue = task.dueDate && 
+      moment(task.dueDate).tz('America/Sao_Paulo').isBefore(moment().tz('America/Sao_Paulo'), 'day') && 
+      task.status !== 'COMPLETED'
     const isUrgent = task.priority === 'URGENT'
 
     return (
@@ -343,7 +392,7 @@ const Dashboard: React.FC = () => {
             {task.dueDate && (
               <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
                 <Calendar className="inline h-3 w-3 mr-1" />
-                {isOverdue ? 'Venceu' : 'Vence'}: {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                {isOverdue ? 'Venceu' : 'Vence'}: {moment(task.dueDate).tz('America/Sao_Paulo').format('DD/MM/YYYY')}
               </span>
             )}
           </div>
@@ -371,7 +420,7 @@ const Dashboard: React.FC = () => {
     )
   }
 
-  // ✅ AÇÕES RÁPIDAS BASEADAS EM UX
+  // ✅ AÇÕES RÁPIDAS (MANTIDAS)
   const QuickAction: React.FC<{
     title: string
     description: string
@@ -405,7 +454,7 @@ const Dashboard: React.FC = () => {
     </button>
   )
 
-  // ✅ LOADING MELHORADO
+  // ✅ LOADING MELHORADO (MANTIDO)
   if (!user) {
     return (
       <div className="p-6 flex items-center justify-center min-h-96">
@@ -439,7 +488,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-8 animate-fade-in">
-      {/* ✅ HEADER MELHORADO */}
+      {/* ✅ HEADER MELHORADO (MANTIDO) */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="heading-xl flex items-center gap-4 mb-2">
@@ -466,25 +515,18 @@ const Dashboard: React.FC = () => {
               <Plus className="h-5 w-5" />
               Nova Tarefa
             </Button>
-            <Button 
-              onClick={() => window.location.href = '/tasks'} 
-              variant="secondary"
-              size="lg"
-            >
-              <Eye className="h-5 w-5" />
-              Ver Todas
-            </Button>
           </div>
         )}
       </div>
 
-      {/* ✅ ESTATÍSTICAS PRINCIPAIS - ESTILO PREFERIDO SEM HOVER */}
+      {/* ✅ ESTATÍSTICAS PRINCIPAIS (MANTIDAS) */}
+      {/* ✅ ESTATÍSTICAS PRINCIPAIS - ÍCONES CORRIGIDOS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total de Tarefas"
           value={stats.total}
           icon={Target}
-          color="text-blue-500"
+          color="text-purple-500"
           description="Todas as tarefas"
         />
         <StatCard
@@ -498,31 +540,31 @@ const Dashboard: React.FC = () => {
           title="Pendentes"
           value={stats.pending}
           icon={Clock}
-          color="text-yellow-500"
+          color="text-grey-500"
           description="Aguardando início"
         />
         <StatCard
           title="Em Progresso"
           value={stats.inProgress}
           icon={Activity}
-          color="text-orange-500"
+          color="text-blue-500"
           description="Sendo executadas"
         />
       </div>
 
-      {/* ✅ GRID PRINCIPAL */}
+      {/* ✅ GRID PRINCIPAL - ALTURA MÍNIMA PARA EVITAR SOBREPOSIÇÃO */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ✅ GRÁFICO DE PIZZA CSS COM TOOLTIP */}
-        <Card className="lg:col-span-1">
-          <div className="flex items-center gap-2 mb-6">
+        {/* ✅ GRÁFICO DE PIZZA CORRIGIDO */}
+        <Card className="lg:col-span-1 min-h-96">
+          <div className="flex items-center gap-2 mb-4">
             <PieChart className="h-6 w-6 text-blue-500" />
             <h3 className="heading-md">Distribuição de Tarefas</h3>
           </div>
           <PieChartCSS />
         </Card>
 
-        {/* ✅ TAREFAS PRIORITÁRIAS */}
-        <Card className="lg:col-span-1">
+        {/* ✅ TAREFAS PRIORITÁRIAS (MANTIDAS) */}
+        <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-6 w-6 text-orange-500" />
@@ -546,8 +588,8 @@ const Dashboard: React.FC = () => {
           )}
         </Card>
 
-        {/* ✅ AÇÕES RÁPIDAS EXPANDIDAS */}
-        <Card className="lg:col-span-1">
+        {/* ✅ AÇÕES RÁPIDAS (MANTIDAS) */}
+        <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center gap-2 mb-6">
             <Zap className="h-6 w-6 text-purple-500" />
             <h3 className="heading-md">Ações Rápidas</h3>
@@ -623,7 +665,7 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* ✅ TAREFAS RECENTES */}
+      {/* ✅ TAREFAS RECENTES (MANTIDAS) */}
       {recentTasks.length > 0 && (
         <Card>
           <div className="flex items-center justify-between mb-6">

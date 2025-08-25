@@ -135,3 +135,45 @@ export const bulkDeleteTasks = async (taskIds: string[]): Promise<{
   })
   return response.data
 }
+
+// ✅ ATUALIZAR FUNÇÕES NO SEU taskService.ts
+
+import type { 
+  NotificationsResponse, 
+  MarkNotificationResponse, 
+  DeleteNotificationResponse,
+  UnreadCountResponse 
+} from '../types'
+
+// Buscar notificações
+export const getNotifications = async (): Promise<NotificationsResponse> => {
+  const response = await api.get('/notifications')
+  return response.data
+}
+
+// Contar não lidas
+export const getUnreadCount = async (): Promise<UnreadCountResponse> => {
+  const response = await api.get('/notifications/unread-count')
+  return response.data
+}
+
+// Marcar como lida
+export const markNotificationAsRead = async (id: string): Promise<MarkNotificationResponse> => {
+  const response = await api.patch(`/notifications/${id}/read`)
+  return response.data
+}
+
+// Marcar todas como lidas
+export const markAllNotificationsAsRead = async (): Promise<{
+  message: string
+  updatedCount: number
+}> => {
+  const response = await api.patch('/notifications/mark-all-read')
+  return response.data
+}
+
+// Excluir notificação
+export const deleteNotification = async (id: string): Promise<DeleteNotificationResponse> => {
+  const response = await api.delete(`/notifications/${id}`)
+  return response.data
+}

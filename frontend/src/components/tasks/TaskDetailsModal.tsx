@@ -25,6 +25,7 @@ import type { Task } from '../../types'
 import { getTaskComments, createComment, type Comment } from '../../services/commentService'
 import { getTaskAttachments, uploadAttachments, downloadAttachment, type Attachment } from '../../services/attachmentService'
 import Portal from '../ui/Portal'
+import moment from 'moment-timezone'
 
 interface TaskDetailsModalProps {
   task: Task
@@ -239,37 +240,18 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  // ✅ FUNÇÃO PARA FORMATAR DATAS NO MODAL
-  const formatDateLocal = (dateString: string) => {
-    if (!dateString) return ''
-    
-    try {
-      // Extrair apenas a parte da data (YYYY-MM-DD) se vier no formato ISO completo
-      const dateOnly = dateString.split('T')[0]
-      
-      // Separar ano, mês e dia
-      const [year, month, day] = dateOnly.split('-')
-      
-      // Criar data local explicitamente (mês - 1 porque Date usa índice 0-11)
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
-      
-      // Verificar se a data é válida
-      if (isNaN(date.getTime())) {
-        console.warn('Data inválida:', dateString)
-        return 'Data inválida'
-      }
-      
-      // Retornar formatação brasileira
-      return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric'
-      })
-    } catch (error) {
-      console.error('Erro ao formatar data:', error)
-      return 'Erro na data'
-    }
+// ✅ SUBSTITUIR A FUNÇÃO formatDateLocal POR:
+const formatDateBrazil = (dateString: string) => {
+  if (!dateString) return ''
+  
+  try {
+    const date = moment(dateString).tz('America/Sao_Paulo')
+    return date.format('DD/MM/YYYY')
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
+    return 'Data inválida'
   }
+}
 
   return (
     <Portal>
@@ -380,7 +362,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <div className="min-w-0">
                           <p className="text-xs text-gray-600">Vence em</p>
                           <p className={`font-medium text-xs md:text-sm ${isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
-                            {formatDateLocal(task.dueDate)}
+                            {formatDateBrazil(task.dueDate)}
                             {isOverdue && (
                               <span className="ml-1 text-red-600 animate-pulse">⚠️</span>
                             )}
@@ -406,7 +388,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                         <div className="min-w-0">
                           <p className="text-xs text-blue-600">Data Meta</p>
                           <p className={`font-medium text-xs md:text-sm ${isNearTarget ? 'text-orange-600' : 'text-blue-700'}`}>
-                            {formatDateLocal(task.targetDate)}
+                            {formatDateBrazil(task.targetDate)}
                             {isNearTarget && (
                               <span className="ml-1 text-orange-600 animate-pulse">🎯</span>
                             )}
