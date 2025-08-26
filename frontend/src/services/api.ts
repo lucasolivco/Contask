@@ -1,15 +1,14 @@
-// frontend/src/services/api.ts - DETECTAR AUTOMATICAMENTE
+// frontend/src/services/api.ts - OTIMIZAR COM CACHE
 import axios from 'axios';
 
-// ✅ DETECTAR AUTOMATICAMENTE O AMBIENTE
 const getBaseURL = () => {
   const hostname = window.location.hostname;
   const port = 3001;
   
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `http://localhost:${port}`; // Desenvolvimento local
+    return `http://localhost:${port}`;
   } else {
-    return `http://${hostname}:${port}`; // Rede local - usar mesmo IP do frontend
+    return `http://${hostname}:${port}`;
   }
 }
 
@@ -21,10 +20,13 @@ const api = axios.create({
   },
 });
 
-// ✅ INTERCEPTOR PARA LOGS (REMOVER EM PRODUÇÃO)
+// ✅ INTERCEPTOR MELHORADO COM MENOS LOGS
 api.interceptors.request.use(
   (config) => {
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    // ✅ LOG APENAS EM DESENVOLVIMENTO E SEM SPAM
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
+    }
     return config;
   },
   (error) => {
@@ -35,11 +37,24 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    // ✅ LOG APENAS ERROS OU REQUESTS IMPORTANTES
+    if (response.status >= 400 || process.env.NODE_ENV === 'development') {
+      console.log(`✅ ${response.status} ${response.config.url}`);
+    }
     return response;
   },
   (error) => {
-    console.error('❌ Response Error:', error.response?.status, error.response?.data);
+    // ✅ LOG DETALHADO PARA RATE LIMITING
+    if (error.response?.status === 429) {
+      console.error('🚨 RATE LIMIT ATINGIDO:', {
+        url: error.config?.url,
+        retryAfter: error.response.headers['retry-after'],
+        remaining: error.response.headers['x-ratelimit-remaining'],
+        resetTime: error.response.headers['x-ratelimit-reset']
+      });
+    } else {
+      console.error('❌ Response Error:', error.response?.status, error.response?.data);
+    }
     return Promise.reject(error);
   }
 );

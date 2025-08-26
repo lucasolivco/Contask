@@ -22,13 +22,21 @@ import VerifyEmail from './pages/VerifyEmail'
 import ForgotPassword from './pages/ForgotPassword'  // ✅ NOVA
 import ResetPassword from './pages/ResetPassword'   
 
+// ✅ QUERYCLIENT CORRIGIDO
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false, // ✅ Evitar refetch desnecessário
+      staleTime: 2 * 60 * 1000, // 2 minutos
+      gcTime: 5 * 60 * 1000, // ✅ gcTime ao invés de cacheTime
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
     },
+    mutations: {
+      retry: 1,
+    }
   },
 })
 

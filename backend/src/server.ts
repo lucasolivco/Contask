@@ -1,4 +1,4 @@
-// Arquivo principal que inicia nosso servidor
+// backend/src/server.ts - RATE LIMITING MAIS FLEXÍVEL
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -70,14 +70,27 @@ app.use(cors({
 
 app.use(morgan('combined'))
 
-// Limite de requisições para evitar spam
+// ✅ RATE LIMITING MAIS FLEXÍVEL PARA USO NORMAL
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100,
-    message: 'Muitas requisições, tente novamente mais tarde.'
+    max: 1000, // ✅ AUMENTADO DE 100 PARA 1000 REQUISIÇÕES
+    message: 'Muitas requisições, tente novamente mais tarde.',
+    standardHeaders: true, // ✅ RETORNA HEADERS INFORMATIVOS
+    legacyHeaders: false, // ✅ DESABILITA HEADERS ANTIGOS
 })
 
-app.use(limiter)
+// ✅ RATE LIMITING ESPECÍFICO PARA AUTENTICAÇÃO (MAIS RESTRITIVO)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 20, // ✅ MÁXIMO 20 TENTATIVAS DE LOGIN/REGISTRO
+    message: 'Muitas tentativas de autenticação, tente novamente em 15 minutos.',
+    skipSuccessfulRequests: true, // ✅ NÃO CONTA REQUESTS BEM-SUCEDIDOS
+})
+
+// ✅ APLICAR LIMITERS - ESPECÍFICO PARA AUTH, GERAL PARA RESTO
+app.use('/api/auth/login', authLimiter) // ✅ LIMITER RESTRITIVO SÓ PARA LOGIN
+app.use('/api/auth/register', authLimiter) // ✅ LIMITER RESTRITIVO SÓ PARA REGISTRO
+app.use(limiter) // ✅ LIMITER GERAL MAIS FLEXÍVEL PARA OUTRAS ROTAS
 
 // Middleware para interpretar JSON
 app.use(express.json({ limit: '10mb' }))
@@ -93,6 +106,10 @@ app.get('/api/health', (req, res) => {
     res.json({
         message: 'Servidor funcionando!',
         timestamp: new Date().toISOString(),
+        rateLimiting: {
+            general: '1000 req/15min',
+            auth: '20 req/15min'
+        },
         network: {
             local: `http://localhost:${PORT}`,
             network: `http://${networkIP}:${PORT}`
@@ -100,7 +117,7 @@ app.get('/api/health', (req, res) => {
     })
 })
 
-// Middleware para rotas não encontradas
+// ✅ MIDDLEWARE PARA ROTAS NÃO ENCONTRADAS - NOME NO WILDCARD
 app.use('/*path', (req, res) => {
   res.status(404).json({ 
     error: 'Rota não encontrada',
@@ -126,6 +143,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   📍 Local:    http://localhost:${PORT}`)
   console.log(`   📍 Rede:     http://${networkIP}:${PORT}`)
   console.log(`   📍 Health:   http://${networkIP}:${PORT}/api/health`)
+  console.log(`   📍 Rate Limiting: 1000 req/15min (geral), 20 req/15min (auth)`)
   console.log(`\n🌐 Para acessar de outros dispositivos: http://${networkIP}:${PORT}`)
   console.log(`📱 Frontend da rede: http://${networkIP}:5173`)
 })
