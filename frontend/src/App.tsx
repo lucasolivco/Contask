@@ -22,6 +22,8 @@ import VerifyEmail from './pages/VerifyEmail'
 import ForgotPassword from './pages/ForgotPassword'  // ✅ NOVA
 import ResetPassword from './pages/ResetPassword'   
 
+import Calendar from './pages/Calendar' // ✅ ADICIONAR IMPORT
+
 // ✅ QUERYCLIENT CORRIGIDO
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -223,6 +225,7 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="tasks/create" element={<CreateTask />} />
+              <Route path="calendar" element={<Calendar />} /> {/* ✅ NOVA ROTA */}
               <Route path="employees" element={<Employees />} />
               <Route path="notifications" element={<Notifications />} />
             </Route>

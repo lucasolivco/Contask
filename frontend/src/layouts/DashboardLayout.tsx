@@ -1,3 +1,4 @@
+// frontend/src/layouts/DashboardLayout.tsx - ADICIONAR CALENDÁRIO NA NAVEGAÇÃO
 import React from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -8,7 +9,8 @@ import {
     LogOut,
     Menu,
     X,
-    Plus
+    Plus,
+    Calendar // ✅ ADICIONAR IMPORT
 } from 'lucide-react'
 
 import { useAuth } from '../contexts/AuthContext'
@@ -25,7 +27,7 @@ const DashboardLayout: React.FC = () => {
         navigate('/login')
     }
 
-    // Itens do mEnu
+    // ✅ ADICIONAR CALENDÁRIO NO MENU
     const menuItems = [
         {
             name: 'Dashboard',
@@ -37,6 +39,12 @@ const DashboardLayout: React.FC = () => {
             name: user?.role === 'MANAGER' ? 'Todas as Tarefas' : 'Minhas Tarefas',
             icon: CheckSquare,
             path: '/tasks',
+            show: true
+        },
+        {
+            name: 'Calendário', // ✅ NOVA OPÇÃO
+            icon: Calendar,
+            path: '/calendar',
             show: true
         },
         {
@@ -55,7 +63,7 @@ const DashboardLayout: React.FC = () => {
 
     const isActivePath = (path: string) => location.pathname === path
 
-    // Componente de navegação reutilizável
+    // Resto do componente permanece igual...
     const NavigationItems = ({ onItemClick }: { onItemClick?: () => void }) => (
         <>
             {menuItems.map((item) => (
@@ -102,8 +110,8 @@ const DashboardLayout: React.FC = () => {
                 <div className="flex flex-col flex-grow bg-white border-r border-gray-200 shadow-sm">
                     {/* Logo */}
                     <div className="flex items-center px-6 py-5 border-b border-gray-200 gradient-rose">
-                        <CheckSquare className="h-8 w-8 text-pink-600" />
-                        <span className="ml-2 text-xl font-bold bg-gradient-to-r from-pink-500 to-pink-600 bg-clip-text text-transparent">
+                        <CheckSquare className="h-8 w-8 text-blue-600" />
+                        <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                             TaskManager
                         </span>
                     </div>
@@ -117,7 +125,7 @@ const DashboardLayout: React.FC = () => {
                     <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center min-w-0 flex-1">
-                                <div className="h-9 w-9 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="h-9 w-9 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                                     <span className="text-sm font-semibold text-white">
                                         {user?.name?.charAt(0).toUpperCase()}
                                     </span>
@@ -179,7 +187,7 @@ const DashboardLayout: React.FC = () => {
                         <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <div className="h-9 w-9 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                                    <div className="h-9 w-9 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
                                         <span className="text-sm font-semibold text-white">
                                             {user?.name?.charAt(0).toUpperCase()}
                                         </span>
@@ -223,7 +231,7 @@ const DashboardLayout: React.FC = () => {
                         </button>
                         <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">TaskManager</span>
                         <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center">
+                            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                                 <span className="text-xs font-semibold text-white">
                                     {user?.name?.charAt(0).toUpperCase()}
                                 </span>
