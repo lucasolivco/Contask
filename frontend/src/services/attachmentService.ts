@@ -1,3 +1,4 @@
+// frontend/src/services/attachmentService.ts - CORRIGIDO
 import api from './api'
 
 export interface Attachment {
@@ -17,11 +18,11 @@ export interface Attachment {
   }
 }
 
-// Buscar anexos de uma tarefa
+// ✅ BUSCAR ANEXOS
 export const getTaskAttachments = async (taskId: string): Promise<{ attachments: Attachment[] }> => {
   try {
     console.log('🔍 Buscando anexos para tarefa:', taskId)
-    const response = await api.get(`/tasks/${taskId}/attachments`)
+    const response = await api.get(`/api/tasks/${taskId}/attachments`) // ✅ /api/tasks
     console.log('✅ Anexos recebidos:', response.data.attachments.length)
     return response.data
   } catch (error) {
@@ -30,7 +31,7 @@ export const getTaskAttachments = async (taskId: string): Promise<{ attachments:
   }
 }
 
-// Upload de anexos
+// ✅ UPLOAD DE ANEXOS
 export const uploadAttachments = async (taskId: string, files: File[]): Promise<{ attachments: Attachment[]; message: string }> => {
   try {
     console.log('📎 Fazendo upload de', files.length, 'arquivo(s) para tarefa:', taskId)
@@ -40,7 +41,7 @@ export const uploadAttachments = async (taskId: string, files: File[]): Promise<
       formData.append('files', file)
     })
 
-    const response = await api.post(`/tasks/${taskId}/attachments`, formData, {
+    const response = await api.post(`/api/tasks/${taskId}/attachments`, formData, { // ✅ /api/tasks
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -54,12 +55,12 @@ export const uploadAttachments = async (taskId: string, files: File[]): Promise<
   }
 }
 
-// Download de anexo
+// ✅ DOWNLOAD DE ANEXO
 export const downloadAttachment = async (attachmentId: string, fileName: string): Promise<void> => {
   try {
     console.log('📥 Fazendo download do anexo:', attachmentId)
     
-    const response = await api.get(`/tasks/attachments/${attachmentId}/download`, {
+    const response = await api.get(`/api/tasks/attachments/${attachmentId}/download`, { // ✅ /api/tasks
       responseType: 'blob'
     })
 

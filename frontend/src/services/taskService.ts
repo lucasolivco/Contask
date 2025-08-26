@@ -1,8 +1,8 @@
-// Serviços para tarefas - CORRIGIDO
+// Serviços para tarefas - CORRIGIDO COM /api/
 import api from './api'
 import type { Task, CreateTaskForm, TaskFilter, TaskResponse, EmployeesResponse } from '../types'
 
-// Buscar lista de tarefas (com filtros opcionais) - CORRIGIDO
+// ✅ BUSCAR LISTA DE TAREFAS
 export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
     const params = new URLSearchParams();
 
@@ -27,7 +27,6 @@ export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
         params.append('dueDate', filters.dueDate)
     }
 
-    // ✅ PARÂMETROS QUE ESTAVAM FALTANDO
     if (filters?.dueDateMonth) {
         params.append('dueDateMonth', filters.dueDateMonth.toString())
     }
@@ -41,9 +40,8 @@ export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
     }
     
     const queryString = params.toString()
-    const url = queryString ? `/tasks?${queryString}` : '/tasks'
+    const url = queryString ? `/api/tasks?${queryString}` : '/api/tasks' // ✅ /api/tasks
     
-    // ✅ LOG PARA DEBUG
     console.log('🚀 taskService chamando URL:', url)
     console.log('🚀 taskService com filtros:', filters)
     
@@ -51,37 +49,35 @@ export const getTasks = async (filters?: TaskFilter): Promise<TaskResponse> => {
     return response.data;
 }
 
-// Buscar uma tarefa específica pelo ID
+// ✅ BUSCAR TAREFA POR ID
 export const getTask = async (id: string): Promise<{ task: Task }> => {
-    const response = await api.get(`/tasks/${id}`);
+    const response = await api.get(`/api/tasks/${id}`); // ✅ /api/tasks
     return response.data;
 }
 
-// Criar nova tarefa (só gerentes)
+// ✅ CRIAR TAREFA
 export const createTask = async (data: CreateTaskForm): Promise<{ task: Task; message: string }> => {
-    const response = await api.post('/tasks', data);
+    const response = await api.post('/api/tasks', data); // ✅ /api/tasks
     return response.data
 }
 
-// Atualizar status de uma tarefa
-// ✅ CORRIGIR FUNÇÃO updateTaskStatus
+// ✅ ATUALIZAR STATUS
 export const updateTaskStatus = async (id: string, status: Task['status']) => {
   console.log(`🔄 taskService: Atualizando tarefa ${id} para status ${status}`)
   
-  // ✅ USAR PATCH ao invés de PUT e URL correta
-  const response = await api.patch(`/tasks/${id}/status`, { status })
+  const response = await api.patch(`/api/tasks/${id}/status`, { status }) // ✅ /api/tasks
   
   console.log(`✅ taskService: Resposta recebida:`, response.data)
   return response.data
 }
 
-// Buscar lista de funcionários (só gerentes)
+// ✅ BUSCAR FUNCIONÁRIOS
 export const getEmployees = async (): Promise<EmployeesResponse> => {
-    const response = await api.get('/tasks/employees');
+    const response = await api.get('/api/tasks/employees'); // ✅ /api/tasks/employees
     return response.data;
 }
 
-// ✅ NOVA FUNÇÃO: Buscar detalhes de um funcionário específico
+// ✅ DETALHES DO FUNCIONÁRIO
 export const getEmployeeDetails = async (employeeId: string): Promise<{
   employee: {
     id: string
@@ -99,12 +95,12 @@ export const getEmployeeDetails = async (employeeId: string): Promise<{
   }
 }> => {
   console.log(`🔍 taskService: Buscando detalhes do funcionário ${employeeId}`)
-  const response = await api.get(`/tasks/employees/${employeeId}`)
+  const response = await api.get(`/api/tasks/employees/${employeeId}`) // ✅ /api/tasks
   console.log(`✅ taskService: Detalhes recebidos:`, response.data)
   return response.data
 }
 
-// Atualizar tarefa
+// ✅ ATUALIZAR TAREFA
 export const updateTask = async (id: string, data: {
   title: string
   description?: string
@@ -114,66 +110,53 @@ export const updateTask = async (id: string, data: {
   targetDate?: string
   assignedToId: string
 }) => {
-  const response = await api.put(`/tasks/${id}`, data)
+  const response = await api.put(`/api/tasks/${id}`, data) // ✅ /api/tasks
   return response.data
 }
 
-// ✅ EXCLUIR TAREFA INDIVIDUAL
+// ✅ EXCLUIR TAREFA
 export const deleteTask = async (id: string): Promise<{ message: string }> => {
-  const response = await api.delete(`/tasks/${id}`)
+  const response = await api.delete(`/api/tasks/${id}`) // ✅ /api/tasks
   return response.data
 }
 
-// ✅ EXCLUIR MÚLTIPLAS TAREFAS
+// ✅ EXCLUIR MÚLTIPLAS
 export const bulkDeleteTasks = async (taskIds: string[]): Promise<{ 
   message: string; 
   deletedCount: number; 
   deletedTasks: { id: string; title: string }[]
 }> => {
-  const response = await api.delete('/tasks/bulk', {
+  const response = await api.delete('/api/tasks/bulk', { // ✅ /api/tasks
     data: { taskIds }
   })
   return response.data
 }
 
-// ✅ ATUALIZAR FUNÇÕES NO SEU taskService.ts
-
-import type { 
-  NotificationsResponse, 
-  MarkNotificationResponse, 
-  DeleteNotificationResponse,
-  UnreadCountResponse 
-} from '../types'
-
-// Buscar notificações
-export const getNotifications = async (): Promise<NotificationsResponse> => {
-  const response = await api.get('/notifications')
+// ✅ NOTIFICAÇÕES TAMBÉM PRECISAM DO /api/
+export const getNotifications = async (): Promise<any> => {
+  const response = await api.get('/api/notifications') // ✅ /api/notifications
   return response.data
 }
 
-// Contar não lidas
-export const getUnreadCount = async (): Promise<UnreadCountResponse> => {
-  const response = await api.get('/notifications/unread-count')
+export const getUnreadCount = async (): Promise<any> => {
+  const response = await api.get('/api/notifications/unread-count') // ✅ /api/notifications
   return response.data
 }
 
-// Marcar como lida
-export const markNotificationAsRead = async (id: string): Promise<MarkNotificationResponse> => {
-  const response = await api.patch(`/notifications/${id}/read`)
+export const markNotificationAsRead = async (id: string): Promise<any> => {
+  const response = await api.patch(`/api/notifications/${id}/read`) // ✅ /api/notifications
   return response.data
 }
 
-// Marcar todas como lidas
 export const markAllNotificationsAsRead = async (): Promise<{
   message: string
   updatedCount: number
 }> => {
-  const response = await api.patch('/notifications/mark-all-read')
+  const response = await api.patch('/api/notifications/mark-all-read') // ✅ /api/notifications
   return response.data
 }
 
-// Excluir notificação
-export const deleteNotification = async (id: string): Promise<DeleteNotificationResponse> => {
-  const response = await api.delete(`/notifications/${id}`)
+export const deleteNotification = async (id: string): Promise<any> => {
+  const response = await api.delete(`/api/notifications/${id}`) // ✅ /api/notifications
   return response.data
 }

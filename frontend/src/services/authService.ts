@@ -1,4 +1,4 @@
-// services/authService.ts - ADICIONAR SERVIÇOS DE RECUPERAÇÃO
+// services/authService.ts - CORRIGIR TODAS AS ROTAS
 import api from './api';
 import type { 
   LoginForm, 
@@ -21,7 +21,7 @@ export const verifyEmail = async (token: string): Promise<VerifyEmailResponse> =
     try {
         console.log('🔍 Verificando token:', token);
         
-        const response = await api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
+        const response = await api.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`); // ✅ /api/auth/
         
         console.log('✅ Resposta da verificação:', response.data);
         
@@ -45,10 +45,10 @@ export const verifyEmail = async (token: string): Promise<VerifyEmailResponse> =
     }
 };
 
-// Outras funções permanecem iguais...
+// ✅ LOGIN CORRIGIDO
 export const login = async (data: LoginForm): Promise<LoginResponse> => {
     try {
-        const response = await api.post('/auth/login', data);
+        const response = await api.post('/api/auth/login', data); // ✅ /api/auth/login
         return response.data;
     } catch (error) {
         console.error('Erro ao fazer login:', error);
@@ -56,9 +56,10 @@ export const login = async (data: LoginForm): Promise<LoginResponse> => {
     }
 };
 
+// ✅ REGISTER CORRIGIDO
 export const register = async (data: RegisterForm): Promise<RegisterResponse> => {
     try {
-        const response = await api.post('/auth/register', data);
+        const response = await api.post('/api/auth/register', data); // ✅ /api/auth/register
         return response.data;
     } catch (error) {
         console.error('Erro ao registrar usuário:', error);
@@ -66,9 +67,10 @@ export const register = async (data: RegisterForm): Promise<RegisterResponse> =>
     }
 }
 
+// ✅ RESEND EMAIL CORRIGIDO
 export const resendVerificationEmail = async (data: ResendEmailRequest): Promise<ResendEmailResponse> => {
     try {
-        const response = await api.post('/auth/resend-verification', data);
+        const response = await api.post('/api/auth/resend-verification', data); // ✅ /api/auth/resend-verification
         return response.data;
     } catch (error) {
         console.error('Erro ao reenviar email:', error);
@@ -76,9 +78,10 @@ export const resendVerificationEmail = async (data: ResendEmailRequest): Promise
     }
 };
 
+// ✅ GET USER CORRIGIDO
 export const getUser = async (): Promise<User> => {
     try {
-        const response = await api.get('/auth/me');
+        const response = await api.get('/api/auth/me'); // ✅ /api/auth/me
         return response.data;
     } catch (error) {
         console.error('Erro ao obter usuário:', error);
@@ -86,10 +89,10 @@ export const getUser = async (): Promise<User> => {
     }
 };
 
-// ✅ NOVAS FUNÇÕES DE RECUPERAÇÃO DE SENHA
+// ✅ REQUEST PASSWORD RESET CORRIGIDO
 export const requestPasswordReset = async (data: RequestPasswordResetForm): Promise<RequestPasswordResetResponse> => {
     try {
-        const response = await api.post('/auth/request-password-reset', data);
+        const response = await api.post('/api/auth/request-password-reset', data); // ✅ /api/auth/request-password-reset
         return response.data;
     } catch (error) {
         console.error('Erro ao solicitar recuperação:', error);
@@ -97,9 +100,10 @@ export const requestPasswordReset = async (data: RequestPasswordResetForm): Prom
     }
 };
 
+// ✅ RESET PASSWORD CORRIGIDO
 export const resetPassword = async (data: ResetPasswordForm): Promise<ResetPasswordResponse> => {
     try {
-        const response = await api.post('/auth/reset-password', data);
+        const response = await api.post('/api/auth/reset-password', data); // ✅ /api/auth/reset-password
         return response.data;
     } catch (error) {
         console.error('Erro ao redefinir senha:', error);
@@ -107,12 +111,27 @@ export const resetPassword = async (data: ResetPasswordForm): Promise<ResetPassw
     }
 };
 
+// ✅ VERIFY RESET TOKEN CORRIGIDO
 export const verifyResetToken = async (token: string): Promise<VerifyResetTokenResponse> => {
     try {
-        const response = await api.get(`/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+        const response = await api.get(`/api/auth/verify-reset-token?token=${encodeURIComponent(token)}`); // ✅ /api/auth/verify-reset-token
         return response.data;
     } catch (error) {
         console.error('Erro ao verificar token de reset:', error);
         throw error;
+    }
+};
+
+// ✅ LOGOUT (SE EXISTIR)
+export const logout = async (): Promise<void> => {
+    try {
+        await api.post('/api/auth/logout'); // ✅ /api/auth/logout
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+    } catch (error) {
+        console.error('Erro ao fazer logout:', error);
+        // Remove do localStorage mesmo se der erro na API
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
     }
 };
