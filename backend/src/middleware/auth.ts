@@ -21,11 +21,11 @@ export const authenticateToken = async (
         //Busca o token no cabeçalho
         //É como mostrar seu ingresso na entrada do cinema
         const authHeader = req.headers.authorization
-        const token = authHeader && authHeader.split(' ')[1] // Remove "Beater" do início
+        const token = authHeader && authHeader.split(' ')[1] // Remove "Bearer" do início
 
         if (!token) {
             return res.status(401).json({
-                message: 'Token não fornecido'
+                error: 'Token não fornecido'
             })
         }
 
@@ -40,12 +40,24 @@ export const authenticateToken = async (
         // Busca informações do usuário no banco de dados
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
-            select: { id: true, role: true } // Só busca o que precisamos
+            select: { 
+                id: true, 
+                role: true,
+                emailVerified: true // ✅ VERIFICAR SE EMAIL FOI CONFIRMADO
+            }
         })
 
         if (!user) {
             return res.status(404).json({
                 error: 'Usuário não encontrado'
+            })
+        }
+
+        // ✅ VERIFICAR SE EMAIL FOI CONFIRMADO
+        if (!user.emailVerified) {
+            return res.status(401).json({
+                error: 'Email não verificado. Confirme seu email para continuar.',
+                emailNotVerified: true
             })
         }
 
@@ -77,4 +89,3 @@ export const requireManager= (
 
     next()
 }
-

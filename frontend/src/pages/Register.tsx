@@ -1,4 +1,4 @@
-// Página de cadastro - onde novos usuários se registram
+// Página de cadastro com verificação por email
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,11 +11,9 @@ import { UserPlus, Eye, EyeOff } from 'lucide-react'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Card from '../components/ui/Card'
-import { useAuth } from '../contexts/AuthContext'
 import { register as registerUser } from '../services/authService'
 import type { RegisterForm } from '../types'
 
-// Schema de validação para cadastro
 const registerSchema = z.object({
   name: z
     .string()
@@ -36,7 +34,6 @@ export type RegisterSchemaType = z.infer<typeof registerSchema>;
 
 const Register: React.FC = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
 
   const {
@@ -46,16 +43,30 @@ const Register: React.FC = () => {
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: 'EMPLOYEE' // Funcionário por padrão
+      role: 'EMPLOYEE'
     }
   })
 
+  // ✅ MUTATION ATUALIZADA - NÃO FAZ LOGIN AUTOMÁTICO
   const registerMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      login(data.user, data.token)
-      toast.success(`Conta criada com sucesso! Bem-vindo, ${data.user.name}!`)
-      navigate('/dashboard')
+      console.log('✅ Cadastro realizado:', data);
+      
+      if (data.requiresEmailVerification) {
+        // Redirecionar para página de verificação
+        navigate('/verify-email-sent', { 
+          state: { 
+            email: data.user.email, 
+            name: data.user.name 
+          } 
+        });
+        toast.success('Conta criada! Verifique seu email para ativar.');
+      } else {
+        // Fluxo antigo (se verificação estiver desabilitada)
+        toast.success(`Conta criada com sucesso! Bem-vindo, ${data.user.name}!`);
+        navigate('/login');
+      }
     },
     onError: (error: any) => {
       const message = error.response?.data?.error || 'Erro ao criar conta'
@@ -129,7 +140,7 @@ const Register: React.FC = () => {
                 {...register('role')}
                 className="input-field"
               >
-                <option value="EMPLOYEE">Funcionário</option>
+                <option value="EMPLOYEE">Equipe</option>
                 <option value="MANAGER">Gerente</option>
               </select>
             </div>
@@ -139,11 +150,12 @@ const Register: React.FC = () => {
               loading={registerMutation.isPending}
               className="w-full"
             >
-              {registerMutation.isPending ? 'Cadastrando...' : 'Cadastrar'}
-              Criar conta
+              {registerMutation.isPending ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
         </Card>
+
+        
       </div>
     </div>
   )

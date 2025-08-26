@@ -7,23 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ✅ SCHEMA CORRIGIDO COMPLETO
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
   name      String
+  email     String   @unique
   password  String
   role      Role     @default(EMPLOYEE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relacionamentos existentes
-  createdTasks Task[] @relation("CreatedBy")
-  assignedTasks Task[] @relation("AssignedTo")
-  notifications Notification[]
-  attachments    Attachment[]
-  
-  // ✅ NOVO: Relacionamento com comentários
-  comments Comment[] @relation("CommentAuthor")
+  // Campos de verificação de email
+  emailVerified Boolean @default(false)
+  emailVerificationToken String? @unique
+  tokenExpiresAt DateTime?
+
+  // ✅ CAMPOS PARA RESET DE SENHA
+  passwordResetToken String? @unique
+  passwordResetExpiresAt DateTime?
+
+  // ✅ RELACIONAMENTOS CORRIGIDOS COM NOMES ESPECÍFICOS
+  createdTasks     Task[] @relation("CreatedBy")
+  assignedTasks    Task[] @relation("AssignedTo")
+  comments         Comment[] @relation("CommentAuthor")
+  attachments      Attachment[] @relation("UploadedBy")
+  notifications    Notification[]
 
   @@map("users")
 }
@@ -39,30 +47,28 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  // Relacionamentos existentes
+  // ✅ RELACIONAMENTOS CORRIGIDOS
   createdById String
   createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
   
   assignedToId String
   assignedTo   User   @relation("AssignedTo", fields: [assignedToId], references: [id])
   
-  attachments Attachment[]
+  // ✅ RELACIONAMENTOS COM OUTROS MODELOS
+  attachments   Attachment[]
   notifications Notification[]
-  
-  // ✅ NOVO: Relacionamento com comentários
-  comments Comment[]
+  comments      Comment[]
 
   @@map("tasks")
 }
 
-// ✅ NOVO MODEL: Comentários
 model Comment {
   id        String   @id @default(cuid())
   message   String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relacionamentos
+  // ✅ RELACIONAMENTOS CORRIGIDOS
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
@@ -72,22 +78,21 @@ model Comment {
   @@map("comments")
 }
 
-// ✅ AJUSTAR Model Attachment para ser consistente
 model Attachment {
-  id           String @id @default(cuid())
-  fileName     String    // Renomeado de filename para fileName
+  id           String   @id @default(cuid())
+  fileName     String
   originalName String
   mimeType     String
-  fileSize     Int       // Renomeado de size para fileSize
-  filePath     String    // Renomeado de path para filePath
+  fileSize     Int
+  filePath     String
   createdAt    DateTime @default(now())
 
-  // Relacionamentos
+  // ✅ RELACIONAMENTOS CORRIGIDOS
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
-  uploadedById String   // Renomeado de userId para uploadedById
-  uploadedBy   User   @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User   @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
 
   @@map("attachments")
 }
@@ -110,7 +115,7 @@ model Notification {
   @@map("notifications")
 }
 
-// Enums permanecem iguais
+// ✅ ENUMS CORRETOS
 enum Role {
   MANAGER
   EMPLOYEE

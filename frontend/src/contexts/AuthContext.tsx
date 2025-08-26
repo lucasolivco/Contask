@@ -17,9 +17,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const queryClient = useQueryClient(); // ✅ ADICIONAR QUERY CLIENT
+    const queryClient = useQueryClient();
 
-    // ✅ VERIFICAR USUÁRIO SALVO AO INICIALIZAR
     useEffect(() => {
         const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
@@ -27,9 +26,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (savedToken && savedUser) {
             try {
                 const parsedUser = JSON.parse(savedUser);
-                setToken(savedToken);
-                setUser(parsedUser);
-                console.log('✅ Usuário restaurado:', parsedUser.email);
+                
+                // ✅ VERIFICAR SE USUÁRIO TEM EMAIL VERIFICADO
+                if (parsedUser.emailVerified !== false) {
+                    setToken(savedToken);
+                    setUser(parsedUser);
+                    console.log('✅ Usuário restaurado:', parsedUser.email);
+                } else {
+                    console.log('⚠️ Usuário não verificado, removendo do localStorage');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
             } catch (error) {
                 console.error('❌ Erro ao restaurar dados:', error);
                 localStorage.removeItem('token');
@@ -39,37 +46,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
     }, []);
 
-    // ✅ FUNÇÃO DE LOGIN CORRIGIDA
+    // Resto do código permanece igual...
     const login = (userData: User, userToken: string) => {
         console.log('🔑 Fazendo login:', userData.email);
-        
-        // Limpar cache antes de definir novo usuário
         queryClient.clear();
-        
         setUser(userData);
         setToken(userToken);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', userToken);
-        
         console.log('✅ Login concluído');
     };
 
-    // ✅ FUNÇÃO DE LOGOUT CORRIGIDA
     const logout = () => {
         console.log('🚪 Fazendo logout...');
-        
-        // 1. Limpar estado
         setUser(null);
         setToken(null);
-        
-        // 2. Limpar localStorage
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-        
-        // 3. Limpar TODO o cache do React Query
         queryClient.clear();
         queryClient.invalidateQueries();
-        
         console.log('✅ Logout completo');
     };
 

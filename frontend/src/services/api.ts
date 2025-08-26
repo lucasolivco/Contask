@@ -1,44 +1,44 @@
-// Configuração para "conversar" com nosso backend
-import axios from 'axios'
-
-// Cria um "telefone" para falar com o backend
+// services/api.ts - VERIFICAR SE ESTÁ ASSIM
+import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3001/api', // URL base do backend
-    timeout: 10000, // Tempo máximo de espera por uma resposta
-    headers: {
-        'Content-Type': 'application/json'
-    }
-})
+  baseURL: 'http://localhost:3001/api',
+  timeout: 10000, // 10 segundos
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-// "Interceptor" - como um secretário que adiciona informações automáticas
-api.interceptors.request.use((config) => {
-    // Busca o token salvo no navegador
-    const token = localStorage.getItem('token')
-
-    if (token) {
-        // Adiciona o token em todas as requisições (como mostrar o crachá)
-        config.headers.authorization = `Bearer ${token}`
-    }
-
-    return config // Continua com a requisição
-
-}, (error) => {
-    // Se der erro, mostra uma mensagem
-    console.error('Erro na requisição:', error)
-    return Promise.reject(error) // Rejeita a promessa com o erro
-})
-
-// Interceptor para lidar com respostas
-api.interceptors.response.use(
-  (response) => response,
+// ✅ INTERCEPTOR PARA LOGS (REMOVER EM PRODUÇÃO)
+api.interceptors.request.use(
+  (config) => {
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
   }
-)
+);
 
-export default api // Exporta o "telefone" para ser usado em outros lugares
+api.interceptors.response.use(
+  (response) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.error('❌ Response Error:', error.response?.status, error.response?.data);
+    return Promise.reject(error);
+  }
+);
+
+// Adicionar token automaticamente
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
