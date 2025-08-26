@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0",
     "tw:init": "node node_modules/tailwindcss/lib/cli.js init -p",
     "tw:build": "node node_modules/tailwindcss/lib/cli.js -i ./src/input.css -o ./dist/output.css --watch"
   },

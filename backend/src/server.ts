@@ -6,11 +6,11 @@ import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 import path from 'path'
+import os from 'os'
 
 // Importa nossas rotas
 import authRoutes from './routes/authRoutes'
 import taskRoutes from './routes/taskRoutes'
-
 import notificationRoutes from './routes/notificationRoutes'
 import { startNotificationScheduler } from './services/notificationService'
 import { testEmailConnection } from './services/emailService'
@@ -18,51 +18,85 @@ import { testEmailConnection } from './services/emailService'
 // Carrega variáveis de ambiente
 dotenv.config()
 
+// ✅ FUNÇÃO PARA DETECTAR IP DA REDE
+function getNetworkIP() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]!) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const networkIP = getNetworkIP();
+
+// ✅ CONVERSÃO CORRETA DA PORTA
+const PORT = Number(process.env.PORT) || 3001;
+
 // ✅ DEBUG: Log das variáveis de ambiente
 console.log('🔧 Variáveis de ambiente carregadas:')
 console.log('   NODE_ENV:', process.env.NODE_ENV)
-console.log('   PORT:', process.env.PORT)
+console.log('   PORT:', PORT)
 console.log('   SMTP_HOST:', process.env.SMTP_HOST)
 console.log('   SMTP_USER:', process.env.SMTP_USER ? 'Configurado ✅' : 'NÃO CONFIGURADO ❌')
 console.log('   SMTP_PASS:', process.env.SMTP_PASS ? 'Configurado ✅' : 'NÃO CONFIGURADO ❌')
 
 // Cria o aplicativo Express
 const app = express()
-const PORT = process.env.PORT || 3001
 
 // Servir arquivos de upload estaticamente
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
 // Middleware de segurança
-app.use(helmet()) // Adiciona cabeçalhos de segurança
-app.use(cors()) // Permite requisições do frontend
-app.use(morgan('combined')) // Log das requisições
+app.use(helmet())
+
+// ✅ CORS CONFIGURADO PARA REDE LOCAL
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        `http://${networkIP}:5173`,
+        /^http:\/\/192\.168\.\d+\.\d+:5173$/,
+        /^http:\/\/10\.\d+\.\d+\.\d+:5173$/,
+        /^http:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+:5173$/
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}))
+
+app.use(morgan('combined'))
 
 // Limite de requisições para evitar spam
 const limiter = rateLimit({
-    windowMs:15*60*1000, // 15 minutos
-    max: 100, // Limite de 100 requisições por IP
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100,
     message: 'Muitas requisições, tente novamente mais tarde.'
 })
 
-app.use(limiter) // Aplica o limite de requisições
+app.use(limiter)
 
 // Middleware para interpretar JSON
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 // Rotas da aplicação
-app.use('/api/auth', authRoutes) // Todas as rotas de auth começam com /api/auth
-app.use('/api/tasks', taskRoutes) // Todas as rotas de tarefas começam com /api/tasks
+app.use('/api/auth', authRoutes)
+app.use('/api/tasks', taskRoutes)
+app.use('/api/notifications', notificationRoutes)
 
-// Rotas de notificações
-app.use('/api/notifications', notificationRoutes) // NOVA LINHA
-
-// Rota de teste para verificar se o servidor está funcionando
+// Rota de teste
 app.get('/api/health', (req, res) => {
     res.json({
         message: 'Servidor funcionando!',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        network: {
+            local: `http://localhost:${PORT}`,
+            network: `http://${networkIP}:${PORT}`
+        }
     })
 })
 
@@ -86,9 +120,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 testEmailConnection()
 startNotificationScheduler()
 
-// Inicia o servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`)
-  console.log(`📍 Health check: http://localhost:${PORT}/api/health`)
-  console.log(`📍 Rotas da API: http://localhost:${PORT}/api`)
+// ✅ AGORA ESTÁ CORRETO - PORT É NUMBER
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor rodando em:`)
+  console.log(`   📍 Local:    http://localhost:${PORT}`)
+  console.log(`   📍 Rede:     http://${networkIP}:${PORT}`)
+  console.log(`   📍 Health:   http://${networkIP}:${PORT}/api/health`)
+  console.log(`\n🌐 Para acessar de outros dispositivos: http://${networkIP}:${PORT}`)
+  console.log(`📱 Frontend da rede: http://${networkIP}:5173`)
 })

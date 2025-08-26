@@ -1,9 +1,21 @@
-// services/api.ts - VERIFICAR SE ESTÁ ASSIM
+// frontend/src/services/api.ts - DETECTAR AUTOMATICAMENTE
 import axios from 'axios';
 
+// ✅ DETECTAR AUTOMATICAMENTE O AMBIENTE
+const getBaseURL = () => {
+  const hostname = window.location.hostname;
+  const port = 3001;
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `http://localhost:${port}`; // Desenvolvimento local
+  } else {
+    return `http://${hostname}:${port}`; // Rede local - usar mesmo IP do frontend
+  }
+}
+
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
-  timeout: 10000, // 10 segundos
+  baseURL: getBaseURL(),
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
