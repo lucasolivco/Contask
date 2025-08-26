@@ -52,7 +52,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
 
-  // ✅ PREVENIR SCROLL DO BODY QUANDO MODAL ABERTO
+  // ✅ PREVENIR SCROLL DO BODY QUANDO MODAL ABERTo
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'

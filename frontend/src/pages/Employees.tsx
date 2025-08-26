@@ -187,7 +187,7 @@ const Employees: React.FC = () => {
             </Button>
           </div>
 
-          {/* ✅ ESTATÍSTICAS COM DADOS REAIS */}
+          {/* ✅ ESTATÍSTICAS COM DADOS REAISs */}
           <div className="space-y-3 sm:space-y-4 flex-1">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-gray-700">Tarefas</h4>
