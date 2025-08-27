@@ -1,3 +1,4 @@
+// frontend/src/components/tasks/TaskCard.tsx - ATUALIZADO COM PERMISSÕES
 import { 
   Calendar, 
   User, 
@@ -8,9 +9,9 @@ import {
   Edit3, 
   Target, 
   MessageCircle,
-  Trash2
+  Trash2,
+  Crown // ✅ ADICIONAR para indicar managers
 } from 'lucide-react'
-// ✅ ADICIONAR IMPORT DO MOMENT
 import moment from 'moment-timezone'
 import {  
   TaskStatusLabels, 
@@ -18,8 +19,15 @@ import {
 } from '../../types'
 import type { Task } from '../../types'
 
+// ✅ INTERFACE ATUALIZADA PARA SUPORTAR PERMISSÕES
 interface TaskCardProps {
-  task: Task
+  task: Task & {
+    canEdit?: boolean
+    canChangeStatus?: boolean
+    canDelete?: boolean
+    isCreator?: boolean
+    isAssigned?: boolean
+  }
   onStatusChange?: (taskId: string, newStatus: Task['status']) => void
   userRole: string
   onEdit?: (taskId: string) => void
@@ -45,7 +53,6 @@ const TaskCard = ({
     if (!dateString) return ''
     
     try {
-      // A data vem do banco em UTC, converter para Brasil
       const date = moment(dateString).tz('America/Sao_Paulo')
       return date.format('DD/MM/YYYY')
     } catch (error) {
@@ -164,8 +171,8 @@ const TaskCard = ({
       {/* Header com checkbox e prioridade */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          {/* ✅ CHECKBOX MELHORADO (APENAS MANAGER) */}
-          {userRole === 'MANAGER' && onToggleSelect && (
+          {/* ✅ CHECKBOX APENAS PARA QUEM PODE DELETAR (CRIADORES) */}
+          {task.canDelete && onToggleSelect && (
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -202,14 +209,33 @@ const TaskCard = ({
         {task.title}
       </h3>
 
-      {/* Informações compactas */}
+      {/* ✅ INFORMAÇÕES COM INDICADORES DE ROLE */}
       <div className="space-y-2 mb-4 text-sm text-gray-600">
-        {/* Responsável */}
-        <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-gray-400" />
-          <span>
-            {userRole === 'MANAGER' ? task.assignedTo.name : task.createdBy.name}
-          </span>
+        {/* ✅ MOSTRAR INFORMAÇÕES BASEADAS NA PERSPECTIVA */}
+        <div className="space-y-1">
+          {/* Criado por */}
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-gray-400" />
+            <span className="text-xs text-gray-500">Criado por:</span>
+            <div className="flex items-center gap-1">
+              <span className="text-gray-700">{task.createdBy.name}</span>
+              {task.isCreator && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Você</span>
+              )}
+            </div>
+          </div>
+          
+          {/* Atribuído para */}
+          <div className="flex items-center gap-2">
+            <Crown className="h-4 w-4 text-purple-400" />
+            <span className="text-xs text-gray-500">Atribuído para:</span>
+            <div className="flex items-center gap-1">
+              <span className="text-gray-700">{task.assignedTo.name}</span>
+              {task.isAssigned && (
+                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Você</span>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ✅ DATAS FORMATADAS CORRETAMENTE */}
@@ -244,7 +270,7 @@ const TaskCard = ({
         </div>
       </div>
 
-      {/* Ações compactas */}
+      {/* ✅ AÇÕES BASEADAS EM PERMISSÕES */}
       <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
         {/* Ver Detalhes */}
         <button
@@ -258,50 +284,82 @@ const TaskCard = ({
           Acessar
         </button>
         
-        {/* Ações específicas por papel */}
-        {userRole === 'MANAGER' ? (
-          <div className="flex items-center gap-1">
-            {/* Botão Delete */}
-            {onDelete && (
+        {/* ✅ AÇÕES BASEADAS EM PERMISSÕES (NÃO EM ROLE) */}
+        <div className="flex items-center gap-1">
+          {/* ✅ DROPDOWN DE STATUS - APENAS PARA QUEM PODE ALTERAR STATUS */}
+          {task.canChangeStatus && !task.canEdit && (
+            <select
+              value={task.status}
+              onChange={(e) => {
+                e.stopPropagation()
+                onStatusChange?.(task.id, e.target.value as Task['status'])
+              }}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all bg-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="PENDING">⏳ Pendente</option>
+              <option value="IN_PROGRESS">🔄 Em Progresso</option>
+              <option value="COMPLETED">✅ Concluído</option>
+            </select>
+          )}
+          
+          {/* ✅ BOTÕES DE EDITAR/EXCLUIR - APENAS PARA CRIADORES */}
+          {task.canEdit && (
+            <>
+              {/* Botão Delete */}
+              {task.canDelete && onDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(task.id)
+                  }}
+                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Excluir tarefa"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+              
+              {/* Botão Editar */}
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  onDelete(task.id)
+                  onEdit?.(task.id)
                 }}
-                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                title="Excluir tarefa"
+                className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
               >
-                <Trash2 className="h-4 w-4" />
+                <Edit3 className="h-3 w-3" />
+                Editar
               </button>
-            )}
-            
-            {/* Botão Editar */}
-            <button
-              onClick={(e) => {
+            </>
+          )}
+          
+          {/* ✅ CASO ESPECIAL: CRIADOR QUE TAMBÉM É ATRIBUÍDO */}
+          {task.canEdit && task.canChangeStatus && (
+            <select
+              value={task.status}
+              onChange={(e) => {
                 e.stopPropagation()
-                onEdit?.(task.id)
+                onStatusChange?.(task.id, e.target.value as Task['status'])
               }}
-              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
+              className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-100 focus:outline-none transition-all bg-white ml-1"
+              onClick={(e) => e.stopPropagation()}
+              title="Alterar status"
             >
-              <Edit3 className="h-3 w-3" />
-              Editar
-            </button>
-          </div>
-        ) : (
-          <select
-            value={task.status}
-            onChange={(e) => {
-              e.stopPropagation()
-              onStatusChange?.(task.id, e.target.value as Task['status'])
-            }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all bg-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <option value="PENDING">⏳ Pendente</option>
-            <option value="IN_PROGRESS">🔄 Em Progresso</option>
-            <option value="COMPLETED">✅ Concluído</option>
-          </select>
-        )}
+              <option value="PENDING">⏳ Pendente</option>
+              <option value="IN_PROGRESS">🔄 Em Progresso</option>
+              <option value="COMPLETED">✅ Concluído</option>
+              <option value="CANCELLED">❌ Cancelada</option>
+            </select>
+          )}
+        </div>
+        
+        {/* ✅ INDICADOR DE PERMISSÃO (SUTIL) */}
+        <div className="text-xs text-gray-400 ml-auto">
+          {task.isCreator && task.isAssigned} {/* Criador e atribuído */}
+          {task.isCreator && !task.isAssigned} {/* Apenas criador */}
+          {!task.isCreator && task.isAssigned} {/* Apenas atribuído */}
+        </div>
       </div>
     </div>
   )

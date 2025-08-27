@@ -1,4 +1,4 @@
-// CreateTask.tsx - CORRIGIDO
+// frontend/src/pages/CreateTask.tsx - ATUALIZADO PARA MANAGERS
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,15 +6,16 @@ import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Save, ArrowLeft, User, Calendar, AlertTriangle, Sparkles, Target } from 'lucide-react'
+import { Save, ArrowLeft, User, Calendar, AlertTriangle, Sparkles, Target, Crown, Users } from 'lucide-react'
 
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Card from '../components/ui/Card'
-import { createTask, getEmployees } from '../services/taskService'
+import { createTask, getAssignableUsers } from '../services/taskService' // ✅ MUDANÇA: usar getAssignableUsers
 import type { CreateTaskForm } from '../types'
+import { useAuth } from '../contexts/AuthContext' // ✅ ADICIONAR: para acessar usuário atual
 
-// Schema CORRIGIDO - usando valores em inglês que o backend espera
+// Schema permanece igual
 const createTaskSchema = z.object({
   title: z
     .string()
@@ -29,17 +30,16 @@ const createTaskSchema = z.object({
   
   assignedToId: z
     .string()
-    .min(1, 'Funcionário é obrigatório'),
+    .min(1, 'Usuário é obrigatório'), // ✅ MUDANÇA: "Usuário" ao invés de "Funcionário"
   
   dueDate: z
     .string()
     .optional(),
 
   targetDate: z
-    .string() // ✅ NOVA: Data meta
+    .string()
     .optional(),
 
-  // CORRIGIDO: usar valores em inglês
   priority: z
     .enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const)
     .describe('Prioridade é obrigatória'),
@@ -47,6 +47,7 @@ const createTaskSchema = z.object({
 
 const CreateTask: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth() // ✅ ADICIONAR: para identificar usuário atual
   
   const {
     register,
@@ -56,22 +57,22 @@ const CreateTask: React.FC = () => {
   } = useForm<CreateTaskForm>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
-      priority: 'MEDIUM' // CORRIGIDO: valor padrão em inglês
+      priority: 'MEDIUM'
     }
   })
 
-  // Query para buscar funcionários
+  // ✅ MUDANÇA: Query para buscar usuários atribuíveis (managers + employees)
   const { 
-    data: employeesData, 
-    isLoading: loadingEmployees,
-    error: employeesError
+    data: assignableData, 
+    isLoading: loadingUsers,
+    error: usersError
   } = useQuery({
-    queryKey: ['employees'],
-    queryFn: getEmployees,
+    queryKey: ['assignable-users'],
+    queryFn: getAssignableUsers,
     retry: 1
   })
 
-  // Mutation para criar tarefa
+  // Mutation permanece igual
   const createTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: (data) => {
@@ -91,8 +92,12 @@ const CreateTask: React.FC = () => {
   }
 
   const selectedPriority = watch('priority')
+  const selectedUserId = watch('assignedToId') // ✅ ADICIONAR: para mostrar info do usuário selecionado
 
-  // CORRIGIDO: usar chaves em inglês
+  // ✅ ADICIONAR: Encontrar usuário selecionado
+  const selectedUser = assignableData?.assignableUsers.find(u => u.id === selectedUserId)
+
+  // Configuração de prioridade permanece igual
   const priorityConfig = {
     LOW: {
       label: 'Baixa',
@@ -116,9 +121,9 @@ const CreateTask: React.FC = () => {
     }
   }
 
-   return (
+  return (
     <div className="p-6 max-w-4xl mx-auto space-y-8 animate-fade-in">
-      {/* Header melhorado */}
+      {/* Header permanece igual */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-6">
         <Button
           variant="ghost"
@@ -137,16 +142,16 @@ const CreateTask: React.FC = () => {
             Nova Tarefa
           </h1>
           <p className="text-muted mt-2 text-lg">
-            Crie uma nova tarefa e atribua para sua equipe
+            Crie uma nova tarefa e atribua para sua equipe {/* ✅ Manter texto genérico */}
           </p>
         </div>
       </div>
 
-      {/* Formulário melhorado */}
+      {/* Formulário atualizado */}
       <Card className="shadow-lg border-gray-200">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           
-          {/* Seção: Informações Básicas */}
+          {/* Seção: Informações Básicas permanece igual */}
           <div className="space-y-6">
             <h3 className="heading-md text-rose-700 border-b border-rose-100 pb-2">
               📝 Informações da Tarefa
@@ -181,7 +186,7 @@ const CreateTask: React.FC = () => {
             </div>
           </div>
 
-          {/* Seção: Atribuição */}
+          {/* ✅ SEÇÃO: Atribuição ATUALIZADA */}
           <div className="space-y-6">
             <h3 className="heading-md text-rose-700 border-b border-rose-100 pb-2">
               👥 Atribuição e Prazo
@@ -189,13 +194,13 @@ const CreateTask: React.FC = () => {
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                <User className="inline h-4 w-4 mr-2" />
-                Atribuir para Funcionário
+                <Users className="inline h-4 w-4 mr-2" />
+                Atribuir Para {/* ✅ MUDANÇA: texto mais genérico */}
               </label>
               
-              {employeesError ? (
+              {usersError ? (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-                  Erro ao carregar funcionários. Tente recarregar a página.
+                  Erro ao carregar usuários. Tente recarregar a página.
                 </div>
               ) : (
                 <select
@@ -205,22 +210,52 @@ const CreateTask: React.FC = () => {
                   `}
                   {...register('assignedToId')}
                 >
-                  <option value="">Selecione um funcionário</option>
-                  {employeesData?.employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name} ({employee.email})
-                      {employee._count?.assignedTasks > 0 && 
-                        ` - ${employee._count.assignedTasks} tarefa(s) ativa(s)`
-                      }
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingUsers ? 'Carregando usuários...' : 'Selecione um usuário'}
+                  </option>
+                  
+                  {/* ✅ VOCÊ MESMO */}
+                  {assignableData?.categories.self && assignableData.categories.self.length > 0 && (
+                    <optgroup label="👤 Atribuir para mim">
+                      {assignableData.categories.self.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name} (Você)
+                          {user.activeTasks > 0 && ` - ${user.activeTasks} tarefa(s) ativa(s)`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  
+                  {/* ✅ OUTROS MANAGERS */}
+                  {assignableData?.categories.managers && assignableData.categories.managers.length > 0 && (
+                    <optgroup label="👑 Outros Managers">
+                      {assignableData.categories.managers.map((manager) => (
+                        <option key={manager.id} value={manager.id}>
+                          {manager.name} ({manager.email})
+                          {manager.activeTasks > 0 && ` - ${manager.activeTasks} tarefa(s) ativa(s)`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  
+                  {/* ✅ FUNCIONÁRIOS */}
+                  {assignableData?.categories.employees && assignableData.categories.employees.length > 0 && (
+                    <optgroup label="👥 Funcionários">
+                      {assignableData.categories.employees.map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {employee.name} ({employee.email})
+                          {employee.activeTasks > 0 && ` - ${employee.activeTasks} tarefa(s) ativa(s)`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               )}
               
-              {loadingEmployees && (
+              {loadingUsers && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-rose-500"></div>
-                  Carregando funcionários...
+                  Carregando usuários...
                 </div>
               )}
               
@@ -229,9 +264,55 @@ const CreateTask: React.FC = () => {
                   {errors.assignedToId.message}
                 </p>
               )}
+
+              {/* ✅ NOVA: Informação sobre usuário selecionado */}
+              {selectedUser && (
+                <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      selectedUser.role === 'MANAGER' 
+                        ? 'bg-purple-100' 
+                        : 'bg-emerald-100'
+                    }`}>
+                      {selectedUser.role === 'MANAGER' ? (
+                        <Crown className="h-4 w-4 text-purple-600" />
+                      ) : (
+                        <User className="h-4 w-4 text-emerald-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-blue-900">
+                          {selectedUser.name}
+                        </span>
+                        {selectedUser.isCurrentUser && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                            Você
+                          </span>
+                        )}
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          selectedUser.role === 'MANAGER'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {selectedUser.role === 'MANAGER' ? 'Manager' : 'Funcionário'}
+                        </span>
+                      </div>
+                      <div className="text-sm text-blue-700 mt-1">
+                        <span>{selectedUser.email}</span>
+                        {selectedUser.activeTasks > 0 && (
+                          <span className="ml-3 bg-blue-100 px-2 py-1 rounded text-xs">
+                            {selectedUser.activeTasks} tarefas ativas
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* ✅ SEÇÃO DE DATAS REORGANIZADA */}
+            {/* Seção de datas permanece igual */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Data meta */}
               <div>
@@ -312,7 +393,40 @@ const CreateTask: React.FC = () => {
             </div>
           </div>
 
-          {/* ✅ NOVA: Explicação sobre as datas */}
+          {/* ✅ NOVA: Estatísticas da equipe */}
+          {assignableData?.stats && (
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
+              <h4 className="font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Resumo da Equipe Disponível
+              </h4>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-white rounded-lg p-3">
+                  <div className="text-lg font-bold text-purple-600 flex items-center justify-center gap-1">
+                    <Crown className="h-4 w-4" />
+                    {assignableData.stats.totalManagers}
+                  </div>
+                  <div className="text-xs text-gray-600">Managers</div>
+                </div>
+                <div className="bg-white rounded-lg p-3">
+                  <div className="text-lg font-bold text-emerald-600 flex items-center justify-center gap-1">
+                    <User className="h-4 w-4" />
+                    {assignableData.stats.totalEmployees}
+                  </div>
+                  <div className="text-xs text-gray-600">Funcionários</div>
+                </div>
+                <div className="bg-white rounded-lg p-3">
+                  <div className="text-lg font-bold text-blue-600 flex items-center justify-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {assignableData.stats.totalUsers}
+                  </div>
+                  <div className="text-xs text-gray-600">Total</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Explicação sobre as datas permanece igual */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
@@ -327,7 +441,7 @@ const CreateTask: React.FC = () => {
             </div>
           </div>
 
-          {/* Indicador visual de prioridade */}
+          {/* Indicador visual de prioridade permanece igual */}
           {selectedPriority && (
             <div className={`
               p-4 rounded-xl border animate-scale-in
@@ -352,7 +466,7 @@ const CreateTask: React.FC = () => {
             </div>
           )}
 
-          {/* Botões de ação */}
+          {/* Botões de ação permanecem iguais */}
           <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-gray-200">
             <Button
               type="button"
@@ -366,7 +480,7 @@ const CreateTask: React.FC = () => {
             <Button
               type="submit"
               loading={createTaskMutation.isPending}
-              disabled={loadingEmployees || !!employeesError}
+              disabled={loadingUsers || !!usersError}
               className="w-full sm:w-auto btn-primary interactive-glow"
               size="lg"
             >
@@ -377,7 +491,7 @@ const CreateTask: React.FC = () => {
         </form>
       </Card>
 
-      {/* Dica útil */}
+      {/* ✅ DICA ATUALIZADA */}
       <Card className="bg-blue-50 border-blue-200">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-blue-100 rounded-lg">
@@ -389,7 +503,11 @@ const CreateTask: React.FC = () => {
             </h4>
             <p className="text-blue-700 text-sm">
               Seja específico no título e descrição. Inclua critérios de aceitação e 
-              informações que ajudem o funcionário a entender exatamente o que deve ser feito.
+              informações que ajudem a pessoa responsável a entender exatamente o que deve ser feito.
+              {/* ✅ MUDANÇA: "pessoa responsável" ao invés de "funcionário" */}
+            </p>
+            <p className="text-blue-600 text-xs mt-2">
+              💡 <strong>Novo:</strong> Agora você pode atribuir tarefas para outros managers ou para si mesmo!
             </p>
           </div>
         </div>

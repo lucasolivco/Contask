@@ -1,3 +1,5 @@
+// frontend/src/components/tasks/TaskDetailsModal.tsx - CRIAR/CORRIGIR
+
 import React, { useEffect, useState } from 'react'
 import { 
   X, 
@@ -27,6 +29,7 @@ import { getTaskAttachments, uploadAttachments, downloadAttachment, type Attachm
 import Portal from '../ui/Portal'
 import moment from 'moment-timezone'
 
+// ✅ INTERFACE CORRIGIDA PARA TASKDETAILSMODAL
 interface TaskDetailsModalProps {
   task: Task
   isOpen: boolean
@@ -52,7 +55,13 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
 
-  // ✅ PREVENIR SCROLL DO BODY QUANDO MODAL ABERTo
+  // ✅ VERIFICAÇÃO DE SEGURANÇA PARA CURRENTUSER
+  if (!currentUser) {
+    console.warn('TaskDetailsModal: currentUser não fornecido')
+    if (!isOpen) return null
+  }
+
+  // ✅ PREVENIR SCROLL DO BODY QUANDO MODAL ABERTO
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -240,41 +249,41 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-// ✅ SUBSTITUIR A FUNÇÃO formatDateLocal POR:
-const formatDateBrazil = (dateString: string) => {
-  if (!dateString) return ''
-  
-  try {
-    const date = moment(dateString).tz('America/Sao_Paulo')
-    return date.format('DD/MM/YYYY')
-  } catch (error) {
-    console.error('Erro ao formatar data:', error)
-    return 'Data inválida'
+  // ✅ FUNÇÃO PARA FORMATAR DATA
+  const formatDateBrazil = (dateString: string) => {
+    if (!dateString) return ''
+    
+    try {
+      const date = moment(dateString).tz('America/Sao_Paulo')
+      return date.format('DD/MM/YYYY')
+    } catch (error) {
+      console.error('Erro ao formatar data:', error)
+      return 'Data inválida'
+    }
   }
-}
 
   return (
     <Portal>
-      {/* ✅ OVERLAY COM PORTAL - COBERTURA TOTAL GARANTIDA */}
+      {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 z-50"
         onClick={onClose}
       />
 
-      {/* ✅ MODAL RESPONSIVO COM PORTAL */}
-      <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4">
+      {/* Modal */}
+      <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4 z-50">
         <div 
           className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* ✅ HEADER RESPONSIVO */}
+          {/* Header */}
           <div className="flex items-start md:items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-white">
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 min-w-0 flex-1 mr-4">
               <h2 className="text-lg md:text-2xl font-bold text-gray-900 line-clamp-2">{task.title}</h2>
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   {getStatusIcon(task.status)}
-                  <span className={`status-${task.status.toLowerCase().replace('_', '-')} text-xs md:text-sm font-medium`}>
+                  <span className={`text-xs md:text-sm font-medium`}>
                     {TaskStatusLabels[task.status]}
                   </span>
                 </div>
@@ -293,14 +302,14 @@ const formatDateBrazil = (dateString: string) => {
             </button>
           </div>
 
-          {/* ✅ CONTEÚDO RESPONSIVO - LAYOUT MELHORADO PARA MOBILE */}
+          {/* Conteúdo */}
           <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
             
-            {/* ✅ CONTEÚDO PRINCIPAL - ALTURA REDUZIDA EM MOBILE */}
+            {/* Conteúdo principal */}
             <div className="flex-1 lg:flex-1 overflow-y-auto max-h-[40vh] lg:max-h-none">
               <div className="p-4 md:p-6 space-y-4 md:space-y-6">
                 
-                {/* ✅ ALERTAS DE DATAS */}
+                {/* Alertas de datas */}
                 {(isOverdue || isNearTarget) && (
                   <div className="space-y-2">
                     {isOverdue && (
@@ -322,7 +331,7 @@ const formatDateBrazil = (dateString: string) => {
                   </div>
                 )}
 
-                {/* Título e Descrição - COMPACTO EM MOBILE */}
+                {/* Descrição */}
                 {task.description && (
                   <div>
                     <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">Descrição</h3>
@@ -332,7 +341,7 @@ const formatDateBrazil = (dateString: string) => {
                   </div>
                 )}
 
-                {/* ✅ INFORMAÇÕES PRINCIPAIS - MAIS COMPACTO EM MOBILE */}
+                {/* Informações principais */}
                 <div>
                   <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3">Informações</h3>
                   <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -355,7 +364,7 @@ const formatDateBrazil = (dateString: string) => {
                       </div>
                     </div>
 
-                    {/* ✅ DATA DE VENCIMENTO FORMATADA CORRETAMENTE */}
+                    {/* Data de vencimento */}
                     {task.dueDate ? (
                       <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
                         <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
@@ -399,7 +408,7 @@ const formatDateBrazil = (dateString: string) => {
                   </div>
                 </div>
 
-                {/* ✅ ANEXOS COMPACTOS EM MOBILE */}
+                {/* Anexos */}
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                     <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
@@ -472,10 +481,10 @@ const formatDateBrazil = (dateString: string) => {
               </div>
             </div>
 
-            {/* ✅ CHAT COM MUITO MAIS ESPAÇO EM MOBILE */}
+            {/* Chat de comentários */}
             <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col bg-gray-50 flex-1 lg:flex-none min-h-[50vh] lg:min-h-0">
               
-              {/* Header do Chat - COMPACTO */}
+              {/* Header do Chat */}
               <div className="p-3 border-b border-gray-200 bg-white">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
@@ -485,7 +494,7 @@ const formatDateBrazil = (dateString: string) => {
                 <p className="text-xs text-gray-500">Conversa da equipe</p>
               </div>
 
-              {/* ✅ LISTA DE COMENTÁRIOS COM MUITO MAIS ESPAÇO EM MOBILE */}
+              {/* Lista de comentários */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {isLoadingComments ? (
                   <div className="flex items-center justify-center py-8">
@@ -527,7 +536,7 @@ const formatDateBrazil = (dateString: string) => {
                 )}
               </div>
 
-              {/* ✅ FORM DE COMENTÁRIO OTIMIZADO */}
+              {/* Form de comentário */}
               <div className="p-3 border-t border-gray-200 bg-white">
                 <form onSubmit={handleSubmitComment} className="space-y-2">
                   <textarea
@@ -555,7 +564,6 @@ const formatDateBrazil = (dateString: string) => {
                     )}
                   </button>
                 </form>
-              
               </div>
             </div>
           </div>

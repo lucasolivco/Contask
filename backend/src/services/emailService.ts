@@ -21,7 +21,7 @@ const transporter = nodemailer.createTransport({
   }
 })
 
-const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const BASE_URL = process.env.FRONTEND_URL;
 
 // ✅ TEMPLATES EXISTENTES DE TAREFAS
 const emailTemplates = {

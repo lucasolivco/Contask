@@ -367,12 +367,12 @@ const Dashboard: React.FC = () => {
     return (
       <div className={`
         flex items-center justify-between py-3 px-3 rounded-lg transition-all duration-200 
-        ${isOverdue ? 'bg-red-50 border border-red-200' : 'hover:bg-gray-50'}
-        ${isUrgent ? 'border-l-4 border-l-purple-500' : ''}
+        ${isOverdue ? 'border' : 'hover:bg-gray-50'}
+        ${isUrgent ? 'border' : 'hover:bg-gray-50'}
       `}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className={`text-sm font-semibold truncate ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+            <h4 className={`text-sm font-semibold truncate ${isOverdue ? 'text-dark-700' : 'text-gray-900'}`}>
               {task.title}
             </h4>
             {isUrgent && (
@@ -492,7 +492,7 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="heading-xl flex items-center gap-4 mb-2">
-            <div className="p-3 bg-gradient-to-br from-yellow-400 to-yellow-300 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-2xl shadow-lg">
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             Olá, {user?.name}!
@@ -519,7 +519,6 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      {/* ✅ ESTATÍSTICAS PRINCIPAIS (MANTIDAS) */}
       {/* ✅ ESTATÍSTICAS PRINCIPAIS - ÍCONES CORRIGIDOS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard

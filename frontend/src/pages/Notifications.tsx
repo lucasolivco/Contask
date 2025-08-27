@@ -181,7 +181,7 @@ const Notifications: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-purple-600 to-purple-400 rounded-2xl shadow-lg">
               <Bell className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -277,9 +277,6 @@ const Notifications: React.FC = () => {
             <div className="flex gap-2">
               {[
                 { key: 'all', label: 'Todos os tipos' },
-                { key: 'TASK_ASSIGNED', label: 'Atribuições' },
-                { key: 'TASK_COMPLETED', label: 'Conclusões' },
-                { key: 'TASK_OVERDUE', label: 'Vencimentos' }
               ].map(({ key, label }) => (
                 <button
                   key={key}

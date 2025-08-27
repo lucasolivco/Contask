@@ -82,7 +82,7 @@ const Register: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <UserPlus className="mx-auto h-12 w-12 text-primary-600" />
+          <UserPlus className="mx-auto h-12 w-12 text-rose-500" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Criar nova conta
           </h2>

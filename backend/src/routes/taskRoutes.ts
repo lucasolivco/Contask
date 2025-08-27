@@ -1,4 +1,5 @@
 // "Menu" de funcionalidades relacionadas às tarefas
+
 import { Router } from 'express'
 import { 
   createTask, 
@@ -6,7 +7,8 @@ import {
   getTask, 
   updateTaskStatus, 
   getEmployees,
-  getEmployeeDetails,  // ✅ NOVA IMPORTAÇÃO
+  getAssignableUsers,
+  getEmployeeDetails,
   editTarefa,
   getTaskComments,
   createComment,
@@ -17,7 +19,8 @@ import {
   debugDates,
   deleteTask,
   bulkDeleteTasks,
-  getMyTasks
+  getMyTasks,
+  getMyAssignedTasks    // ✅ NOVA IMPORTAÇÃO
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
@@ -27,14 +30,18 @@ const router = Router()
 // Todas as rotas de tarefas precisam de autenticação
 router.use(authenticateToken)
 
+// ✅ NOVA ROTA: Buscar usuários para atribuição
+router.get('/assignable-users', requireManager, getAssignableUsers)
+
 // ✅ NOVA ROTA ESPECÍFICA PARA FUNCIONÁRIOS (deve vir ANTES da rota /)
 router.get('/my-tasks', getMyTasks)
+router.get('/assigned-to-me', getMyAssignedTasks)  // ✅ NOVA: Para managers que receberam tarefas
 
 // Rotas para gerentes
 router.get('/employees', requireManager, getEmployees)
 router.get('/employees/:employeeId', requireManager, getEmployeeDetails)  // ✅ NOVA ROTA
 router.post('/', requireManager, createTask)
-router.put('/:id', editTarefa)
+router.put('/:id', requireManager, editTarefa)        // ✅ Apenas criador pode editar
 
 // Rotas para todos os usuários autenticados
 router.get('/', getTasks)
@@ -59,5 +66,11 @@ router.get('/debug/dates', debugDates)
 // Rotas de exclusão (só gerentes)
 router.delete('/bulk', requireManager, bulkDeleteTasks)
 router.delete('/:id', requireManager, deleteTask)
+
+// ✅ NOVA ROTA: Buscar usuários para atribuição
+router.get('/assignable-users', requireManager, getAssignableUsers)
+
+// ✅ NOVA ROTA ESPECÍFICA PARA FUNCIONÁRIOS (deve vir ANTES da rota /)
+router.get('/my-tasks', getMyTasks)
 
 export default router

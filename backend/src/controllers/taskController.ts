@@ -22,7 +22,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 
     if (!title || !assignedToId) {
       return res.status(400).json({ 
-        error: 'Título e funcionário responsável são obrigatórios' 
+        error: 'Título e usuário responsável são obrigatórios' // ✅ MUDANÇA: não é só "funcionário"
       })
     }
 
@@ -50,15 +50,23 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const assignedUser = await prisma.user.findUnique({
-      where: { id: assignedToId }
+    // ✅ MODIFICAR: Buscar qualquer usuário verificado, não só EMPLOYEE
+    const assignedUser = await prisma.user.findFirst({
+      where: { 
+        id: assignedToId,
+        emailVerified: true // ✅ ADICIONAR: Só usuários verificados
+        // ✅ REMOVER: role: 'EMPLOYEE' - permitir MANAGERS também
+      }
     })
 
     if (!assignedUser) {
       return res.status(404).json({ 
-        error: 'Funcionário não encontrado' 
+        error: 'Usuário não encontrado ou não verificado' // ✅ MUDANÇA: mensagem mais genérica
       })
     }
+
+    // ✅ ADICIONAR: Log para debug
+    console.log(`📝 Manager ${req.user!.userId} criando tarefa para ${assignedUser.name} (${assignedUser.role})`)
 
     const manager = await prisma.user.findUnique({
       where: { id: req.user!.userId }
@@ -93,35 +101,45 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       }
     })
 
+    // ✅ MODIFICAR NOTIFICAÇÃO: Personalizar baseado no role
+    const notificationMessage = assignedUser.role === 'MANAGER' 
+      ? `Nova tarefa atribuída por ${manager?.name}: "${title}"`
+      : `Você recebeu uma nova tarefa: "${title}"`
+
     // ✅ CRIAR NOTIFICAÇÃO PARA O FUNCIONÁRIO
     await prisma.notification.create({
       data: {
         type: 'TASK_ASSIGNED',
         title: 'Nova tarefa atribuída',
-        message: `Você recebeu uma nova tarefa: "${title}"`,
+        message: notificationMessage,
         userId: assignedToId,
         taskId: task.id
       }
     })
 
-    // ✅ ENVIAR EMAIL PARA O FUNCIONÁRIO COM DATA FORMATADA CORRETAMENTE
+    // ✅ MODIFICAR EMAIL: Personalizar template baseado no role
+    const emailSubject = assignedUser.role === 'MANAGER' 
+      ? '📋 Nova tarefa'
+      : '📋 Nova tarefa atribuída'
+
     await sendEmail({
       to: assignedUser.email,
-      subject: '📋 Nova tarefa atribuída',
+      subject: emailSubject,
       template: 'task-assigned',
       data: {
         userName: assignedUser.name,
         taskTitle: title,
         taskDescription: description,
         dueDate: dueDateUTC ? moment(dueDateUTC).tz('America/Sao_Paulo').format('DD/MM/YYYY') : null,
-        managerName: manager?.name
+        managerName: manager?.name,
+        isManagerToManager: assignedUser.role === 'MANAGER' // ✅ ADICIONAR: flag para template
       }
     })
 
-    console.log(`✅ Tarefa criada e notificações enviadas: ${title}`)
+    console.log(`✅ Tarefa criada e notificações enviadas: ${title} para ${assignedUser.role}`)
 
     res.status(201).json({
-      message: 'Tarefa criada com sucesso',
+      message: `Tarefa criada e atribuída para ${assignedUser.name}`,
       task
     })
 
@@ -152,16 +170,21 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
 
     console.log('🔍 Filtros recebidos:', { 
       status, priority, search, assignedToId, dueDate, overdue,
-      dueDateMonth, dueDateYear 
+      dueDateMonth, dueDateYear, userRole 
     })
 
     let whereCondition: any = {}
 
-    // Filtros de permissão
+    // ✅ MODIFICAR: Filtros de permissão para managers
     if (userRole === 'EMPLOYEE') {
+      // Employee: apenas tarefas atribuídas a ele
       whereCondition.assignedToId = userId
     } else if (userRole === 'MANAGER') {
-      whereCondition.createdById = userId
+      // ✅ MANAGER: tarefas que CRIOU + tarefas ATRIBUÍDAS a ele
+      whereCondition.OR = [
+        { createdById: userId },    // Tarefas que ele criou
+        { assignedToId: userId }    // Tarefas atribuídas a ele por outros managers
+      ]
     }
 
     // Filtros básicos
@@ -277,7 +300,6 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
 
     console.log('🔍 Condição final de busca:', JSON.stringify(whereCondition, null, 2))
 
-    // ✅ ADICIONAR: Busca as tarefas com logs
     const tasks = await prisma.task.findMany({
       where: whereCondition,
       include: {
@@ -296,12 +318,21 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         }
       },
       orderBy: {
-        dueDate: 'asc' // ✅ MELHORAR: Ordenar por data de vencimento quando filtrando por data
+        dueDate: 'asc'
       }
     })
 
+    // ✅ ADICIONAR: Flag para indicar se o usuário é o criador ou apenas atribuído
+    const tasksWithPermissions = tasks.map(task => ({
+      ...task,
+      canEdit: task.createdById === userId,           // ✅ Só o criador pode editar
+      canChangeStatus: task.assignedToId === userId,  // ✅ Só o atribuído pode mudar status
+      isCreator: task.createdById === userId,         // ✅ É o criador?
+      isAssigned: task.assignedToId === userId        // ✅ É o atribuído?
+    }))
+
     console.log('📋 Tarefas encontradas:', tasks.length)
-    
+
     // ✅ ADICIONAR: Log das datas encontradas para debug
     if (dueDateMonth || dueDateYear) {
       console.log('📅 Datas de vencimento encontradas:')
@@ -312,10 +343,95 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       })
     }
 
-    res.json({ tasks })
+    res.json({ 
+      tasks: tasksWithPermissions 
+    })
 
   } catch (error) {
     console.error('❌ Erro ao buscar tarefas:', error)
+    res.status(500).json({ 
+      error: 'Erro interno do servidor' 
+    })
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Buscar usuários para atribuição (MANAGERS + EMPLOYEES)
+export const getAssignableUsers = async (req: AuthRequest, res: Response) => {
+  try {
+    const currentUserId = req.user!.userId
+    const userRole = req.user!.role
+
+    console.log(`🔍 Manager ${currentUserId} buscando usuários atribuíveis`)
+
+    // Verificar se é MANAGER
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ 
+        error: 'Apenas gerentes podem acessar lista de usuários atribuíveis' 
+      })
+    }
+
+    // ✅ BUSCAR TODOS OS USUÁRIOS VERIFICADOS (MANAGERS + EMPLOYEES)
+    const users = await prisma.user.findMany({
+      where: { 
+        emailVerified: true // ✅ Apenas usuários verificados
+        // ✅ NÃO FILTRAR POR ROLE - incluir todos
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            assignedTasks: {
+              where: {
+                status: {
+                  in: ['PENDING', 'IN_PROGRESS'] // ✅ Apenas tarefas ativas
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: [
+        { role: 'desc' }, // ✅ MANAGERS primeiro
+        { name: 'asc' }   // ✅ Depois por nome
+      ]
+    })
+
+    // ✅ SEPARAR E ORGANIZAR USUÁRIOS
+    const currentUser = users.find(u => u.id === currentUserId)
+    const otherManagers = users.filter(u => u.role === 'MANAGER' && u.id !== currentUserId)
+    const employees = users.filter(u => u.role === 'EMPLOYEE')
+
+    // ✅ ADICIONAR INFORMAÇÕES EXTRAS
+    const usersWithInfo = users.map(user => ({
+      ...user,
+      isCurrentUser: user.id === currentUserId,
+      activeTasks: user._count.assignedTasks,
+      category: user.id === currentUserId ? 'self' : 
+                user.role === 'MANAGER' ? 'manager' : 'employee'
+    }))
+
+    console.log(`✅ Usuários atribuíveis: ${users.length} (${otherManagers.length + 1} managers, ${employees.length} employees)`)
+
+    res.json({
+      assignableUsers: usersWithInfo,
+      categories: {
+        self: currentUser ? [{ ...currentUser, isCurrentUser: true, activeTasks: currentUser._count.assignedTasks }] : [],
+        managers: otherManagers.map(u => ({ ...u, isCurrentUser: false, activeTasks: u._count.assignedTasks })),
+        employees: employees.map(u => ({ ...u, isCurrentUser: false, activeTasks: u._count.assignedTasks }))
+      },
+      stats: {
+        totalUsers: users.length,
+        totalManagers: users.filter(u => u.role === 'MANAGER').length,
+        totalEmployees: employees.length
+      }
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar usuários atribuíveis:', error)
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
@@ -350,8 +466,8 @@ export const getTask = async (req: AuthRequest, res: Response) => {
 
     // Verifica se o usuário tem permissão para ver esta tarefa
     const canAccess = 
-      userRole === 'MANAGER' && task.createdById === userId ||
-      userRole === 'EMPLOYEE' && task.assignedToId === userId
+      task.createdById === userId ||    // É o criador
+      task.assignedToId === userId      // É o atribuído
 
     if (!canAccess) {
       return res.status(403).json({ 
@@ -359,7 +475,19 @@ export const getTask = async (req: AuthRequest, res: Response) => {
       })
     }
 
-    res.json({ task })
+     // ✅ ADICIONAR: Informações de permissão
+    const taskWithPermissions = {
+      ...task,
+      canEdit: task.createdById === userId,           // ✅ Só o criador pode editar
+      canChangeStatus: task.assignedToId === userId,  // ✅ Só o atribuído pode mudar status
+      canDelete: task.createdById === userId,         // ✅ Só o criador pode excluir
+      isCreator: task.createdById === userId,         // ✅ É o criador?
+      isAssigned: task.assignedToId === userId        // ✅ É o atribuído?
+    }
+
+    res.json({ 
+      task: taskWithPermissions 
+    })
 
   } catch (error) {
     console.error('Erro ao buscar tarefa:', error)
@@ -368,6 +496,7 @@ export const getTask = async (req: AuthRequest, res: Response) => {
     })
   }
 }
+
 
 // Função para atualizar status da tarefa
 // ✅ FUNÇÃO CORRIGIDA PARA ATUALIZAR STATUS - FUNCIONÁRIOS
@@ -398,12 +527,13 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Tarefa não encontrada' })
     }
 
-    const canUpdate = 
-      (userRole === 'MANAGER' && task.createdById === userId) ||
-      (userRole === 'EMPLOYEE' && task.assignedToId === userId)
+    // ✅ MODIFICAR: Apenas o ATRIBUÍDO pode mudar status (independente do role)
+    const canUpdateStatus = task.assignedToId === userId
 
-    if (!canUpdate) {
-      return res.status(403).json({ error: 'Sem permissão para atualizar esta tarefa' })
+    if (!canUpdateStatus) {
+      return res.status(403).json({ 
+        error: 'Apenas a pessoa atribuída à tarefa pode alterar o status' 
+      })
     }
 
     const updatedTask = await prisma.task.update({
@@ -418,45 +548,49 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
       }
     })
 
-    // ✅ NOTIFICAÇÕES BASEADAS NO PAPEL E STATUS
-    if (userRole === 'EMPLOYEE' && status === 'COMPLETED') {
-      // Funcionário concluiu tarefa - notificar gerente
-      await prisma.notification.create({
-        data: {
-          type: 'TASK_COMPLETED',
-          title: 'Tarefa concluída',
-          message: `A tarefa "${task.title}" foi concluída por ${task.assignedTo.name}`,
-          userId: task.createdById,
-          taskId: task.id
-        }
-      })
+    // ✅ MODIFICAR: Notificações baseadas na mudança de status
+    if (status === 'COMPLETED') {
+      // Tarefa concluída - notificar criador (se não for a mesma pessoa)
+      if (task.createdById !== task.assignedToId) {
+        await prisma.notification.create({
+          data: {
+            type: 'TASK_COMPLETED',
+            title: 'Tarefa concluída',
+            message: `A tarefa "${task.title}" foi concluída por ${task.assignedTo.name}`,
+            userId: task.createdById,
+            taskId: task.id
+          }
+        })
 
-      // Enviar email para o gerente
-      await sendEmail({
-        to: task.createdBy.email,
-        subject: '✅ Tarefa concluída',
-        template: 'task-completed',
-        data: {
-          managerName: task.createdBy.name,
-          taskTitle: task.title,
-          employeeName: task.assignedTo.name,
-          completedDate: new Date().toLocaleDateString('pt-BR')
-        }
-      })
+        // Enviar email para o criador
+        await sendEmail({
+          to: task.createdBy.email,
+          subject: '✅ Tarefa concluída',
+          template: 'task-completed',
+          data: {
+            managerName: task.createdBy.name,
+            taskTitle: task.title,
+            assignedUserName: task.assignedTo.name,
+            completedDate: new Date().toLocaleDateString('pt-BR')
+          }
+        })
+      }
 
-      console.log(`✅ Notificação de conclusão enviada para gerente: ${task.title}`)
+      console.log(`✅ Tarefa concluída: ${task.title} por ${task.assignedTo.name}`)
     
-    } else if (userRole === 'EMPLOYEE') {
-      // Funcionário atualizou status - notificar gerente
-      await prisma.notification.create({
-        data: {
-          type: 'TASK_UPDATED',
-          title: 'Tarefa atualizada',
-          message: `${task.assignedTo.name} atualizou a tarefa "${task.title}" para ${status}`,
-          userId: task.createdById,
-          taskId: task.id
-        }
-      })
+    } else {
+      // Outras mudanças de status - notificar criador (se não for a mesma pessoa)
+      if (task.createdById !== task.assignedToId) {
+        await prisma.notification.create({
+          data: {
+            type: 'TASK_UPDATED',
+            title: 'Status da tarefa atualizado',
+            message: `${task.assignedTo.name} atualizou a tarefa "${task.title}" para ${status}`,
+            userId: task.createdById,
+            taskId: task.id
+          }
+        })
+      }
     }
 
     res.json({
@@ -477,22 +611,26 @@ export const getEmployees = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId
     const userRole = req.user!.role
 
-    console.log(`🔍 Manager ${userId} buscando lista de funcionários`)
+    console.log(`🔍 Manager ${userId} buscando lista de usuários`)
 
     // Verificar se é MANAGER
     if (userRole !== 'MANAGER') {
       return res.status(403).json({ 
-        error: 'Apenas gerentes podem acessar lista de funcionários' 
+        error: 'Apenas gerentes podem acessar lista de usuários' 
       })
     }
 
-    // Buscar funcionários com estatísticas das tarefas criadas pelo manager atual
-    const employees = await prisma.user.findMany({
-      where: { role: 'EMPLOYEE' },
+    // ✅ BUSCAR TODOS OS USUÁRIOS VERIFICADOS, NÃO SÓ EMPLOYEES
+    const users = await prisma.user.findMany({
+      where: { 
+        emailVerified: true 
+        // ✅ REMOVER: role: 'EMPLOYEE' - incluir MANAGERS também
+      },
       select: {
         id: true,
         name: true,
         email: true,
+        role: true, // ✅ ADICIONAR: incluir role na resposta
         createdAt: true,
         assignedTasks: {
           where: {
@@ -507,12 +645,15 @@ export const getEmployees = async (req: AuthRequest, res: Response) => {
           }
         }
       },
-      orderBy: { name: 'asc' }
+      orderBy: [
+        { role: 'desc' }, // ✅ MANAGERS primeiro
+        { name: 'asc' }
+      ]
     })
 
-    // ✅ CALCULAR ESTATÍSTICAS PARA CADA FUNCIONÁRIO
-    const employeesWithStats = employees.map(employee => {
-      const tasks = employee.assignedTasks
+    // ✅ CALCULAR ESTATÍSTICAS PARA CADA USUÁRIO (igual ao código anterior)
+    const usersWithStats = users.map(user => {
+      const tasks = user.assignedTasks
       const totalTasks = tasks.length
       const pendingTasks = tasks.filter(t => t.status === 'PENDING').length
       const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length
@@ -530,10 +671,11 @@ export const getEmployees = async (req: AuthRequest, res: Response) => {
       const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
       return {
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        createdAt: employee.createdAt,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role, // ✅ INCLUIR role
+        createdAt: user.createdAt,
         totalTasks,
         pendingTasks,
         inProgressTasks,
@@ -547,14 +689,25 @@ export const getEmployees = async (req: AuthRequest, res: Response) => {
       }
     })
 
-    console.log(`✅ Encontrados ${employeesWithStats.length} funcionários`)
+    // ✅ SEPARAR POR TIPO PARA ESTATÍSTICAS
+    const managers = usersWithStats.filter(u => u.role === 'MANAGER')
+    const employees = usersWithStats.filter(u => u.role === 'EMPLOYEE')
+
+    console.log(`✅ Encontrados ${usersWithStats.length} usuários (${managers.length} managers, ${employees.length} employees)`)
 
     res.json({ 
-      employees: employeesWithStats 
+      employees: usersWithStats, // ✅ MANTER nome para compatibilidade
+      users: usersWithStats,     // ✅ ADICIONAR campo mais genérico
+      managers: managers,        // ✅ SEPARADO para facilitar frontend
+      stats: {
+        totalUsers: usersWithStats.length,
+        totalManagers: managers.length,
+        totalEmployees: employees.length
+      }
     })
 
   } catch (error) {
-    console.error('❌ Erro ao buscar funcionários:', error)
+    console.error('❌ Erro ao buscar usuários:', error)
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
@@ -568,41 +721,46 @@ export const getEmployeeDetails = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId
     const userRole = req.user!.role
 
-    console.log(`🔍 Manager ${userId} buscando detalhes do funcionário ${employeeId}`)
+    console.log(`🔍 Manager ${userId} buscando detalhes do usuário ${employeeId}`)
 
     // Verificar se é MANAGER
     if (userRole !== 'MANAGER') {
       return res.status(403).json({ 
-        error: 'Apenas gerentes podem acessar detalhes de funcionários' 
+        error: 'Apenas gerentes podem acessar detalhes de usuários' 
       })
     }
 
-    // Buscar o funcionário
-    const employee = await prisma.user.findUnique({
+    // ✅ BUSCAR QUALQUER USUÁRIO VERIFICADO
+    const user = await prisma.user.findFirst({
       where: { 
         id: employeeId,
-        role: 'EMPLOYEE' // Garantir que é funcionário
+        emailVerified: true
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        emailVerified: true,
         createdAt: true
       }
     })
 
-    if (!employee) {
+    if (!user) {
       return res.status(404).json({ 
-        error: 'Funcionário não encontrado' 
+        error: 'Usuário não encontrado ou não verificado'
       })
     }
 
-    // Buscar todas as tarefas atribuídas ao funcionário que foram criadas pelo manager atual
+    console.log(`👤 Usuário encontrado: ${user.name} (${user.role})`)
+
+    // ✅ BUSCAR APENAS TAREFAS ATRIBUÍDAS AO USUÁRIO (INDEPENDENTE DO ROLE)
+    console.log(`📋 Buscando APENAS tarefas ATRIBUÍDAS ao usuário ${user.name}`)
+    
     const tasks = await prisma.task.findMany({
       where: {
-        assignedToId: employeeId,
-        createdById: userId  // ✅ Apenas tarefas criadas pelo manager atual
+        assignedToId: employeeId  // ✅ APENAS tarefas atribuídas a ele
+        // ✅ REMOVER: filtro por createdById - não importa quem criou
       },
       include: {
         createdBy: {
@@ -627,10 +785,24 @@ export const getEmployeeDetails = async (req: AuthRequest, res: Response) => {
         }
       },
       orderBy: [
-        { status: 'asc' },      // Pendentes primeiro
-        { dueDate: 'asc' }      // Por data de vencimento
+        { status: 'asc' },
+        { dueDate: 'asc' }
       ]
     })
+
+    console.log(`📊 Encontradas ${tasks.length} tarefas ATRIBUÍDAS ao usuário ${user.name}`)
+
+    // ✅ DEBUG: Log das tarefas encontradas
+    if (tasks.length > 0) {
+      console.log(`📋 Tarefas atribuídas:`)
+      tasks.forEach((task, index) => {
+        console.log(`   ${index + 1}. [${task.status}] ${task.title}`)
+        console.log(`      Criada por: ${task.createdBy.name}`)
+        console.log(`      Atribuída para: ${task.assignedTo.name}`)
+      })
+    } else {
+      console.log(`⚠️ NENHUMA tarefa atribuída encontrada para ${user.name} (${user.role})`)
+    }
 
     // ✅ CALCULAR ESTATÍSTICAS DETALHADAS
     const totalTasks = tasks.length
@@ -647,7 +819,7 @@ export const getEmployeeDetails = async (req: AuthRequest, res: Response) => {
       ['PENDING', 'IN_PROGRESS'].includes(t.status)
     ).length
 
-    // Taxa de conclusão
+    // ✅ CORRIGIR CÁLCULO DA TAXA DE CONCLUSÃO
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
     // Estatísticas por prioridade
@@ -677,10 +849,10 @@ export const getEmployeeDetails = async (req: AuthRequest, res: Response) => {
         low: lowTasks
       },
       recentTasks,
-      avgTasksPerMonth: totalTasks > 0 ? Math.round(totalTasks / Math.max(1, Math.ceil((Date.now() - new Date(employee.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))) : 0
+      avgTasksPerMonth: totalTasks > 0 ? Math.round(totalTasks / Math.max(1, Math.ceil((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))) : 0
     }
 
-    console.log(`✅ Detalhes do funcionário ${employee.name}:`, {
+    console.log(`✅ Estatísticas calculadas para ${user.name}:`, {
       totalTasks,
       pendingTasks,
       completedTasks,
@@ -689,19 +861,19 @@ export const getEmployeeDetails = async (req: AuthRequest, res: Response) => {
     })
 
     res.json({
-      employee,
+      employee: user.role === 'EMPLOYEE' ? user : undefined,  // ✅ COMPATIBILIDADE
+      user: user,                                              // ✅ CAMPO GENÉRICO
       tasks,
       stats
     })
 
   } catch (error) {
-    console.error('❌ Erro ao buscar detalhes do funcionário:', error)
+    console.error('❌ Erro ao buscar detalhes do usuário:', error)
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
   }
 }
-
 
 export const editTarefa = async (req: AuthRequest, res: Response) => {
   try {
@@ -723,21 +895,38 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
 
     // Verificar se a tarefa existe
     const existingTask = await prisma.task.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } }
+      }
     })
 
     if (!existingTask) {
       return res.status(404).json({ error: 'Tarefa não encontrada' })
     }
 
-    // Verificar se o funcionário existe (se enviado)
-    if (assignedToId) {
-      const assignedUser = await prisma.user.findUnique({
-        where: { id: assignedToId }
+    // ✅ MODIFICAR: Apenas o CRIADOR pode editar (não o atribuído)
+    const canEdit = existingTask.createdById === userId
+
+    if (!canEdit) {
+      return res.status(403).json({ 
+        error: 'Apenas o criador da tarefa pode editá-la. Você pode apenas alterar o status se foi atribuído a você.' 
+      })
+    }
+
+    // ✅ MODIFICAR: Verificar se o usuário a ser atribuído existe (QUALQUER USUÁRIO VERIFICADO)
+    if (assignedToId && assignedToId !== existingTask.assignedToId) {
+      const assignedUser = await prisma.user.findFirst({
+        where: { 
+          id: assignedToId,
+          emailVerified: true
+          // ✅ NÃO FILTRAR POR ROLE - permitir MANAGERS e EMPLOYEES
+        }
       })
 
-      if (!assignedUser || assignedUser.role !== 'EMPLOYEE') {
-        return res.status(400).json({ error: 'Funcionário não encontrado' })
+      if (!assignedUser) {
+        return res.status(400).json({ error: 'Usuário para atribuição não encontrado' })
       }
     }
 
@@ -797,17 +986,29 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
       }
     })
 
-    // Se mudou o assignedTo, cria notificação para o novo responsável
+        // Se mudou o assignedTo, cria notificação para o novo responsável
     if (assignedToId && assignedToId !== existingTask.assignedToId) {
+      const newAssignedUser = await prisma.user.findUnique({
+        where: { id: assignedToId },
+        select: { name: true, role: true }
+      })
+
+      // ✅ PERSONALIZAR notificação baseada no role
+      const notificationMessage = newAssignedUser?.role === 'MANAGER'
+        ? `Você foi atribuído à tarefa "${updatedTask.title}" por ${existingTask.createdBy.name}`
+        : `Você foi atribuído à tarefa "${updatedTask.title}"`
+
       await prisma.notification.create({
         data: {
           type: 'TASK_ASSIGNED',
-          title: 'Tarefa atribuída',
-          message: `Você foi atribuído à tarefa "${updatedTask.title}"`,
+          title: 'Tarefa reatribuída',
+          message: notificationMessage,
           userId: assignedToId,
           taskId: updatedTask.id
         }
       })
+
+      console.log(`🔄 Tarefa reatribuída: ${updatedTask.title} para ${newAssignedUser?.name} (${newAssignedUser?.role})`)
     }
 
     res.json({
@@ -830,6 +1031,7 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Erro interno do servidor' })
   }
 }
+
 
 // Buscar comentários de uma tarefa
 export const getTaskComments = async (req: AuthRequest, res: Response) => {
@@ -1423,6 +1625,64 @@ export const getMyTasks = async (req: AuthRequest, res: Response) => {
 
   } catch (error) {
     console.error('❌ Erro ao buscar tarefas do funcionário:', error)
+    res.status(500).json({ 
+      error: 'Erro interno do servidor' 
+    })
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Buscar tarefas atribuídas a mim (para managers que receberam tarefas)
+export const getMyAssignedTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId
+
+    console.log(`🔍 Usuário ${userId} buscando tarefas atribuídas a ele`)
+
+    // Buscar APENAS tarefas atribuídas ao usuário (criadas por outros)
+    const tasks = await prisma.task.findMany({
+      where: {
+        assignedToId: userId,
+        createdById: { not: userId } // ✅ Excluir tarefas que ele mesmo criou
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        },
+        assignedTo: {
+          select: { id: true, name: true, email: true }
+        },
+        attachments: true,
+        _count: {
+          select: { 
+            attachments: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: [
+        { status: 'asc' },      // Pendentes primeiro
+        { dueDate: 'asc' }      // Por data de vencimento
+      ]
+    })
+
+    // ✅ ADICIONAR: Informações de permissão
+    const tasksWithPermissions = tasks.map(task => ({
+      ...task,
+      canEdit: false,                    // ✅ Não pode editar (não é criador)
+      canChangeStatus: true,             // ✅ Pode mudar status (é atribuído)
+      canDelete: false,                  // ✅ Não pode excluir (não é criador)
+      isCreator: false,                  // ✅ Não é criador
+      isAssigned: true                   // ✅ É atribuído
+    }))
+
+    console.log(`✅ Encontradas ${tasks.length} tarefas atribuídas ao usuário ${userId}`)
+
+    res.json({ 
+      tasks: tasksWithPermissions 
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar tarefas atribuídas:', error)
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
