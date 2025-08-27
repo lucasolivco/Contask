@@ -1,20 +1,13 @@
-// frontend/src/pages/Tasks.tsx - COMPLETO COM SUPORTE A MANAGERS
+// frontend/src/pages/Tasks.tsx - SIMPLIFICADO SEM FILTRO DUPLICADO
+
 import React, { useState, useMemo, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { 
   CheckSquare, 
   Plus,
-  Clock,
-  AlertTriangle,
-  Target,
   Trash2, 
-  CheckSquare2,
-  X,
-  Users,
-  Crown,
-  Filter,
-  User
+  X
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
@@ -23,7 +16,7 @@ import TaskFilters from '../components/tasks/TaskFilters'
 import TaskCard from '../components/tasks/TaskCard'
 import TaskDetailsModal from '../components/tasks/TaskDetailsModal'
 import { useAuth } from '../contexts/AuthContext'
-import { getTasks, updateTaskStatus, deleteTask, bulkDeleteTasks, getMyAssignedTasks } from '../services/taskService' // ✅ ADICIONAR getMyAssignedTasks
+import { getTasks, updateTaskStatus, deleteTask, bulkDeleteTasks } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
 import { useNavigate } from 'react-router-dom'
 
@@ -37,29 +30,26 @@ const Tasks: React.FC = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
-  const [viewFilter, setViewFilter] = useState<'all' | 'created' | 'assigned'>('all') // ✅ ADICIONAR filtro de visualização
 
-   // ✅ LIMPAR ESTADO QUANDO USUÁRIO MUDA
+  // ✅ LIMPAR ESTADO QUANDO USUÁRIO MUDA
   useEffect(() => {
     if (user) {
-      console.log(`🔄 Usuário mudou para: ${user.email} (${user.role})`);
+      console.log(`🔄 Usuário mudou para: ${user.email} (${user.role})`)
       
       // Limpar seleções e filtros
-      setSelectedTaskIds([]);
-      setFilters({});
-      setSelectedTask(null);
-      setIsDetailsModalOpen(false);
-      setViewFilter('all'); // ✅ ADICIONAR reset do viewFilter
+      setSelectedTaskIds([])
+      setFilters({})
+      setSelectedTask(null)
+      setIsDetailsModalOpen(false)
       
       // Invalidar cache específico
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // ✅ ADICIONAR
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
       
-      console.log('   ✅ Estado limpo para novo usuário');
+      console.log('   ✅ Estado limpo para novo usuário')
     }
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient])
 
-  // ✅ QUERY PRINCIPAL COM USER ID NA KEY
+  // ✅ QUERY ÚNICA SIMPLIFICADA
   const { data: tasksData, isLoading, error } = useQuery({
     queryKey: ['tasks', user?.id, filters],
     queryFn: () => getTasks(filters),
@@ -68,49 +58,11 @@ const Tasks: React.FC = () => {
     gcTime: 1000 * 60 * 5,
   })
 
-  // ✅ NOVA QUERY PARA TAREFAS ATRIBUÍDAS AO MANAGER
-  const { data: assignedTasksData } = useQuery({
-    queryKey: ['assigned-tasks', user?.id],
-    queryFn: () => getMyAssignedTasks(),
-    enabled: !!user && user.role === 'MANAGER',
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5,
-  })
-
   const tasks = tasksData?.tasks || []
-  const assignedTasks = assignedTasksData?.tasks || []
 
-  // ✅ FILTROS ATUALIZADOS COM VISUALIZAÇÃO
+  // ✅ FILTROS SIMPLIFICADOS - SEM LÓGICA COMPLEXA DE VISUALIZAÇÃO
   const filteredTasks = useMemo(() => {
-    let allTasks = [...tasks]
-    
-    // ✅ FILTRO POR TIPO DE VISUALIZAÇÃO (APENAS PARA MANAGERS)
-    if (user?.role === 'MANAGER') {
-      if (viewFilter === 'created') {
-        // Apenas tarefas que o manager criou
-        allTasks = allTasks.filter(task => task.canEdit) // canEdit = é criador
-      } else if (viewFilter === 'assigned') {
-        // Apenas tarefas atribuídas ao manager (criadas por outros)
-        allTasks = assignedTasks
-      } else {
-        // Todas as tarefas (criadas + atribuídas)
-        const createdTaskIds = allTasks.map(t => t.id)
-        const assignedNotCreated = assignedTasks.filter(t => !createdTaskIds.includes(t.id))
-        allTasks = [...allTasks, ...assignedNotCreated]
-      }
-    }
-
-    let filtered = allTasks
-
-    // Filtro por tarefas atrasadas
-    if (filters.overdue) {
-      const now = new Date()
-      filtered = filtered.filter(task =>
-        task.dueDate &&
-        new Date(task.dueDate) < now &&
-        ['PENDING', 'IN_PROGRESS'].includes(task.status)
-      )
-    }
+    let filtered = [...tasks]
 
     // ✅ ORDENAÇÃO POR PRIORIDADE: URGENT > HIGH > MEDIUM > LOW
     const priorityOrder = { 'URGENT': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 }
@@ -131,13 +83,11 @@ const Tasks: React.FC = () => {
     })
 
     return filtered
-  }, [tasks, assignedTasks, filters, viewFilter, user?.role])
+  }, [tasks])
 
-  // ✅ MODIFICAR handleStatusChange PARA QUALQUER USUÁRIO ATRIBUÍDO
   const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
     const task = filteredTasks.find(t => t.id === taskId)
     
-    // ✅ VERIFICAR SE O USUÁRIO PODE ALTERAR STATUS (ATRIBUÍDO)
     if (!task?.canChangeStatus) {
       toast.error('Você não pode alterar o status desta tarefa')
       return
@@ -148,7 +98,6 @@ const Tasks: React.FC = () => {
       
       await updateTaskStatus(taskId, newStatus)
       queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] })
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks', user?.id] }) // ✅ ADICIONAR
       
       toast.success('Status atualizado com sucesso!', { id: `status-${taskId}` })
     } catch (error: any) {
@@ -156,7 +105,6 @@ const Tasks: React.FC = () => {
     }
   }
 
-  // ✅ MODIFICAR handleEditTask PARA VERIFICAR PERMISSÕES
   const handleEditTask = (taskId: string) => {
     const task = filteredTasks.find(t => t.id === taskId)
     
@@ -178,7 +126,6 @@ const Tasks: React.FC = () => {
     setSelectedTask(null)
   }
 
-  // ✅ MODIFICAR handleDeleteTask PARA VERIFICAR PERMISSÕES
   const handleDeleteTask = async (taskId: string) => {
     if (!user?.id) {
       toast.error('Usuário não autenticado')
@@ -202,7 +149,6 @@ const Tasks: React.FC = () => {
       setIsDeleting(true)
       const result = await deleteTask(taskId)
       queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] })
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks', user?.id] }) // ✅ ADICIONAR
       setSelectedTaskIds(prev => prev.filter(id => id !== taskId))
       toast.success(result.message || 'Tarefa excluída com sucesso!')
     } catch (error: any) {
@@ -233,7 +179,6 @@ const Tasks: React.FC = () => {
       setIsDeleting(true)
       const result = await bulkDeleteTasks(selectedTaskIds)
       queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] })
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks', user?.id] }) // ✅ ADICIONAR
       setSelectedTaskIds([])
       toast.success(result.message || 'Tarefas excluídas com sucesso!')
     } catch (error: any) {
@@ -305,78 +250,14 @@ const Tasks: React.FC = () => {
         )}
       </div>
 
-      {/* Filtros */}
-      <TaskFilters onFiltersChange={setFilters} userRole={user?.role || ''} />
+      {/* ✅ FILTROS ELEGANTES COM currentUserId */}
+      <TaskFilters 
+        onFiltersChange={setFilters} 
+        userRole={user?.role || ''} 
+        currentUserId={user?.id}
+      />
 
-      {/* ✅ NOVO: FILTRO DE VISUALIZAÇÃO PARA MANAGERS */}
-      {user?.role === 'MANAGER' && (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Visualização
-              </h3>
-              <div className="text-xs text-gray-600 bg-white px-2 py-1 rounded">
-                {filteredTasks.length} tarefa(s)
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {[
-                { 
-                  key: 'all', 
-                  label: 'Todas as Tarefas', 
-                  icon: Users, 
-                  description: 'Criadas + Atribuídas',
-                  count: tasks.length + assignedTasks.filter(t => !tasks.some(ct => ct.id === t.id)).length
-                },
-                { 
-                  key: 'created', 
-                  label: 'Que Criei', 
-                  icon: Crown, 
-                  description: 'Posso editar',
-                  count: tasks.filter(t => t.canEdit).length
-                },
-                { 
-                  key: 'assigned', 
-                  label: 'Atribuídas a Mim', 
-                  icon: Target, 
-                  description: 'Só alterar status',
-                  count: assignedTasks.length
-                }
-              ].map(({ key, label, icon: Icon, description, count }) => {
-                const isActive = viewFilter === key
-                
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setViewFilter(key as any)}
-                    className={`
-                      px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                      flex items-center gap-2 group
-                      ${isActive 
-                        ? 'bg-blue-600 text-white shadow-md transform scale-105' 
-                        : 'bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-700 border border-gray-200'
-                      }
-                    `}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <div className="text-left">
-                      <div>{label}</div>
-                      <div className="text-xs opacity-75">
-                        {count} • {description}
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* ✅ BARRA DE SELEÇÃO MELHORADA (APENAS MANAGER) */}
+      {/* ✅ BARRA DE SELEÇÃO (APENAS MANAGER) */}
       {user?.role === 'MANAGER' && filteredTasks.length > 0 && (
         <div className={`
           flex items-center justify-between p-4 rounded-xl border transition-all duration-300
@@ -467,15 +348,15 @@ const Tasks: React.FC = () => {
               <CheckSquare className="h-16 w-16 text-gray-400" />
             </div>
             <h3 className="heading-md mb-3">
-              {tasks.length === 0 && assignedTasks.length === 0 ? 'Nenhuma tarefa encontrada' : 'Nenhuma tarefa corresponde aos filtros'}
+              {tasks.length === 0 ? 'Nenhuma tarefa encontrada' : 'Nenhuma tarefa corresponde aos filtros'}
             </h3>
             <p className="text-muted mb-8">
-              {tasks.length === 0 && assignedTasks.length === 0
+              {tasks.length === 0
                 ? 'Comece criando sua primeira tarefa'
                 : 'Tente ajustar os filtros para ver mais resultados'
               }
             </p>
-            {user?.role === 'MANAGER' && tasks.length === 0 && assignedTasks.length === 0 && (
+            {user?.role === 'MANAGER' && tasks.length === 0 && (
               <Button 
                 onClick={() => navigate('/tasks/create')}
                 className="interactive-glow"
