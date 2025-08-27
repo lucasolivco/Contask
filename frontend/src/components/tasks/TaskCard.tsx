@@ -1,4 +1,5 @@
-// frontend/src/components/tasks/TaskCard.tsx - ATUALIZADO COM PERMISSÕES
+// frontend/src/components/tasks/TaskCard.tsx - CHECKBOX CORRIGIDO
+
 import { 
   Calendar, 
   User, 
@@ -10,7 +11,7 @@ import {
   Target, 
   MessageCircle,
   Trash2,
-  Crown // ✅ ADICIONAR para indicar managers
+  Crown
 } from 'lucide-react'
 import moment from 'moment-timezone'
 import {  
@@ -19,7 +20,6 @@ import {
 } from '../../types'
 import type { Task } from '../../types'
 
-// ✅ INTERFACE ATUALIZADA PARA SUPORTAR PERMISSÕES
 interface TaskCardProps {
   task: Task & {
     canEdit?: boolean
@@ -95,6 +95,21 @@ const TaskCard = ({
   const isOverdue = task.dueDate && isDatePastBrazil(task.dueDate) && task.status !== 'COMPLETED'
   const isNearTarget = task.targetDate && isDateNearBrazil(task.targetDate) && task.status !== 'COMPLETED'
 
+  // ✅ VERIFICAR SE PODE MOSTRAR CHECKBOX
+  const canShowCheckbox = () => {
+    // Para managers, sempre mostrar checkbox (para seleção múltipla)
+    if (userRole === 'MANAGER' && onToggleSelect) {
+      return true
+    }
+    // Para outros, apenas se pode deletar
+    return task.canDelete && onToggleSelect
+  }
+
+  // ✅ VERIFICAR SE PODE DELETAR (PARA O BOTÃO LIXEIRA)
+  const canShowDeleteButton = () => {
+    return task.canDelete || (userRole === 'MANAGER' && (task.isCreator || task.canEdit))
+  }
+
   // ✅ getStatusStyles MANTIDO
   const getStatusStyles = (status: Task['status']) => {
     switch (status) {
@@ -160,30 +175,57 @@ const TaskCard = ({
   const statusStyles = getStatusStyles(task.status)
   const priorityStyles = getPriorityStyles(task.priority)
 
+  // ✅ HANDLE CLICK DO CARD INTEIRO
+  const handleCardClick = () => {
+    onViewDetails?.(task)
+  }
+
+  // ✅ HANDLE PARA PREVENIR PROPAGAÇÃO EM ELEMENTOS INTERATIVOS
+  const handleInteractiveClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+  }
+
+  // ✅ DEBUG: Log para verificar propriedades
+  console.log('TaskCard Debug:', {
+    taskId: task.id,
+    userRole,
+    canDelete: task.canDelete,
+    canEdit: task.canEdit,
+    isCreator: task.isCreator,
+    canShowCheckbox: canShowCheckbox(),
+    hasOnToggleSelect: !!onToggleSelect
+  })
+
   return (
-    <div className={`
-      bg-white rounded-xl border border-gray-200 border-r-4 ${statusStyles.border} p-4 
-      transition-all duration-200 hover:shadow-lg hover:border-gray-300 ${statusStyles.bgHover}
-      ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
-      ${task.status === 'COMPLETED' ? 'opacity-75' : ''}
-    `}>
+    <div 
+      className={`
+        bg-white rounded-xl border border-gray-200 border-r-4 ${statusStyles.border} p-4 
+        transition-all duration-200 hover:shadow-lg hover:border-gray-300 ${statusStyles.bgHover}
+        ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
+        ${task.status === 'COMPLETED' ? 'opacity-75' : ''}
+        cursor-pointer group
+      `}
+      onClick={handleCardClick}
+    >
       
-      {/* Header com checkbox e prioridade */}
+      {/* ✅ HEADER COM CHECKBOX E PRIORIDADE */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          {/* ✅ CHECKBOX APENAS PARA QUEM PODE DELETAR (CRIADORES) */}
-          {task.canDelete && onToggleSelect && (
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isSelected || false}
-                onChange={(e) => {
-                  e.stopPropagation()
-                  onToggleSelect(task.id)
-                }}
-                className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
-              />
-            </label>
+          {/* ✅ CHECKBOX CORRIGIDO - SEMPRE VISÍVEL PARA MANAGERS */}
+          {canShowCheckbox() && (
+            <div onClick={handleInteractiveClick}>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSelected || false}
+                  onChange={(e) => {
+                    e.stopPropagation()
+                    onToggleSelect?.(task.id)
+                  }}
+                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                />
+              </label>
+            </div>
           )}
           
           {/* Status */}
@@ -195,23 +237,37 @@ const TaskCard = ({
           </div>
         </div>
         
-        {/* ✅ PRIORIDADE (BADGE) - CORES MANTIDAS */}
+        {/* ✅ PRIORIDADE + BOTÃO DELETE NO HOVER */}
         <div className="flex items-center gap-2">
+          {/* Prioridade */}
           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold border ${priorityStyles.text}`}>
             <span className="mr-1">{priorityStyles.icon}</span>
             {TaskPriorityLabels[task.priority]}
           </span>
+          
+          {/* ✅ BOTÃO DELETE CORRIGIDO */}
+          {canShowDeleteButton() && onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(task.id)
+              }}
+              className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+              title="Excluir tarefa"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Título da tarefa */}
-      <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 text-base">
+      {/* ✅ TÍTULO DA TAREFA - CLICÁVEL */}
+      <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 text-base hover:text-blue-600 transition-colors">
         {task.title}
       </h3>
 
       {/* ✅ INFORMAÇÕES COM INDICADORES DE ROLE */}
       <div className="space-y-2 mb-4 text-sm text-gray-600">
-        {/* ✅ MOSTRAR INFORMAÇÕES BASEADAS NA PERSPECTIVA */}
         <div className="space-y-1">
           {/* Criado por */}
           <div className="flex items-center gap-2">
@@ -270,32 +326,22 @@ const TaskCard = ({
         </div>
       </div>
 
-      {/* ✅ AÇÕES BASEADAS EM PERMISSÕES */}
+      {/* ✅ FOOTER COM AÇÕES */}
       <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-        {/* Ver Detalhes */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onViewDetails?.(task)
-          }}
-          className="flex-1 flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-blue-600 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-        >
+        {/* ✅ INDICADOR CLICÁVEL */}
+        <div className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700 transition-colors">
           <MessageCircle className="h-4 w-4" />
-          Acessar
-        </button>
+          <span className="font-medium">Clique para ver detalhes</span>
+        </div>
         
-        {/* ✅ AÇÕES BASEADAS EM PERMISSÕES (NÃO EM ROLE) */}
-        <div className="flex items-center gap-1">
+        {/* ✅ AÇÕES INTERATIVAS */}
+        <div className="flex items-center gap-1 ml-auto" onClick={handleInteractiveClick}>
           {/* ✅ DROPDOWN DE STATUS - APENAS PARA QUEM PODE ALTERAR STATUS */}
           {task.canChangeStatus && !task.canEdit && (
             <select
               value={task.status}
-              onChange={(e) => {
-                e.stopPropagation()
-                onStatusChange?.(task.id, e.target.value as Task['status'])
-              }}
+              onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
               className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all bg-white"
-              onClick={(e) => e.stopPropagation()}
             >
               <option value="PENDING">⏳ Pendente</option>
               <option value="IN_PROGRESS">🔄 Em Progresso</option>
@@ -303,47 +349,26 @@ const TaskCard = ({
             </select>
           )}
           
-          {/* ✅ BOTÕES DE EDITAR/EXCLUIR - APENAS PARA CRIADORES */}
-          {task.canEdit && (
-            <>
-              {/* Botão Delete */}
-              {task.canDelete && onDelete && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete(task.id)
-                  }}
-                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Excluir tarefa"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-              
-              {/* Botão Editar */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit?.(task.id)
-                }}
-                className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
-              >
-                <Edit3 className="h-3 w-3" />
-                Editar
-              </button>
-            </>
+          {/* ✅ BOTÃO EDITAR - PARA CRIADORES */}
+          {(task.canEdit || (userRole === 'MANAGER' && task.isCreator)) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit?.(task.id)
+              }}
+              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
+            >
+              <Edit3 className="h-3 w-3" />
+              Editar
+            </button>
           )}
           
           {/* ✅ CASO ESPECIAL: CRIADOR QUE TAMBÉM É ATRIBUÍDO */}
           {task.canEdit && task.canChangeStatus && (
             <select
               value={task.status}
-              onChange={(e) => {
-                e.stopPropagation()
-                onStatusChange?.(task.id, e.target.value as Task['status'])
-              }}
+              onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
               className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-100 focus:outline-none transition-all bg-white ml-1"
-              onClick={(e) => e.stopPropagation()}
               title="Alterar status"
             >
               <option value="PENDING">⏳ Pendente</option>
@@ -352,13 +377,6 @@ const TaskCard = ({
               <option value="CANCELLED">❌ Cancelada</option>
             </select>
           )}
-        </div>
-        
-        {/* ✅ INDICADOR DE PERMISSÃO (SUTIL) */}
-        <div className="text-xs text-gray-400 ml-auto">
-          {task.isCreator && task.isAssigned} {/* Criador e atribuído */}
-          {task.isCreator && !task.isAssigned} {/* Apenas criador */}
-          {!task.isCreator && task.isAssigned} {/* Apenas atribuído */}
         </div>
       </div>
     </div>
