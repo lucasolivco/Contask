@@ -269,7 +269,7 @@ const Calendar: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="heading-xl flex items-center gap-4 mb-2">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl shadow-lg">
               <CalendarIcon className="h-8 w-8 text-white" />
             </div>
             Calendário de Tarefas
@@ -528,40 +528,6 @@ const Calendar: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
-
-          {/* Ações Rápidas */}
-          <Card>
-            <h3 className="font-semibold text-gray-900 mb-3">Ações Rápidas</h3>
-            
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/tasks')}
-                className="w-full justify-start"
-              >
-                Ver Todas as Tarefas
-              </Button>
-              
-              {user?.role === 'MANAGER' && (
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/tasks/create')}
-                  className="w-full justify-start"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Tarefa
-                </Button>
-              )}
-              
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/tasks?overdue=true')}
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                Ver Atrasadas ({monthStats.overdue})
-              </Button>
             </div>
           </Card>
         </div>

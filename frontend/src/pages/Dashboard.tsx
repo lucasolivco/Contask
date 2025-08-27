@@ -1,3 +1,5 @@
+// frontend/src/pages/Dashboard.tsx - CORES BALANCEADAS E LIMPO
+
 import React, { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { 
@@ -82,7 +84,7 @@ const Dashboard: React.FC = () => {
     }
   }, [tasks, user?.id])
 
-  // ✅ DADOS PARA GRÁFICO DE PIZZA CSS
+  // ✅ DADOS PARA GRÁFICO COM CORES BALANCEADAS
   const chartData = React.useMemo(() => {
     if (stats.total === 0) return []
     
@@ -91,34 +93,34 @@ const Dashboard: React.FC = () => {
         name: 'Concluídas', 
         value: stats.completed, 
         percentage: Math.round((stats.completed / stats.total) * 100),
-        color: '#10b981',
+        color: '#22c55e', // Verde mais saturado
         textColor: 'text-emerald-700'
       },
       { 
         name: 'Em Progresso', 
         value: stats.inProgress, 
         percentage: Math.round((stats.inProgress / stats.total) * 100),
-        color: '#3b82f6',
+        color: '#3b82f6', // Azul balanceado
         textColor: 'text-blue-700'
       },
       { 
         name: 'Pendentes', 
         value: stats.pending, 
         percentage: Math.round((stats.pending / stats.total) * 100),
-        color: '#6b7280',
+        color: '#9ca3af', // Cinza médio
         textColor: 'text-gray-700'
       },
       { 
         name: 'Atrasadas', 
         value: stats.overdue, 
         percentage: Math.round((stats.overdue / stats.total) * 100),
-        color: '#ef4444',
-        textColor: 'text-red-700'
+        color: '#f43f5e', // Rosa mais vibrante
+        textColor: 'text-rose-700'
       },
     ].filter(item => item.value > 0)
   }, [stats])
 
-  // ✅ COMPONENTE DE GRÁFICO PIZZA CORRIGIDO - TODAS AS FATIAS VISÍVEIS
+  // ✅ COMPONENTE DE GRÁFICO PIZZA COM CORES BALANCEADAS
   const PieChartCSS: React.FC = () => {
     if (chartData.length === 0) {
       return (
@@ -132,14 +134,9 @@ const Dashboard: React.FC = () => {
       )
     }
 
-    // ✅ DEBUG: Mostrar dados no console
-    console.log('📊 Chart Data:', chartData)
-    console.log('📊 Stats:', stats)
-
     // ✅ GARANTIR QUE FATIAS PEQUENAS SEJAM VISÍVEIS (MÍNIMO 5%)
     const adjustedChartData = chartData.map(item => ({
       ...item,
-      // Garantir que fatias pequenas tenham pelo menos 5% para serem visíveis
       displayPercentage: Math.max(item.percentage, 5)
     }))
 
@@ -158,8 +155,6 @@ const Dashboard: React.FC = () => {
       const angle = (item.normalizedPercentage / 100) * 360
       const startAngle = currentAngle
       currentAngle += angle
-      
-      console.log(`Fatia ${index}: ${item.name} - ${item.percentage}% real, ${item.normalizedPercentage}% exibido, ângulo: ${angle}°`)
       
       return { 
         ...item, 
@@ -201,20 +196,20 @@ const Dashboard: React.FC = () => {
       <div className="h-64">
         <div className="flex flex-col h-full">
           
-          {/* ✅ GRÁFICO COM FATIAS GARANTIDAMENTE VISÍVEIS */}
+          {/* ✅ GRÁFICO COM CORES BALANCEADAS */}
           <div className="flex-1 flex items-center justify-center">
             <svg width="160" height="160" className="drop-shadow-sm">
-              {/* ✅ RENDERIZAR FATIAS COM CORES DISTINTAS */}
+              {/* ✅ RENDERIZAR FATIAS COM CORES BALANCEADAS */}
               {segments.map((segment, index) => (
                 <path
                   key={`segment-${index}`}
                   d={createPath(segment.startAngle, segment.angle)}
                   fill={segment.color}
                   stroke="white"
-                  strokeWidth="2"
-                  className="transition-opacity duration-200"
+                  strokeWidth="3"
+                  className="transition-opacity duration-200 hover:opacity-80"
                   style={{ 
-                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+                    filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1))'
                   }}
                 />
               ))}
@@ -225,8 +220,8 @@ const Dashboard: React.FC = () => {
                 cy="80"
                 r="30"
                 fill="white"
-                stroke="#e5e7eb"
-                strokeWidth="1"
+                stroke="#f3f4f6"
+                strokeWidth="2"
                 className="drop-shadow-sm"
               />
               
@@ -250,16 +245,16 @@ const Dashboard: React.FC = () => {
             </svg>
           </div>
           
-          {/* ✅ LEGENDA COM DADOS REAIS (NÃO AJUSTADOS) */}
+          {/* ✅ LEGENDA COM CORES BALANCEADAS */}
           <div className="mt-3 space-y-2">
             {chartData.map((item, index) => (
               <div 
                 key={`legend-${index}`}
-                className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
               >
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-3 h-3 rounded-full flex-shrink-0 border border-white"
+                    className="w-3 h-3 rounded-full flex-shrink-0 border-2 border-white shadow-sm"
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-sm text-gray-700 font-medium">
@@ -278,7 +273,7 @@ const Dashboard: React.FC = () => {
     )
   }
   
-// ✅ TAREFAS PRIORITÁRIAS E RECENTES (MANTIDAS)
+// ✅ TAREFAS PRIORITÁRIAS E RECENTES
   const priorityTasks = React.useMemo(() => {
     if (!user || !tasks.length) return [];
     
@@ -303,7 +298,6 @@ const Dashboard: React.FC = () => {
   }, [tasks, user?.id])
 
   // ✅ COMPONENTE DE ESTATÍSTICA MANTIDO
-  // ✅ COMPONENTE DE ESTATÍSTICA CORRIGIDO - ÍCONES COM FUNDO
   const StatCard: React.FC<{
     title: string
     value: number | string
@@ -357,7 +351,8 @@ const Dashboard: React.FC = () => {
       </Card>
     )
   }
-  // ✅ COMPONENTE DE TAREFA MELHORADO (MANTIDO)
+
+  // ✅ COMPONENTE DE TAREFA LIMPO (SEM TAG REDUNDANTE)
   const TaskItem: React.FC<{ task: Task; showPriority?: boolean }> = ({ task, showPriority = true }) => {
     const isOverdue = task.dueDate && 
       moment(task.dueDate).tz('America/Sao_Paulo').isBefore(moment().tz('America/Sao_Paulo'), 'day') && 
@@ -367,16 +362,18 @@ const Dashboard: React.FC = () => {
     return (
       <div className={`
         flex items-center justify-between py-3 px-3 rounded-lg transition-all duration-200 
-        ${isOverdue ? 'border' : 'hover:bg-gray-50'}
-        ${isUrgent ? 'border' : 'hover:bg-gray-50'}
+        border border-gray-100 hover:border-gray-200 hover:bg-gray-50
+        ${isOverdue ? 'border-rose-200 bg-rose-50/30' : ''}
+        ${isUrgent && !isOverdue ? 'border-purple-200 bg-purple-50/30' : ''}
       `}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className={`text-sm font-semibold truncate ${isOverdue ? 'text-dark-700' : 'text-gray-900'}`}>
+            <h4 className="text-sm font-semibold truncate text-gray-900">
               {task.title}
             </h4>
+            {/* ✅ APENAS TAG URGENTE (SEM REDUNDÂNCIA) */}
             {isUrgent && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
                 URGENTE
               </span>
             )}
@@ -390,7 +387,7 @@ const Dashboard: React.FC = () => {
               }
             </span>
             {task.dueDate && (
-              <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
+              <span className={isOverdue ? 'text-rose-600 font-medium' : 'text-gray-500'}>
                 <Calendar className="inline h-3 w-3 mr-1" />
                 {isOverdue ? 'Venceu' : 'Vence'}: {moment(task.dueDate).tz('America/Sao_Paulo').format('DD/MM/YYYY')}
               </span>
@@ -401,17 +398,21 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center gap-2 ml-3">
           {showPriority && (
             <span className={`
-              px-2 py-1 text-xs font-medium rounded
-              ${TaskPriorityColors[task.priority].bg} 
-              ${TaskPriorityColors[task.priority].text}
+              px-2 py-1 text-xs font-medium rounded-full border
+              ${task.priority === 'URGENT' ? 'bg-purple-100 text-purple-700 border-purple-200' : ''}
+              ${task.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 border-orange-200' : ''}
+              ${task.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
+              ${task.priority === 'LOW' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
             `}>
               {TaskPriorityLabels[task.priority]}
             </span>
           )}
           <span className={`
-            px-2 py-1 text-xs font-medium rounded
-            ${TaskStatusColors[task.status].bg} 
-            ${TaskStatusColors[task.status].text}
+            px-2 py-1 text-xs font-medium rounded-full border
+            ${task.status === 'PENDING' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
+            ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
+            ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700 border-green-200' : ''}
+            ${task.status === 'CANCELLED' ? 'bg-gray-100 text-gray-600 border-gray-200' : ''}
           `}>
             {TaskStatusLabels[task.status]}
           </span>
@@ -419,40 +420,6 @@ const Dashboard: React.FC = () => {
       </div>
     )
   }
-
-  // ✅ AÇÕES RÁPIDAS (MANTIDAS)
-  const QuickAction: React.FC<{
-    title: string
-    description: string
-    icon: React.ElementType
-    onClick: () => void
-    color: string
-    badge?: string
-  }> = ({ title, description, icon: Icon, onClick, color, badge }) => (
-    <button 
-      onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border border-gray-200 hover:border-opacity-60 transition-all duration-200 interactive-scale group ${color}`}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="p-3 rounded-xl group-hover:scale-110 transition-transform">
-            <Icon className="h-6 w-6" />
-          </div>
-          <div className="ml-4">
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-gray-900">{title}</p>
-              {badge && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
-                  {badge}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">{description}</p>
-          </div>
-        </div>
-      </div>
-    </button>
-  )
 
   // ✅ LOADING MELHORADO (MANTIDO)
   if (!user) {
@@ -492,7 +459,7 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="heading-xl flex items-center gap-4 mb-2">
-            <div className="p-3 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl shadow-lg">
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             Olá, {user?.name}!
@@ -505,27 +472,15 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
         
-        {user?.role === 'MANAGER' && (
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => window.location.href = '/tasks/create'} 
-              size="lg"
-              className="btn-primary"
-            >
-              <Plus className="h-5 w-5" />
-              Nova Tarefa
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* ✅ ESTATÍSTICAS PRINCIPAIS - ÍCONES CORRIGIDOS */}
+      {/* ✅ ESTATÍSTICAS PRINCIPAIS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total de Tarefas"
           value={stats.total}
           icon={Target}
-          color="text-purple-500"
+          color="text-pink-500"
           description="Todas as tarefas"
         />
         <StatCard
@@ -539,7 +494,7 @@ const Dashboard: React.FC = () => {
           title="Pendentes"
           value={stats.pending}
           icon={Clock}
-          color="text-grey-500"
+          color="text-gray-500"
           description="Aguardando início"
         />
         <StatCard
@@ -551,22 +506,22 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* ✅ GRID PRINCIPAL - ALTURA MÍNIMA PARA EVITAR SOBREPOSIÇÃO */}
+      {/* ✅ GRID PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ✅ GRÁFICO DE PIZZA CORRIGIDO */}
+        {/* ✅ GRÁFICO DE PIZZA COM CORES BALANCEADAS */}
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center gap-2 mb-4">
-            <PieChart className="h-6 w-6 text-blue-500" />
+            <PieChart className="h-6 w-6 text-pink-500" />
             <h3 className="heading-md">Distribuição de Tarefas</h3>
           </div>
           <PieChartCSS />
         </Card>
 
-        {/* ✅ TAREFAS PRIORITÁRIAS (MANTIDAS) */}
+        {/* ✅ TAREFAS PRIORITÁRIAS */}
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6 text-orange-500" />
+              <AlertTriangle className="h-6 w-6 text-pink-500" />
               <h3 className="heading-md">Tarefas Prioritárias</h3>
             </div>
             <span className="text-sm text-gray-500">{priorityTasks.length} urgentes</span>
@@ -587,107 +542,44 @@ const Dashboard: React.FC = () => {
           )}
         </Card>
 
-        {/* ✅ AÇÕES RÁPIDAS (MANTIDAS) */}
+        {/* ✅ ATIVIDADE RECENTE LIMPA */}
         <Card className="lg:col-span-1 min-h-96">
-          <div className="flex items-center gap-2 mb-6">
-            <Zap className="h-6 w-6 text-purple-500" />
-            <h3 className="heading-md">Ações Rápidas</h3>
-          </div>
-          
-          <div className="space-y-3">
-            {user?.role === 'MANAGER' ? (
-              <>
-                <QuickAction
-                  title="Nova Tarefa"
-                  description="Criar tarefa para equipe"
-                  icon={Plus}
-                  onClick={() => window.location.href = '/tasks/create'}
-                  color="hover:bg-blue-50 hover:border-blue-200"
-                />
-                <QuickAction
-                  title="Ver Funcionários"
-                  description="Gerenciar equipe"
-                  icon={Users}
-                  onClick={() => window.location.href = '/employees'}
-                  color="hover:bg-green-50 hover:border-green-200"
-                />
-                <QuickAction
-                  title="Todas as Tarefas"
-                  description="Visualizar e filtrar"
-                  icon={CheckSquare}
-                  onClick={() => window.location.href = '/tasks'}
-                  color="hover:bg-purple-50 hover:border-purple-200"
-                />
-                <QuickAction
-                  title="Notificações"
-                  description="Ver atualizações"
-                  icon={Bell}
-                  onClick={() => window.location.href = '/notifications'}
-                  color="hover:bg-yellow-50 hover:border-yellow-200"
-                />
-              </>
-            ) : (
-              <>
-                <QuickAction
-                  title="Minhas Tarefas"
-                  description="Ver todas as tarefas"
-                  icon={CheckSquare}
-                  onClick={() => window.location.href = '/tasks'}
-                  color="hover:bg-blue-50 hover:border-blue-200"
-                  badge={stats.pending > 0 ? `${stats.pending}` : undefined}
-                />
-                <QuickAction
-                  title="Tarefas Atrasadas"
-                  description="Resolver pendências"
-                  icon={AlertCircle}
-                  onClick={() => window.location.href = '/tasks?overdue=true'}
-                  color="hover:bg-red-50 hover:border-red-200"
-                  badge={stats.overdue > 0 ? `${stats.overdue}` : undefined}
-                />
-                <QuickAction
-                  title="Notificações"
-                  description="Ver atualizações"
-                  icon={Bell}
-                  onClick={() => window.location.href = '/notifications'}
-                  color="hover:bg-yellow-50 hover:border-yellow-200"
-                />
-                <QuickAction
-                  title="Progresso Pessoal"
-                  description="Suas estatísticas"
-                  icon={Activity}
-                  onClick={() => window.location.href = '/profile'}
-                  color="hover:bg-purple-50 hover:border-purple-200"
-                />
-              </>
-            )}
-          </div>
-        </Card>
-      </div>
-
-      {/* ✅ TAREFAS RECENTES (MANTIDAS) */}
-      {recentTasks.length > 0 && (
-        <Card>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-indigo-500" />
+              <Calendar className="h-6 w-6 text-pink-500" />
               <h3 className="heading-md">Atividade Recente</h3>
             </div>
+            <span className="text-sm text-gray-500">{recentTasks.length} tarefas</span>
+          </div>
+          
+          {recentTasks.length > 0 ? (
+            <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-modern">
+              {recentTasks.map((task) => (
+                <TaskItem key={task.id} task={task} showPriority={true} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+              <p className="font-medium">Nenhuma atividade recente</p>
+              <p className="text-sm">Comece criando uma tarefa!</p>
+            </div>
+          )}
+          
+          {/* ✅ BOTÃO PARA VER TODAS AS TAREFAS */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => window.location.href = '/tasks'}
+              className="w-full"
             >
-              Ver todas →
+              Ver todas as tarefas →
             </Button>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {recentTasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
-            ))}
-          </div>
         </Card>
-      )}
+      </div>
+
     </div>
   )
 }

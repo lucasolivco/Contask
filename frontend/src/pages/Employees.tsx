@@ -176,7 +176,7 @@ const Employees: React.FC = () => {
       <Card 
         className={`group hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 h-full ${
           user.role === 'MANAGER' 
-            ? 'border-l-purple-500 hover:border-l-purple-600' 
+            ? 'border-l-blue-500 hover:border-l-blue-600' 
             : 'border-l-emerald-500 hover:border-l-emerald-600'
         }`}
         onClick={() => handleViewEmployee(user)}
@@ -188,7 +188,7 @@ const Employees: React.FC = () => {
               <div className="relative flex-shrink-0">
                 <div className={`h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105 ${
                   user.role === 'MANAGER' 
-                    ? 'bg-gradient-to-br from-purple-500 to-indigo-600' 
+                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
                     : 'bg-gradient-to-br from-emerald-500 to-green-600'
                 }`}>
                   {/* ✅ SEMPRE PRIMEIRA LETRA - SEM COROA */}
@@ -219,7 +219,7 @@ const Employees: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     user.role === 'MANAGER' 
-                      ? 'bg-purple-100 text-purple-700' 
+                      ? 'bg-blue-100 text-blue-700' 
                       : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     <User className="h-3 w-3 mr-1" />
@@ -373,7 +373,7 @@ const Employees: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
-          <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-xl sm:rounded-2xl shadow-lg">
+          <div className="p-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl shadow-lg">
             <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
           <div>
@@ -387,7 +387,7 @@ const Employees: React.FC = () => {
         {/* Estatísticas */}
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-purple-500" />
+            <User className="w-4 h-4 text-blue-500" />
             <span>{managersFiltered.length} managers</span>
           </div>
           <div className="flex items-center gap-2">
@@ -481,7 +481,7 @@ const Employees: React.FC = () => {
         {managersFiltered.length > 0 && (filterRole === 'ALL' || filterRole === 'MANAGER') && (
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-purple-500" />
+              <User className="w-5 h-5 text-blue-500" />
               <h2 className="text-xl font-semibold text-gray-900">
                 Managers ({managersFiltered.length})
               </h2>
