@@ -1,4 +1,4 @@
-// frontend/src/pages/Dashboard.tsx - CORES BALANCEADAS E LIMPO
+// frontend/src/pages/Dashboard.tsx - APENAS PRIORIDADE EM TAREFAS PRIORITÁRIAS
 
 import React, { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -352,8 +352,12 @@ const Dashboard: React.FC = () => {
     )
   }
 
-  // ✅ COMPONENTE DE TAREFA LIMPO (SEM TAG REDUNDANTE)
-  const TaskItem: React.FC<{ task: Task; showPriority?: boolean }> = ({ task, showPriority = true }) => {
+  // ✅ COMPONENTE DE TAREFA COM CONTROLE DE EXIBIÇÃO
+  const TaskItem: React.FC<{ 
+    task: Task; 
+    showPriority?: boolean;
+    showStatus?: boolean;
+  }> = ({ task, showPriority = true, showStatus = true }) => {
     const isOverdue = task.dueDate && 
       moment(task.dueDate).tz('America/Sao_Paulo').isBefore(moment().tz('America/Sao_Paulo'), 'day') && 
       task.status !== 'COMPLETED'
@@ -368,15 +372,10 @@ const Dashboard: React.FC = () => {
       `}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
+            {/* ✅ TÍTULO LIMPO SEM TAGS */}
             <h4 className="text-sm font-semibold truncate text-gray-900">
               {task.title}
             </h4>
-            {/* ✅ APENAS TAG URGENTE (SEM REDUNDÂNCIA) */}
-            {isUrgent && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
-                URGENTE
-              </span>
-            )}
           </div>
           
           <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -396,6 +395,7 @@ const Dashboard: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2 ml-3">
+          {/* ✅ BADGE DE PRIORIDADE CONDICIONAL */}
           {showPriority && (
             <span className={`
               px-2 py-1 text-xs font-medium rounded-full border
@@ -404,18 +404,23 @@ const Dashboard: React.FC = () => {
               ${task.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
               ${task.priority === 'LOW' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
             `}>
-              {TaskPriorityLabels[task.priority]}
+              {/* ✅ MOSTRAR "URGENTE" NO LUGAR DE "ALTA" QUANDO FOR URGENT */}
+              {task.priority === 'URGENT' ? 'URGENTE' : TaskPriorityLabels[task.priority]}
             </span>
           )}
-          <span className={`
-            px-2 py-1 text-xs font-medium rounded-full border
-            ${task.status === 'PENDING' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
-            ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
-            ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700 border-green-200' : ''}
-            ${task.status === 'CANCELLED' ? 'bg-gray-100 text-gray-600 border-gray-200' : ''}
-          `}>
-            {TaskStatusLabels[task.status]}
-          </span>
+          
+          {/* ✅ BADGE DE STATUS CONDICIONAL */}
+          {showStatus && (
+            <span className={`
+              px-2 py-1 text-xs font-medium rounded-full border
+              ${task.status === 'PENDING' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
+              ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
+              ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700 border-green-200' : ''}
+              ${task.status === 'CANCELLED' ? 'bg-gray-100 text-gray-600 border-gray-200' : ''}
+            `}>
+              {TaskStatusLabels[task.status]}
+            </span>
+          )}
         </div>
       </div>
     )
@@ -517,7 +522,7 @@ const Dashboard: React.FC = () => {
           <PieChartCSS />
         </Card>
 
-        {/* ✅ TAREFAS PRIORITÁRIAS */}
+        {/* ✅ TAREFAS PRIORITÁRIAS - APENAS PRIORIDADE */}
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -530,7 +535,12 @@ const Dashboard: React.FC = () => {
           {priorityTasks.length > 0 ? (
             <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-modern">
               {priorityTasks.map((task) => (
-                <TaskItem key={task.id} task={task} showPriority={false} />
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  showPriority={true}
+                  showStatus={false}
+                />
               ))}
             </div>
           ) : (
@@ -542,7 +552,7 @@ const Dashboard: React.FC = () => {
           )}
         </Card>
 
-        {/* ✅ ATIVIDADE RECENTE LIMPA */}
+        {/* ✅ ATIVIDADE RECENTE - PRIORIDADE E STATUS */}
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -555,7 +565,12 @@ const Dashboard: React.FC = () => {
           {recentTasks.length > 0 ? (
             <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-modern">
               {recentTasks.map((task) => (
-                <TaskItem key={task.id} task={task} showPriority={true} />
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  showPriority={true}
+                  showStatus={true}
+                />
               ))}
             </div>
           ) : (
