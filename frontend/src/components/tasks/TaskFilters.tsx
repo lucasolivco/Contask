@@ -1,4 +1,4 @@
-// frontend/src/components/tasks/TaskFilters.tsx - MINIMALISTA + ATRIBUÍDAS A MIM
+// frontend/src/components/tasks/TaskFilters.tsx - INCLUINDO MANAGERS
 
 import React, { useState, useEffect } from 'react'
 import { 
@@ -15,7 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { getEmployees } from '../../services/taskService'
+import { getAssignableUsers } from '../../services/taskService' // ✅ MUDANÇA: usar getAssignableUsers
 import type { TaskFilter } from '../../types'
 
 interface TaskFiltersProps {
@@ -32,14 +32,12 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   const [filters, setFilters] = useState<TaskFilter>({})
   const [isDateExpanded, setIsDateExpanded] = useState(false)
 
-  // Buscar funcionários se for manager
-  const { data: employeesData } = useQuery({
-    queryKey: ['employees'],
-    queryFn: getEmployees,
+  // ✅ MUDANÇA: Buscar usuários atribuíveis (managers + employees)
+  const { data: assignableData, isLoading: loadingUsers } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: getAssignableUsers,
     enabled: userRole === 'MANAGER'
   })
-
-  const employees = employeesData?.employees || []
 
   const monthOptions = [
     { value: 1, label: 'Janeiro' },
@@ -114,6 +112,21 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         dueDateYear: yearForNextMonth
       }))
     }
+  }
+
+  // ✅ NOVA: Função para encontrar nome do usuário selecionado
+  const getSelectedUserName = (userId: string) => {
+    if (!assignableData || !userId) return 'Usuário'
+    
+    // Buscar em todas as categorias
+    const allUsers = [
+      ...(assignableData.categories.self || []),
+      ...(assignableData.categories.managers || []),
+      ...(assignableData.categories.employees || [])
+    ]
+    
+    const user = allUsers.find(u => u.id === userId)
+    return user?.name || 'Usuário'
   }
 
   return (
@@ -219,19 +232,50 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             <option value="LOW">📝 Baixa</option>
           </select>
 
-          {/* Funcionário (apenas para managers que não filtraram "minhas") */}
+          {/* ✅ USUÁRIOS - ATUALIZADO PARA INCLUIR MANAGERS */}
           {userRole === 'MANAGER' && !filters.assignedToId && (
             <select
               value={filters.assignedToId || 'all'}
               onChange={(e) => updateFilter('assignedToId', e.target.value)}
               className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              disabled={loadingUsers}
             >
-              <option value="all">Todos Usuários</option>
-              {employees.map(employee => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name}
-                </option>
-              ))}
+              <option value="all">
+                {loadingUsers ? 'Carregando...' : 'Todos Usuários'}
+              </option>
+              
+              {/* ✅ VOCÊ MESMO */}
+              {assignableData?.categories.self && assignableData.categories.self.length > 0 && (
+                <optgroup label="Você">
+                  {assignableData.categories.self.map((user) => (
+                    <option key={user.id} value={user.id}>
+                        {user.name} (Você)
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              
+              {/* ✅ OUTROS MANAGERS */}
+              {assignableData?.categories.managers && assignableData.categories.managers.length > 0 && (
+                <optgroup label="Managers">
+                  {assignableData.categories.managers.map((manager) => (
+                    <option key={manager.id} value={manager.id}>
+                        {manager.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              
+              {/* ✅ FUNCIONÁRIOS */}
+              {assignableData?.categories.employees && assignableData.categories.employees.length > 0 && (
+                <optgroup label="Funcionários">
+                  {assignableData.categories.employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                        {employee.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           )}
 
@@ -340,7 +384,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             )}
             {filters.assignedToId && filters.assignedToId !== 'all' && (
               <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                👤 {filters.assignedToId === currentUserId ? 'Minhas' : employees.find(e => e.id === filters.assignedToId)?.name || 'Usuário'}
+                👤 {filters.assignedToId === currentUserId ? 'Minhas' : getSelectedUserName(filters.assignedToId)}
               </span>
             )}
             {filters.overdue && (

@@ -216,7 +216,7 @@ const CreateTask: React.FC = () => {
                   
                   {/* ✅ VOCÊ MESMO */}
                   {assignableData?.categories.self && assignableData.categories.self.length > 0 && (
-                    <optgroup label="👤 Atribuir para mim">
+                    <optgroup label="Atribuir para mim">
                       {assignableData.categories.self.map((user) => (
                         <option key={user.id} value={user.id}>
                           {user.name} (Você)
@@ -228,7 +228,7 @@ const CreateTask: React.FC = () => {
                   
                   {/* ✅ OUTROS MANAGERS */}
                   {assignableData?.categories.managers && assignableData.categories.managers.length > 0 && (
-                    <optgroup label="👑 Outros Managers">
+                    <optgroup label="Outros Managers">
                       {assignableData.categories.managers.map((manager) => (
                         <option key={manager.id} value={manager.id}>
                           {manager.name} ({manager.email})
@@ -240,7 +240,7 @@ const CreateTask: React.FC = () => {
                   
                   {/* ✅ FUNCIONÁRIOS */}
                   {assignableData?.categories.employees && assignableData.categories.employees.length > 0 && (
-                    <optgroup label="👥 Funcionários">
+                    <optgroup label="Usuários">
                       {assignableData.categories.employees.map((employee) => (
                         <option key={employee.id} value={employee.id}>
                           {employee.name} ({employee.email})
