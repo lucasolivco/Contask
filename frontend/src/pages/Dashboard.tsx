@@ -533,7 +533,7 @@ const Dashboard: React.FC = () => {
           </div>
           
           {priorityTasks.length > 0 ? (
-            <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-modern">
+            <div className="space-y-3 max-h-72 overflow-y-auto">
               {priorityTasks.map((task) => (
                 <TaskItem 
                   key={task.id} 
@@ -563,7 +563,7 @@ const Dashboard: React.FC = () => {
           </div>
           
           {recentTasks.length > 0 ? (
-            <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-modern">
+            <div className="space-y-3 max-h-72 overflow-y-auto">
               {recentTasks.map((task) => (
                 <TaskItem 
                   key={task.id} 
