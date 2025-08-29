@@ -172,7 +172,7 @@ const Register: React.FC = () => {
                       Membro da Equipe
                     </p>
                     <p className="text-xs text-gray-500">
-                      Executar e gerenciar tarefas
+                      Executar tarefas e colaborar
                     </p>
                   </div>
                 </label>
@@ -204,7 +204,7 @@ const Register: React.FC = () => {
                       Gerente
                     </p>
                     <p className="text-xs text-gray-500">
-                      Gerenciar equipe e projetos
+                      Gerenciar equipe e atribuir tarefas
                     </p>
                   </div>
                 </label>
