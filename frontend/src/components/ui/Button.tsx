@@ -1,8 +1,10 @@
+// frontend/src/components/ui/Button.tsx - USANDO CYAN
+
 import React from 'react'
 import { Loader2 } from 'lucide-react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'blue'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: React.ReactNode
@@ -20,11 +22,11 @@ const Button = ({
   const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
   
   const variants = {
-    primary: 'bg-rose-500 hover:bg-rose-600 text-white shadow-sm focus:ring-rose-500 disabled:bg-rose-300',
-    secondary: 'bg-blue-50 hover:bg-blue-100 text-grey-700 border border-blue-200 focus:ring-blue-500',
-    ghost: 'hover:bg-rose-50 text-rose-600 hover:text-rose-700 focus:ring-rose-500',
-    danger: 'bg-red-500 hover:bg-red-600 text-white shadow-sm focus:ring-red-500 disabled:bg-red-300',
-    blue: 'hover:bg-blue-200 text-dark shadow-sm focus:ring-blue-500 disabled:bg-blue-300'
+    primary: 'bg-cyan-600 hover:bg-cyan-600 text-white shadow-sm focus:ring-cyan-500 disabled:bg-cyan-300',
+    secondary: 'bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 focus:ring-emerald-500',
+    ghost: 'hover:bg-cyan-50 text-cyan-600 hover:text-cyan-700 focus:ring-cyan-500',
+    danger: 'hover:bg-red-50 text-red-600 hover:text-red-700 focus:ring-red-500',
+    success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm focus:ring-emerald-500 disabled:bg-emerald-300'
   }
   
   const sizes = {

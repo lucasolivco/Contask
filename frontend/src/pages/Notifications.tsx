@@ -181,7 +181,7 @@ const Notifications: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg">
               <Bell className="h-8 w-8 text-white" />
             </div>
             <div>

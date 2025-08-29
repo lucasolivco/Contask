@@ -326,7 +326,8 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
     const tasksWithPermissions = tasks.map(task => ({
       ...task,
       canEdit: task.createdById === userId,           // ✅ Só o criador pode editar
-      canChangeStatus: task.assignedToId === userId,  // ✅ Só o atribuído pode mudar status
+      canChangeStatus: task.assignedToId === userId, // ✅ Só o atribuído pode mudar status
+      canDelete: task.createdById === userId,  // ✅ Só o criador pode deletar
       isCreator: task.createdById === userId,         // ✅ É o criador?
       isAssigned: task.assignedToId === userId        // ✅ É o atribuído?
     }))

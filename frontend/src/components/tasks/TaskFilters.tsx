@@ -268,7 +268,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               
               {/* ✅ FUNCIONÁRIOS */}
               {assignableData?.categories.employees && assignableData.categories.employees.length > 0 && (
-                <optgroup label="Funcionários">
+                <optgroup label="Equipe">
                   {assignableData.categories.employees.map((employee) => (
                     <option key={employee.id} value={employee.id}>
                         {employee.name}

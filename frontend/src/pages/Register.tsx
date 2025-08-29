@@ -1,4 +1,5 @@
-// Página de cadastro com verificação por email
+// frontend/src/pages/Register.tsx - ESTILO SIMPLES E ELEGANTE
+
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,11 +7,12 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { UserPlus, Eye, EyeOff } from 'lucide-react'
+import { UserPlus, Eye, EyeOff, Users, Crown } from 'lucide-react'
 
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Card from '../components/ui/Card'
+import Logo from '../components/ui/Logo'
 import { register as registerUser } from '../services/authService'
 import type { RegisterForm } from '../types'
 
@@ -39,7 +41,8 @@ const Register: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
+    watch
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -47,14 +50,14 @@ const Register: React.FC = () => {
     }
   })
 
-  // ✅ MUTATION ATUALIZADA - NÃO FAZ LOGIN AUTOMÁTICO
+  const selectedRole = watch('role')
+
   const registerMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
       console.log('✅ Cadastro realizado:', data);
       
       if (data.requiresEmailVerification) {
-        // Redirecionar para página de verificação
         navigate('/verify-email-sent', { 
           state: { 
             email: data.user.email, 
@@ -63,7 +66,6 @@ const Register: React.FC = () => {
         });
         toast.success('Conta criada! Verifique seu email para ativar.');
       } else {
-        // Fluxo antigo (se verificação estiver desabilitada)
         toast.success(`Conta criada com sucesso! Bem-vindo, ${data.user.name}!`);
         navigate('/login');
       }
@@ -79,83 +81,168 @@ const Register: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <UserPlus className="mx-auto h-12 w-12 text-rose-500" />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Criar nova conta
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Ou{' '}
-            <Link
-              to="/login"
-              className="font-medium text-primary-600 hover:text-primary-500"
-            >
-              faça login aqui
-            </Link>
-          </p>
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
+      <div className="max-w-sm w-full space-y-8">
+        
+        {/* ✅ HEADER COM LOGO */}
+        <div className="text-center space-y-6">
+          <div className="flex justify-center">
+            <Logo size="xl"/>
+          </div>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <Input
-              label="Nome completo"
-              placeholder="Seu nome"
-              error={errors.name?.message}
-              {...register('name')}
-            />
+        {/* ✅ FORMULÁRIO SIMPLES */}
+        <Card className="p-6 shadow-lg border border-gray-100">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            
+            {/* ✅ NOME INPUT */}
+            <div>
+              <Input
+                label="Nome completo"
+                placeholder="Seu nome"
+                error={errors.name?.message}
+                className="w-full"
+                {...register('name')}
+              />
+            </div>
 
-            <Input
-              label="Email"
-              type="email"
-              placeholder="seu@email.com"
-              error={errors.email?.message}
-              {...register('email')}
-            />
+            {/* ✅ EMAIL INPUT */}
+            <div>
+              <Input
+                label="Email"
+                type="email"
+                placeholder="seu@email.com"
+                error={errors.email?.message}
+                className="w-full"
+                {...register('email')}
+              />
+            </div>
 
+            {/* ✅ SENHA INPUT */}
             <div className="relative">
               <Input
                 label="Senha"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 error={errors.password?.message}
+                className="w-full pr-12"
                 {...register('password')}
               />
               
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-9 text-gray-400 hover:text-cyan-600 transition-colors"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            {/* ✅ TIPO DE CONTA - SIMPLES */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
                 Tipo de conta
               </label>
-              <select
-                {...register('role')}
-                className="input-field"
-              >
-                <option value="EMPLOYEE">Equipe</option>
-                <option value="MANAGER">Gerente</option>
-              </select>
+              
+              <div className="space-y-2">
+                {/* ✅ OPÇÃO EQUIPE */}
+                <label className={`
+                  flex items-center p-3 rounded-lg border cursor-pointer transition-all
+                  ${selectedRole === 'EMPLOYEE' 
+                    ? 'border-cyan-500 bg-cyan-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                  }
+                `}>
+                  <input
+                    type="radio"
+                    value="EMPLOYEE"
+                    className="sr-only"
+                    {...register('role')}
+                  />
+                  
+                  <div className={`
+                    flex items-center justify-center w-8 h-8 rounded-lg mr-3
+                    ${selectedRole === 'EMPLOYEE' ? 'bg-cyan-100' : 'bg-gray-100'}
+                  `}>
+                    <Users className={`h-4 w-4 ${selectedRole === 'EMPLOYEE' ? 'text-cyan-600' : 'text-gray-500'}`} />
+                  </div>
+                  
+                  <div>
+                    <p className={`text-sm font-medium ${selectedRole === 'EMPLOYEE' ? 'text-cyan-900' : 'text-gray-900'}`}>
+                      Membro da Equipe
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Executar e gerenciar tarefas
+                    </p>
+                  </div>
+                </label>
+
+                {/* ✅ OPÇÃO GERENTE */}
+                <label className={`
+                  flex items-center p-3 rounded-lg border cursor-pointer transition-all
+                  ${selectedRole === 'MANAGER' 
+                    ? 'border-cyan-500 bg-cyan-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                  }
+                `}>
+                  <input
+                    type="radio"
+                    value="MANAGER"
+                    className="sr-only"
+                    {...register('role')}
+                  />
+                  
+                  <div className={`
+                    flex items-center justify-center w-8 h-8 rounded-lg mr-3
+                    ${selectedRole === 'MANAGER' ? 'bg-cyan-100' : 'bg-gray-100'}
+                  `}>
+                    <Crown className={`h-4 w-4 ${selectedRole === 'MANAGER' ? 'text-cyan-600' : 'text-gray-500'}`} />
+                  </div>
+                  
+                  <div>
+                    <p className={`text-sm font-medium ${selectedRole === 'MANAGER' ? 'text-cyan-900' : 'text-gray-900'}`}>
+                      Gerente
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Gerenciar equipe e projetos
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
 
+            {/* ✅ BOTÃO CADASTRAR */}
             <Button
               type="submit"
               loading={registerMutation.isPending}
-              className="w-full"
+              className="w-full h-11 mt-6"
             >
               {registerMutation.isPending ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
+
+          {/* ✅ LINK PARA LOGIN */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Já tem uma conta?{' '}
+                <Link
+                  to="/login"
+                  className="font-medium text-cyan-600 hover:text-cyan-700"
+                >
+                  Faça login
+                </Link>
+              </p>
+            </div>
+          </div>
         </Card>
 
-        
+        {/* ✅ FOOTER DISCRETO */}
+        <div className="text-center">
+          <p className="text-xs text-gray-400">
+            © 2024 Contask. Todos os direitos reservados.
+          </p>
+        </div>
       </div>
     </div>
   )

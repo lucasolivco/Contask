@@ -136,7 +136,7 @@ const CreateTask: React.FC = () => {
         
         <div className="flex-1">
           <h1 className="heading-xl flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
             Nova Tarefa
@@ -470,7 +470,7 @@ const CreateTask: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-gray-200">
             <Button
               type="button"
-              variant="ghost"
+              variant="danger"
               onClick={() => navigate('/tasks')}
               className="w-full sm:w-auto"
             >

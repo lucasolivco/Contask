@@ -24,7 +24,7 @@ const Input = ({ label, error, icon, className = '', ...props }: InputProps) => 
           className={`
             w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm
             placeholder:text-gray-400
-            focus:border-rose-300 focus:ring-2 focus:ring-rose-100 focus:outline-none
+            focus:border-cyan-300 focus:cyan-2 focus:ring-cyan-100 focus:outline-none
             disabled:bg-gray-50 disabled:text-gray-500
             transition-all duration-200
             ${icon ? 'pl-10' : ''}

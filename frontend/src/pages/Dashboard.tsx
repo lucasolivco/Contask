@@ -464,7 +464,7 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="heading-xl flex items-center gap-4 mb-2">
-            <div className="p-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg">
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             Olá, {user?.name}!
@@ -516,7 +516,7 @@ const Dashboard: React.FC = () => {
         {/* ✅ GRÁFICO DE PIZZA COM CORES BALANCEADAS */}
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center gap-2 mb-4">
-            <PieChart className="h-6 w-6 text-pink-500" />
+            <PieChart className="h-6 w-6 text-blue-500" />
             <h3 className="heading-md">Distribuição de Tarefas</h3>
           </div>
           <PieChartCSS />
@@ -526,7 +526,7 @@ const Dashboard: React.FC = () => {
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6 text-pink-500" />
+              <AlertTriangle className="h-6 w-6 text-rose-500" />
               <h3 className="heading-md">Tarefas Prioritárias</h3>
             </div>
             <span className="text-sm text-gray-500">{priorityTasks.length} urgentes</span>
@@ -556,7 +556,7 @@ const Dashboard: React.FC = () => {
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-pink-500" />
+              <Calendar className="h-6 w-6 text-blue-500" />
               <h3 className="heading-md">Atividade Recente</h3>
             </div>
             <span className="text-sm text-gray-500">{recentTasks.length} tarefas</span>

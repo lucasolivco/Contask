@@ -1,4 +1,5 @@
-// Página de login com tratamento de email não verificado
+// frontend/src/pages/Login.tsx - ESTILO SIMPLES E ELEGANTE
+
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,11 +7,12 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { LogIn, Eye, EyeOff, Mail } from 'lucide-react'
+import { LogIn, Eye, EyeOff, Mail, AlertTriangle } from 'lucide-react'
 
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Card from '../components/ui/Card'
+import Logo from '../components/ui/Logo'
 import { useAuth } from '../contexts/AuthContext'
 import { login, resendVerificationEmail } from '../services/authService'
 import type { LoginForm } from '../types'
@@ -41,7 +43,6 @@ const Login: React.FC = () => {
     resolver: zodResolver(loginSchema)
   })
 
-  // ✅ MUTATION PARA LOGIN COM TRATAMENTO DE EMAIL NÃO VERIFICADO
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
@@ -53,7 +54,6 @@ const Login: React.FC = () => {
     onError: (error: any) => {
       const errorData = error.response?.data;
       
-      // ✅ VERIFICAR SE É ERRO DE EMAIL NÃO VERIFICADO
       if (errorData?.emailNotVerified) {
         setEmailNotVerified(getValues('email'));
         toast.error('Email não verificado. Verifique sua caixa de entrada.');
@@ -64,7 +64,6 @@ const Login: React.FC = () => {
     }
   });
 
-  // ✅ MUTATION PARA REENVIAR EMAIL
   const resendEmailMutation = useMutation({
     mutationFn: resendVerificationEmail,
     onSuccess: () => {
@@ -81,7 +80,6 @@ const Login: React.FC = () => {
     loginMutation.mutate(data);
   }
 
-  // ✅ FUNÇÃO PARA REENVIAR EMAIL
   const handleResendEmail = () => {
     if (emailNotVerified) {
       resendEmailMutation.mutate({ email: emailNotVerified });
@@ -89,114 +87,130 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <LogIn className="mx-auto h-12 w-12 text-rose-500" />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Login
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Ou{' '}
-            <Link
-              to="/register"
-              className="font-medium text-primary-600 hover:text-primary-500"
-            >
-              cadastre-se aqui
-            </Link>
-          </p>
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
+      <div className="max-w-sm w-full space-y-8">
+        
+        {/* ✅ HEADER COM LOGO */}
+        <div className="text-center space-y-6">
+          <div className="flex justify-center">
+            <Logo size="xl"/>
+          </div>
         </div>
 
-        {/* ✅ ALERTA DE EMAIL NÃO VERIFICADO */}
+        {/* ✅ ALERTA DE EMAIL NÃO VERIFICADO - SIMPLES */}
         {emailNotVerified && (
-          <Card className="bg-yellow-50 border-yellow-200">
-            <div className="flex items-start space-x-3">
-              <Mail className="text-yellow-600 mt-1" size={20} />
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-yellow-800">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-amber-800">
                   Email não verificado
-                </h3>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Você precisa verificar seu email antes de fazer login. 
-                  Verifique sua caixa de entrada (e spam).
                 </p>
-                <div className="mt-3">
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={handleResendEmail}
-                    loading={resendEmailMutation.isPending}
-                    className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
-                  >
-                    {resendEmailMutation.isPending ? 'Reenviando...' : 'Reenviar email'}
-                  </Button>
-                </div>
+                <p className="text-sm text-amber-700">
+                  Verifique sua caixa de entrada e pasta de spam.
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleResendEmail}
+                  loading={resendEmailMutation.isPending}
+                  className="text-amber-700 border-amber-300 hover:bg-amber-100"
+                >
+                  {resendEmailMutation.isPending ? 'Reenviando...' : 'Reenviar email'}
+                </Button>
               </div>
             </div>
-          </Card>
+          </div>
         )}
 
-        <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="seu@email.com"
-              error={errors.email?.message}
-              {...register('email')}
-            />
+        {/* ✅ FORMULÁRIO SIMPLES */}
+        <Card className="p-6 shadow-lg border border-gray-100">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            
+            {/* ✅ EMAIL INPUT */}
+            <div>
+              <Input
+                label="Email"
+                type="email"
+                placeholder="seu@email.com"
+                error={errors.email?.message}
+                className="w-full"
+                {...register('email')}
+              />
+            </div>
 
+            {/* ✅ SENHA INPUT */}
             <div className="relative">
               <Input
                 label="Senha"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 error={errors.password?.message}
+                className="w-full pr-12"
                 {...register('password')}
               />
               
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-9 text-gray-400 hover:text-cyan-600 transition-colors"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
+            {/* ✅ BOTÃO LOGIN */}
             <Button
               type="submit"
               loading={loginMutation.isPending}
-              className="w-full"
+              className="w-full h-11 mt-6"
             >
-              Entrar
+              {loginMutation.isPending ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
+
+          {/* ✅ OPÇÕES ADICIONAIS */}
+          <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+            
+            {/* ✅ LEMBRAR-ME E ESQUECI SENHA */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-gray-700">Lembrar-me</span>
+              </label>
+
+              <Link 
+                to="/forgot-password"
+                className="text-sm font-medium text-red-600 hover:text-red-700"
+              >
+                Esqueceu sua senha?
+              </Link>
+            </div>
+
+            {/* ✅ LINK PARA CADASTRO */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Não tem uma conta?{' '}
+                <Link
+                  to="/register"
+                  className="font-medium text-cyan-600 hover:text-cyan-700"
+                >
+                  Cadastre-se
+                </Link>
+              </p>
+            </div>
+          </div>
         </Card>
 
-        <div className="flex items-center justify-between">
-            <div className="flex items-center">
-                <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                    Lembrar-me
-                </label>
-            </div>
-
-            <div className="text-sm">
-                <Link 
-                    to="/forgot-password"  // ✅ CORRIGIDO: to em vez de href
-                    className="font-medium text-rose-600 hover:text-rose-500"
-                >
-                    Esqueceu sua senha?
-                </Link>
-            </div>
+        {/* ✅ FOOTER DISCRETO */}
+        <div className="text-center">
+          <p className="text-xs text-gray-400">
+            © 2025 Contask. Todos os direitos reservados.
+          </p>
         </div>
-       
       </div>
     </div>
   )

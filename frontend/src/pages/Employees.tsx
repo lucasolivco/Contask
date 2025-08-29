@@ -373,7 +373,7 @@ const Employees: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
-          <div className="p-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl shadow-lg">
+          <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg">
             <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
           <div>

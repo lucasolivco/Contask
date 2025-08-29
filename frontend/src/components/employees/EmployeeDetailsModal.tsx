@@ -218,7 +218,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
               <div className={`h-12 w-12 sm:h-16 sm:w-16 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 ${
                 employee.role === 'MANAGER'
-                  ? 'bg-gradient-to-br from-purple-500 to-indigo-600'
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600'
                   : 'bg-gradient-to-br from-emerald-500 to-green-600'
               }`}>
                 <span className="text-lg sm:text-2xl font-bold text-white">
@@ -241,11 +241,11 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     employee.role === 'MANAGER'
-                      ? 'bg-purple-100 text-purple-700'
+                      ? 'bg-blue-100 text-blue-700'
                       : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     <User className="h-3 w-3 mr-1" />
-                    {employee.role === 'MANAGER' ? 'Manager' : 'Funcionário'}
+                    {employee.role === 'MANAGER' ? 'Manager' : 'Colaborador'}
                   </span>
                   
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

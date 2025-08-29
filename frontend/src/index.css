@@ -1,8 +1,9 @@
+/* frontend/src/index.css - USANDO CORES PADRÃO CYAN */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Reset e configurações base */
 * {
   margin: 0;
   padding: 0;
@@ -18,31 +19,29 @@ body {
   font-optical-sizing: auto;
 }
 
-/* Componentes modernos */
 @layer components {
-  /* Botões - MUDANÇA: Primary agora é AZUL */
+  /* ✅ BOTÕES COM CORES PADRÃO CYAN (AZUL ESVERDADO) */
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed;
+    @apply bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:bg-cyan-300 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 border border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-gray-500 shadow-sm hover:shadow-md;
+    @apply bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-700 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 border border-emerald-200 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 shadow-sm hover:shadow-md;
   }
   
   .btn-ghost {
-    @apply hover:bg-gray-100 active:bg-gray-200 text-gray-600 hover:text-gray-800 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 focus:ring-2 focus:ring-gray-500;
+    @apply hover:bg-cyan-50 active:bg-cyan-100 text-cyan-600 hover:text-cyan-700 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 focus:ring-2 focus:ring-cyan-500;
   }
   
   .btn-danger {
     @apply bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:bg-red-400;
   }
   
-  /* Inputs modernos - CORES NEUTRAS */
+  /* ✅ INPUTS COM FOCO CYAN */
   .input-field {
-    @apply w-full rounded-xl border border-gray-200 px-4 py-3 text-sm placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200 shadow-sm hover:border-gray-300;
+    @apply w-full rounded-xl border border-gray-200 px-4 py-3 text-sm placeholder:text-gray-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200 shadow-sm hover:border-gray-300;
   }
   
-  /* Cards com elevação - SEM BACKGROUND COLORIDO */
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-200;
   }
@@ -51,9 +50,9 @@ body {
     @apply hover:shadow-md hover:border-gray-200 transition-all duration-300 cursor-pointer;
   }
   
-  /* Sistema de prioridades - MUDANÇA: Urgente agora é ROXO */
+  /* ✅ SISTEMA DE PRIORIDADES */
   .priority-urgent {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 border border-red-200;
   }
   
   .priority-high {
@@ -61,16 +60,16 @@ body {
   }
   
   .priority-medium {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200;
   }
   
   .priority-low {
     @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200;
   }
   
-  /* Cards com indicação de prioridade - MUDANÇA: Urgente ROXO */
+  /* ✅ CARDS COM INDICAÇÃO DE PRIORIDADE */
   .card-urgent {
-    @apply border-l-4 border-l-purple-500 bg-white;
+    @apply border-l-4 border-l-red-500 bg-white;
   }
   
   .card-high {
@@ -78,14 +77,13 @@ body {
   }
   
   .card-medium {
-    @apply border-l-4 border-l-blue-500 bg-white;
+    @apply border-l-4 border-l-cyan-500 bg-white;
   }
   
   .card-low {
     @apply border-l-4 border-l-slate-400 bg-white;
   }
   
-  /* Tarefas atrasadas - MUDANÇA: agora é VERMELHO */
   .card-overdue {
     @apply border-2 border-red-400 bg-red-50/30;
   }
@@ -94,13 +92,13 @@ body {
     @apply inline-flex items-center gap-1.5 bg-red-100 text-red-800 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-300 animate-pulse;
   }
   
-  /* Status badges REFORMULADOS */
+  /* ✅ STATUS BADGES */
   .status-pending {
     @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200;
   }
   
   .status-in-progress {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200;
   }
   
   .status-completed {
@@ -113,9 +111,9 @@ body {
 }
 
 @layer utilities {
-  /* Cores para estatísticas - MUDANÇAS: Total e Pendente CINZA, Atrasadas VERMELHO */
+  /* ✅ CORES PARA ESTATÍSTICAS */
   .stat-card-total {
-    @apply bg-slate-50 border-blue-200 text-blue-700;
+    @apply bg-cyan-50 border-cyan-200 text-cyan-700;
   }
   
   .stat-card-pending {
@@ -130,7 +128,20 @@ body {
     @apply bg-red-50 border-red-200 text-red-700;
   }
   
-  /* Animações suaves */
+  /* ✅ GRADIENTES */
+  .gradient-contask {
+    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 50%, #a5f3fc 100%);
+  }
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+  
+  /* ANIMAÇÕES */
   .animate-fade-in {
     animation: fadeIn 0.4s ease-out;
   }
@@ -176,22 +187,7 @@ body {
     }
   }
   
-  /* Text utilities */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  /* Scrollbar moderna */
+  /* ✅ SCROLLBAR */
   .scrollbar-modern::-webkit-scrollbar {
     width: 8px;
   }
@@ -201,10 +197,10 @@ body {
   }
   
   .scrollbar-modern::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full hover:bg-gray-400;
+    @apply bg-cyan-300 rounded-full hover:bg-cyan-400;
   }
   
-  /* Estados interativos */
+  /* INTERAÇÕES */
   .interactive-scale {
     @apply transition-transform duration-200 hover:scale-105 active:scale-95;
   }
@@ -213,7 +209,7 @@ body {
     @apply transition-shadow duration-200 hover:shadow-lg;
   }
   
-  /* Typography melhorada */
+  /* TIPOGRAFIA */
   .heading-xl {
     @apply text-3xl font-bold text-gray-900 tracking-tight;
   }
@@ -238,16 +234,16 @@ body {
     @apply text-gray-500;
   }
   
-  /* Headers com rosa - para elementos específicos */
+  /* ✅ ELEMENTOS DE DESTAQUE */
   .header-accent {
-    @apply text-rose-600;
+    @apply text-cyan-600;
   }
   
   .icon-accent {
-    @apply text-rose-500;
+    @apply text-cyan-500;
   }
   
   .border-accent {
-    @apply border-rose-200;
+    @apply border-cyan-200;
   }
 }
