@@ -1,3 +1,5 @@
+// schema.prisma - VERSÃO FINAL CORRETA
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,7 +9,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ✅ SCHEMA CORRIGIDO COMPLETO
 model User {
   id        String   @id @default(cuid())
   name      String
@@ -22,11 +23,11 @@ model User {
   emailVerificationToken String? @unique
   tokenExpiresAt DateTime?
 
-  // ✅ CAMPOS PARA RESET DE SENHA
+  // Campos para reset de senha
   passwordResetToken String? @unique
   passwordResetExpiresAt DateTime?
 
-  // ✅ RELACIONAMENTOS CORRIGIDOS COM NOMES ESPECÍFICOS
+  // Relacionamentos
   createdTasks     Task[] @relation("CreatedBy")
   assignedTasks    Task[] @relation("AssignedTo")
   comments         Comment[] @relation("CommentAuthor")
@@ -47,14 +48,13 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  // ✅ RELACIONAMENTOS CORRIGIDOS
+  // Relacionamentos
   createdById String
   createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
   
   assignedToId String
   assignedTo   User   @relation("AssignedTo", fields: [assignedToId], references: [id])
   
-  // ✅ RELACIONAMENTOS COM OUTROS MODELOS
   attachments   Attachment[]
   notifications Notification[]
   comments      Comment[]
@@ -68,7 +68,6 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ✅ RELACIONAMENTOS CORRIGIDOS
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
@@ -87,7 +86,6 @@ model Attachment {
   filePath     String
   createdAt    DateTime @default(now())
 
-  // ✅ RELACIONAMENTOS CORRIGIDOS
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
@@ -97,25 +95,27 @@ model Attachment {
   @@map("attachments")
 }
 
+// ✅ MODELO NOTIFICATION ATUALIZADO
 model Notification {
   id      String           @id @default(cuid())
   type    NotificationType
   title   String
-  message String
+  message String           @db.Text
   read    Boolean          @default(false)
+  metadata String?         @db.Text
   
   userId  String
   user    User             @relation(fields: [userId], references: [id])
   
   taskId  String?
-  task    Task?            @relation(fields: [taskId], references: [id])
+  task    Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now()) // ✅ COM VALOR PADRÃO
 
   @@map("notifications")
 }
 
-// ✅ ENUMS CORRETOS
 enum Role {
   MANAGER
   EMPLOYEE
@@ -135,9 +135,12 @@ enum Priority {
   URGENT
 }
 
+// ✅ ENUM NOTIFICATION COMPLETO
 enum NotificationType {
   TASK_ASSIGNED
   TASK_UPDATED
   TASK_COMPLETED
   TASK_OVERDUE
+  TASK_CANCELLED     // ✅ NOVO
+  TASK_REASSIGNED    // ✅ NOVO
 }

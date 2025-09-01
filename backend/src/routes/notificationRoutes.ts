@@ -1,31 +1,34 @@
+// backend/src/routes/notificationRoutes.ts - ROTAS COMPLETAS
+
 import { Router } from 'express'
 import { 
   getNotifications,
   markNotificationAsRead,
+  markNotificationAsUnread,
   markAllNotificationsAsRead,
   deleteNotification,
-  getUnreadCount
+  deleteAllReadNotifications,
+  getUnreadCount,
+  getNotificationStats
 } from '../controllers/notificationController'
 import { authenticateToken } from '../middleware/auth'
 
 const router = Router()
 
-// Todas as rotas precisam de autenticação
 router.use(authenticateToken)
 
-// Buscar notificações do usuário
+// Principais
 router.get('/', getNotifications)
-
-// Contar não lidas
 router.get('/unread-count', getUnreadCount)
+router.get('/stats', getNotificationStats)
 
-// Marcar como lida
+// Ações individuais
 router.patch('/:id/read', markNotificationAsRead)
-
-// Marcar todas como lidas
-router.patch('/mark-all-read', markAllNotificationsAsRead)
-
-// Excluir notificação
+router.patch('/:id/unread', markNotificationAsUnread)
 router.delete('/:id', deleteNotification)
+
+// Ações em lote
+router.patch('/mark-all-read', markAllNotificationsAsRead)
+router.delete('/read', deleteAllReadNotifications)
 
 export default router

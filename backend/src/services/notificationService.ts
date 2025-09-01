@@ -1,36 +1,33 @@
+// backend/src/services/notificationService.ts - VERSÃO COMPLETA
+
 import prisma from '../config/database'
 import { sendEmail } from './emailService'
 import cron from 'node-cron'
 import moment from 'moment-timezone'
 
-// ✅ DEFINIR TIMEZONE DO BRASIL
 const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
 
+type NotificationType = 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE' | 'TASK_CANCELLED' | 'TASK_REASSIGNED'
+
 type NotificationData = {
-  type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE'
+  type: NotificationType
   title: string
   message: string
   userId: string
   taskId?: string
+  metadata?: {
+    oldAssignee?: string
+    newAssignee?: string
+    changedFields?: string[]
+    previousStatus?: string
+    newStatus?: string
+    reason?: string
+  }
 }
 
-// ✅ FUNÇÃO PARA OBTER DATA DO BRASIL
-const getBrazilDate = () => {
-  return moment().tz(BRAZIL_TIMEZONE)
-}
+const getBrazilDate = () => moment().tz(BRAZIL_TIMEZONE)
 
-// ✅ FUNÇÃO PARA OBTER INÍCIO DO DIA NO BRASIL
-const getBrazilDayStart = (date?: moment.Moment) => {
-  const targetDate = date || getBrazilDate()
-  return targetDate.clone().startOf('day').toDate()
-}
-
-// ✅ FUNÇÃO PARA OBTER FIM DO DIA NO BRASIL
-const getBrazilDayEnd = (date?: moment.Moment) => {
-  const targetDate = date || getBrazilDate()
-  return targetDate.clone().endOf('day').toDate()
-}
-
+// ✅ FUNÇÃO PRINCIPAL PARA CRIAR NOTIFICAÇÃO
 export const createNotification = async (data: NotificationData) => {
   try {
     const notification = await prisma.notification.create({
@@ -39,11 +36,12 @@ export const createNotification = async (data: NotificationData) => {
         title: data.title,
         message: data.message,
         userId: data.userId,
-        taskId: data.taskId
+        taskId: data.taskId,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : null
       }
     })
 
-    console.log('✅ Notificação criada:', notification.id)
+    console.log('✅ Notificação criada:', notification.id, '-', data.type)
     return notification
 
   } catch (error) {
@@ -52,38 +50,50 @@ export const createNotification = async (data: NotificationData) => {
   }
 }
 
-export const sendTaskAssignedNotification = async (taskData: any) => {
+// ✅ TAREFA ATRIBUÍDA/REATRIBUÍDA
+export const sendTaskAssignedNotification = async (taskData: any, isReassignment = false) => {
   try {
+    console.log(`📬 Enviando notificação de ${isReassignment ? 'reatribuição' : 'atribuição'}: ${taskData.task.title}`)
+
     const notification = await createNotification({
-      type: 'TASK_ASSIGNED',
-      title: 'Nova tarefa atribuída',
-      message: `Você recebeu a tarefa: ${taskData.task.title}`,
+      type: isReassignment ? 'TASK_REASSIGNED' : 'TASK_ASSIGNED',
+      title: isReassignment ? 'Tarefa reatribuída' : 'Nova tarefa atribuída',
+      message: isReassignment 
+        ? `A tarefa "${taskData.task.title}" foi reatribuída para você`
+        : `Você recebeu a tarefa: "${taskData.task.title}"`,
       userId: taskData.assignedTo.id,
-      taskId: taskData.task.id
+      taskId: taskData.task.id,
+      metadata: isReassignment ? {
+        oldAssignee: taskData.previousAssignee,
+        newAssignee: taskData.assignedTo.name
+      } : undefined
     })
 
     const emailSent = await sendEmail({
       to: taskData.assignedTo.email,
-      subject: '📋 Nova tarefa atribuída',
+      subject: isReassignment ? '🔄 Tarefa reatribuída' : '📋 Nova tarefa atribuída',
       template: 'task-assigned',
       data: {
         userName: taskData.assignedTo.name,
         taskTitle: taskData.task.title,
         taskDescription: taskData.task.description,
         dueDate: taskData.task.dueDate ? moment(taskData.task.dueDate).tz(BRAZIL_TIMEZONE).format('DD/MM/YYYY') : null,
-        managerName: taskData.createdBy.name
+        priority: taskData.task.priority,
+        managerName: taskData.createdBy.name,
+        isReassignment,
+        previousAssignee: taskData.previousAssignee
       }
     })
 
-    console.log(`✅ Notificação enviada para ${taskData.assignedTo.name}`)
     return { notification, emailSent }
 
   } catch (error) {
-    console.error('❌ Erro ao enviar notificação de tarefa atribuída:', error)
+    console.error('❌ Erro ao enviar notificação de atribuição:', error)
     throw error
   }
 }
 
+// ✅ TAREFA CONCLUÍDA
 export const sendTaskCompletedNotification = async (taskData: any) => {
   try {
     const notification = await createNotification({
@@ -101,54 +111,108 @@ export const sendTaskCompletedNotification = async (taskData: any) => {
       data: {
         managerName: taskData.createdBy.name,
         taskTitle: taskData.task.title,
-        employeeName: taskData.assignedTo.name,
+        assignedUserName: taskData.assignedTo.name,
         completedDate: getBrazilDate().format('DD/MM/YYYY')
       }
     })
 
-    console.log(`✅ Notificação de conclusão enviada para ${taskData.createdBy.name}`)
     return { notification, emailSent }
 
   } catch (error) {
-    console.error('❌ Erro ao enviar notificação de tarefa concluída:', error)
+    console.error('❌ Erro ao enviar notificação de conclusão:', error)
     throw error
   }
 }
 
-// ✅ FUNÇÃO CORRIGIDA COM TIMEZONE BRASIL
+// ✅ TAREFA ATUALIZADA
+export const sendTaskUpdatedNotification = async (taskData: any, changes: any) => {
+  try {
+    if (taskData.assignedTo.id !== taskData.updatedBy.id) {
+      const notification = await createNotification({
+        type: 'TASK_UPDATED',
+        title: 'Tarefa atualizada',
+        message: `A tarefa "${taskData.task.title}" foi atualizada por ${taskData.updatedBy.name}`,
+        userId: taskData.assignedTo.id,
+        taskId: taskData.task.id,
+        metadata: {
+          changedFields: changes.changedFields,
+          previousStatus: changes.statusChange?.from,
+          newStatus: changes.statusChange?.to
+        }
+      })
+
+      const emailSent = await sendEmail({
+        to: taskData.assignedTo.email,
+        subject: '🔄 Tarefa atualizada',
+        template: 'task-updated',
+        data: {
+          userName: taskData.assignedTo.name,
+          taskTitle: taskData.task.title,
+          updatedBy: taskData.updatedBy.name,
+          updatedDate: getBrazilDate().format('DD/MM/YYYY HH:mm'),
+          changedFields: changes.changedFields,
+          statusChange: changes.statusChange
+        }
+      })
+    }
+
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de atualização:', error)
+    throw error
+  }
+}
+
+// ✅ TAREFA CANCELADA
+export const sendTaskCancelledNotification = async (taskData: any, reason?: string) => {
+  try {
+    const notification = await createNotification({
+      type: 'TASK_CANCELLED',
+      title: 'Tarefa cancelada',
+      message: `A tarefa "${taskData.task.title}" foi cancelada`,
+      userId: taskData.assignedTo.id,
+      taskId: taskData.task.id,
+      metadata: reason ? { reason } : undefined
+    })
+
+    const emailSent = await sendEmail({
+      to: taskData.assignedTo.email,
+      subject: '❌ Tarefa cancelada',
+      template: 'task-cancelled',
+      data: {
+        userName: taskData.assignedTo.name,
+        taskTitle: taskData.task.title,
+        cancelledBy: taskData.cancelledBy.name,
+        cancelledDate: getBrazilDate().format('DD/MM/YYYY HH:mm'),
+        reason
+      }
+    })
+
+    return { notification, emailSent }
+
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de cancelamento:', error)
+    throw error
+  }
+}
+
+// ✅ VERIFICAR TAREFAS QUE VENCEM AMANHÃ
 export const checkUpcomingTasks = async () => {
   try {
-    console.log('🔍 Verificando tarefas que vencem AMANHÃ (timezone Brasília)...')
+    console.log('🔍 Verificando tarefas que vencem AMANHÃ...')
     
-    // ✅ USAR HORÁRIO DE BRASÍLIA CORRETAMENTE
     const nowBrazil = moment().tz(BRAZIL_TIMEZONE)
-    
-    // ✅ CALCULAR AMANHÃ NO TIMEZONE BRASIL
     const tomorrowBrazil = nowBrazil.clone().add(1, 'day')
     
-    // ✅ CONVERTER PARA UTC PARA COMPARAR COM BANCO (que está em UTC)
-    // Início de amanhã no Brasil, convertido para UTC
-    const tomorrowStartBrazil = tomorrowBrazil.clone().startOf('day')
-    const tomorrowEndBrazil = tomorrowBrazil.clone().endOf('day')
-    
-    // ✅ IMPORTANTE: Converter para UTC para comparar com o banco
-    const tomorrowStartUTC = tomorrowStartBrazil.utc().toDate()
-    const tomorrowEndUTC = tomorrowEndBrazil.utc().toDate()
+    const tomorrowStartUTC = tomorrowBrazil.clone().startOf('day').utc().toDate()
+    const tomorrowEndUTC = tomorrowBrazil.clone().endOf('day').utc().toDate()
 
-    console.log('📅 Debug de datas (CORRIGIDO):')
-    console.log('   Agora (Brasília):', nowBrazil.format('DD/MM/YYYY HH:mm:ss'))
-    console.log('   Amanhã (Brasília):', tomorrowBrazil.format('DD/MM/YYYY'))
-    console.log('   Busca UTC início:', tomorrowStartUTC.toISOString())
-    console.log('   Busca UTC fim:', tomorrowEndUTC.toISOString())
-
-    // ✅ BUSCAR tarefas usando UTC (como estão salvas no banco)
     const upcomingTasks = await prisma.task.findMany({
       where: {
         AND: [
           {
             dueDate: { 
-              gte: tomorrowStartUTC,  // UTC
-              lte: tomorrowEndUTC     // UTC
+              gte: tomorrowStartUTC,
+              lte: tomorrowEndUTC
             }
           },
           {
@@ -159,49 +223,27 @@ export const checkUpcomingTasks = async () => {
         ]
       },
       include: {
-        assignedTo: { 
-          select: { id: true, name: true, email: true } 
-        },
-        createdBy: { 
-          select: { id: true, name: true, email: true } 
-        }
+        assignedTo: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true, email: true } }
       }
     })
 
     console.log(`📋 Encontradas ${upcomingTasks.length} tarefas que vencem AMANHÃ`)
 
-    if (upcomingTasks.length === 0) {
-      console.log('ℹ️ Nenhuma tarefa vence amanhã - nada para notificar')
-      return
-    }
-
-    // ✅ Log das tarefas encontradas (convertendo UTC para Brasil para exibição)
-    upcomingTasks.forEach(task => {
-      const dueDateBrazil = moment(task.dueDate).tz(BRAZIL_TIMEZONE).format('DD/MM/YYYY')
-      console.log(`   📝 "${task.title}" - Vence: ${dueDateBrazil} (AMANHÃ)`)
-      console.log(`       Data UTC no banco: ${task.dueDate?.toISOString()}`)
-    })
-
     for (const task of upcomingTasks) {
-      // ✅ Verificar notificações das últimas 24h (horário Brasília)
-      const last24HoursBrazil = nowBrazil.clone().subtract(24, 'hours').toDate()
+      const last24Hours = nowBrazil.clone().subtract(24, 'hours').toDate()
       
       const existingNotification = await prisma.notification.findFirst({
         where: {
           taskId: task.id,
           type: 'TASK_OVERDUE',
-          createdAt: { 
-            gte: last24HoursBrazil
-          }
+          createdAt: { gte: last24Hours }
         }
       })
 
       if (!existingNotification) {
-        // ✅ FORMATAR DATA CORRETAMENTE PARA EXIBIÇÃO (UTC -> Brasil)
         const dueDateFormatted = moment(task.dueDate).tz(BRAZIL_TIMEZONE).format('DD/MM/YYYY')
-        console.log(`⚠️ Enviando aviso: "${task.title}" vence AMANHÃ (${dueDateFormatted})`)
 
-        // Criar notificação no sistema
         await createNotification({
           type: 'TASK_OVERDUE',
           title: 'Tarefa vence amanhã',
@@ -210,7 +252,6 @@ export const checkUpcomingTasks = async () => {
           taskId: task.id
         })
 
-        // Enviar email
         await sendEmail({
           to: task.assignedTo.email,
           subject: `⏰ AMANHÃ: ${task.title}`,
@@ -225,48 +266,29 @@ export const checkUpcomingTasks = async () => {
         })
 
         console.log(`✅ Aviso enviado para ${task.assignedTo.name}`)
-        
-      } else {
-        console.log(`ℹ️ Tarefa "${task.title}" já foi notificada hoje`)
       }
     }
 
-    console.log('✅ Verificação de tarefas que vencem amanhã concluída')
-
   } catch (error) {
-    console.error('❌ Erro ao verificar tarefas que vencem amanhã:', error)
+    console.error('❌ Erro ao verificar tarefas:', error)
   }
 }
 
-// ✅ SCHEDULER ATUALIZADO COM TIMEZONE BRASIL
+// ✅ SCHEDULER
 export const startNotificationScheduler = () => {
   console.log('⏰ Iniciando agendador de notificações...')
-  console.log('🇧🇷 Timezone: América/São_Paulo (Brasília)')
-  console.log('📋 Configuração: Avisar 1 dia antes do vencimento')
   
-  // ✅ Executar todos os dias às 9:00 da manhã (horário de Brasília)
   cron.schedule('0 9 * * *', () => {
-    const nowBrazil = getBrazilDate()
-    console.log(`🔄 Executando verificação diária (${nowBrazil.format('DD/MM/YYYY HH:mm:ss')} - Brasília)...`)
+    console.log('🔄 Executando verificação diária...')
     checkUpcomingTasks()
   }, {
-    timezone: BRAZIL_TIMEZONE  // ✅ IMPORTANTE: Timezone no cron
+    timezone: BRAZIL_TIMEZONE
   })
 
-  // ✅ Executar uma vez ao iniciar (para teste imediato)
   setTimeout(() => {
-    const nowBrazil = getBrazilDate()
-    console.log(`🚀 Executando verificação inicial (${nowBrazil.format('DD/MM/YYYY HH:mm:ss')} - Brasília)...`)
+    console.log('🚀 Executando verificação inicial...')
     checkUpcomingTasks()
   }, 5000)
 
-  console.log('✅ Agendador configurado: verificação diária às 9:00 (horário de Brasília)')
-}
-
-// ✅ FUNÇÃO DE TESTE MANUAL
-export const testUpcomingNotifications = async () => {
-  const nowBrazil = getBrazilDate()
-  console.log(`🧪 === TESTE: TAREFAS QUE VENCEM AMANHÃ (${nowBrazil.format('DD/MM/YYYY HH:mm:ss')} - Brasília) ===`)
-  await checkUpcomingTasks()
-  console.log('🧪 === FIM DO TESTE ===')
+  console.log('✅ Agendador configurado')
 }

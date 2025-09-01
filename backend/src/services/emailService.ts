@@ -6,7 +6,7 @@ dotenv.config()
 interface EmailData {
   to: string
   subject: string
-  template: 'task-assigned' | 'task-completed' | 'task-overdue'
+  template: 'task-assigned' | 'task-completed' | 'task-overdue' | 'task-updated' | 'task-cancelled'
   data: any
 }
 
@@ -21,112 +21,177 @@ const transporter = nodemailer.createTransport({
   }
 })
 
-const BASE_URL = process.env.FRONTEND_URL;
 
-// ✅ TEMPLATES EXISTENTES DE TAREFAS
+const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
 const emailTemplates = {
   'task-assigned': (data: any) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: #3B82F6; color: white; padding: 20px; text-align: center;">
-        <h1>📋 Nova Tarefa Atribuída</h1>
+      <div style="background: #0891b2; color: white; padding: 20px; text-align: center;">
+        <h1>📋 ${data.isReassignment ? 'Tarefa Reatribuída' : 'Nova Tarefa Atribuída'}</h1>
       </div>
       
       <div style="padding: 20px;">
         <p>Olá <strong>${data.userName}</strong>,</p>
+        <p>${data.isReassignment ? 'Uma tarefa foi reatribuída para você:' : 'Você recebeu uma nova tarefa:'}</p>
         
-        <p>Você recebeu uma nova tarefa:</p>
-        
-        <div style="background: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin: 0 0 10px 0; color: #1F2937;">${data.taskTitle}</h3>
-          ${data.taskDescription ? `<p style="margin: 0; color: #6B7280;">${data.taskDescription}</p>` : ''}
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0891b2;">
+          <h3 style="margin: 0 0 10px 0; color: #164e63;">${data.taskTitle}</h3>
+          ${data.taskDescription ? `<p style="margin: 0; color: #475569;">${data.taskDescription}</p>` : ''}
         </div>
         
         ${data.dueDate ? `<p><strong>📅 Data de vencimento:</strong> ${data.dueDate}</p>` : ''}
-        <p><strong>👤 Atribuída por:</strong> ${data.managerName}</p>
+        ${data.priority ? `<p><strong>🔥 Prioridade:</strong> ${data.priority}</p>` : ''}
+        <p><strong>👤 ${data.isReassignment ? 'Reatribuída' : 'Atribuída'} por:</strong> ${data.managerName}</p>
+        
+        ${data.isReassignment && data.previousAssignee ? `
+          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; color: #92400e;">
+              <strong>🔄 Reatribuição:</strong> Esta tarefa estava anteriormente com ${data.previousAssignee}
+            </p>
+          </div>
+        ` : ''}
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL}/tasks" 
-             style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${BASE_URL}/tasks" 
+             style="background: #0891b2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Ver Tarefa
           </a>
         </div>
       </div>
       
-      <div style="background: #F9FAFB; padding: 15px; text-align: center; color: #6B7280; font-size: 14px;">
-        Sistema de Gerenciamento de Tarefas
+      <div style="background: #f8fafc; padding: 15px; text-align: center; color: #64748b; font-size: 14px;">
+        Sistema de Gerenciamento de Tarefas - Contask
       </div>
     </div>
   `,
 
   'task-completed': (data: any) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: #10B981; color: white; padding: 20px; text-align: center;">
+      <div style="background: #059669; color: white; padding: 20px; text-align: center;">
         <h1>✅ Tarefa Concluída</h1>
       </div>
       
       <div style="padding: 20px;">
         <p>Olá <strong>${data.managerName}</strong>,</p>
-        
         <p>Uma tarefa foi marcada como concluída:</p>
         
-        <div style="background: #ECFDF5; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
-          <h3 style="margin: 0 0 10px 0; color: #1F2937;">${data.taskTitle}</h3>
-          <p style="margin: 0; color: #6B7280;">Concluída por: <strong>${data.employeeName}</strong></p>
-          <p style="margin: 5px 0 0 0; color: #6B7280;">Data de conclusão: ${data.completedDate}</p>
+        <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+          <h3 style="margin: 0 0 10px 0; color: #164e63;">${data.taskTitle}</h3>
+          <p style="margin: 0; color: #475569;">Concluída por: <strong>${data.assignedUserName}</strong></p>
+          <p style="margin: 5px 0 0 0; color: #475569;">Data de conclusão: ${data.completedDate}</p>
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL}/tasks" 
-             style="background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${BASE_URL}/tasks" 
+             style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Ver Detalhes
           </a>
         </div>
       </div>
-      
-      <div style="background: #F9FAFB; padding: 15px; text-align: center; color: #6B7280; font-size: 14px;">
-        Sistema de Gerenciamento de Tarefas
-      </div>
     </div>
   `,
 
-   'task-overdue': (data: any) => `
+  'task-overdue': (data: any) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: #F59E0B; color: white; padding: 20px; text-align: center;">
-        <h1>⏰ Tarefa Vence Amanhã!</h1>
+      <div style="background: #dc2626; color: white; padding: 20px; text-align: center;">
+        <h1>⚠️ ${data.dueTomorrow ? 'Tarefa Vence Amanhã!' : 'Tarefa Atrasada!'}</h1>
       </div>
+      
       <div style="padding: 20px;">
         <p>Olá <strong>${data.userName}</strong>,</p>
-        <p><strong>Lembrete importante:</strong> Sua tarefa vence amanhã!</p>
+        <p><strong>${data.dueTomorrow ? 'Lembrete:' : 'Atenção:'}</strong> ${data.dueTomorrow ? 'Sua tarefa vence amanhã!' : 'Você tem uma tarefa atrasada!'}</p>
         
-        <div style="background: #FEF3C7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #F59E0B;">
-          <h3 style="margin: 0 0 10px 0; color: #92400E;">${data.taskTitle}</h3>
-          <p style="margin: 5px 0; color: #92400E;">
+        <div style="background: ${data.dueTomorrow ? '#fef3c7' : '#fee2e2'}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${data.dueTomorrow ? '#f59e0b' : '#dc2626'};">
+          <h3 style="margin: 0 0 10px 0; color: ${data.dueTomorrow ? '#92400e' : '#991b1b'};">${data.taskTitle}</h3>
+          <p style="margin: 5px 0; color: ${data.dueTomorrow ? '#92400e' : '#991b1b'};">
             <strong>📅 Data de vencimento:</strong> ${data.dueDate}
           </p>
-          <p style="margin: 5px 0; color: #92400E;">
-            <strong>⏰ Tempo restante:</strong> ${data.dueTomorrow ? 'Vence AMANHÃ' : '1 dia'}
-          </p>
-          <p style="margin: 5px 0; color: #92400E;">
+          <p style="margin: 5px 0; color: ${data.dueTomorrow ? '#92400e' : '#991b1b'};">
             <strong>👤 Atribuída por:</strong> ${data.managerName}
           </p>
         </div>
         
-        <div style="background: #FEF2F2; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 3px solid #EF4444;">
-          <p style="margin: 0; color: #DC2626;">
-            🚨 <strong>Atenção:</strong> Esta tarefa deve ser concluída até amanhã. Organize seu tempo!
+        <p style="text-align: center;">
+          <a href="${BASE_URL}/tasks" 
+             style="background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+            📋 ${data.dueTomorrow ? 'Concluir Tarefa' : 'Ver Tarefa Atrasada'}
+          </a>
+        </p>
+      </div>
+    </div>
+  `,
+
+  'task-updated': (data: any) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #ea580c; color: white; padding: 20px; text-align: center;">
+        <h1>🔄 Tarefa Atualizada</h1>
+      </div>
+      
+      <div style="padding: 20px;">
+        <p>Olá <strong>${data.userName}</strong>,</p>
+        <p>Uma tarefa foi atualizada:</p>
+        
+        <div style="background: #fff7ed; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ea580c;">
+          <h3 style="margin: 0 0 10px 0; color: #9a3412;">${data.taskTitle}</h3>
+          <p style="margin: 5px 0; color: #c2410c;">
+            <strong>🔄 Atualizada por:</strong> ${data.updatedBy}
+          </p>
+          <p style="margin: 5px 0; color: #c2410c;">
+            <strong>📅 Data da atualização:</strong> ${data.updatedDate}
           </p>
         </div>
         
-        <p style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL}/tasks" 
-             style="background: #F59E0B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-            📋 Concluir Tarefa Agora
-          </a>
-        </p>
+        ${data.changedFields && data.changedFields.length > 0 ? `
+          <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #1e40af;">📋 Campos alterados:</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #1e40af;">
+              ${data.changedFields.map((field: string) => `<li>${field}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
         
-        <p style="font-size: 12px; color: #6B7280; text-align: center; margin-top: 20px;">
-          Você recebeu este aviso porque a tarefa vence amanhã.
-        </p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${BASE_URL}/tasks" 
+             style="background: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Ver Tarefa
+          </a>
+        </div>
+      </div>
+    </div>
+  `,
+
+  'task-cancelled': (data: any) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #6b7280; color: white; padding: 20px; text-align: center;">
+        <h1>❌ Tarefa Cancelada</h1>
+      </div>
+      
+      <div style="padding: 20px;">
+        <p>Olá <strong>${data.userName}</strong>,</p>
+        <p>Uma tarefa foi cancelada:</p>
+        
+        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6b7280;">
+          <h3 style="margin: 0 0 10px 0; color: #374151;">${data.taskTitle}</h3>
+          <p style="margin: 5px 0; color: #4b5563;">
+            <strong>❌ Cancelada por:</strong> ${data.cancelledBy}
+          </p>
+          <p style="margin: 5px 0; color: #4b5563;">
+            <strong>📅 Data do cancelamento:</strong> ${data.cancelledDate}
+          </p>
+          ${data.reason ? `
+            <p style="margin: 5px 0; color: #4b5563;">
+              <strong>📝 Motivo:</strong> ${data.reason}
+            </p>
+          ` : ''}
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${BASE_URL}/tasks" 
+             style="background: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Ver Todas as Tarefas
+          </a>
+        </div>
       </div>
     </div>
   `
@@ -135,15 +200,14 @@ const emailTemplates = {
 // ✅ FUNÇÃO EXISTENTE PARA NOTIFICAÇÕES DE TAREFAS
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
   try {
-    // Verificar se as configurações de email estão definidas
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.log('⚠️ Configurações de email não definidas - simulando envio')
-      return true // Simular sucesso em desenvolvimento
+      return true
     }
 
     const template = emailTemplates[emailData.template]
     if (!template) {
-      console.error('❌ Template de email não encontrado:', emailData.template)
+      console.error('❌ Template não encontrado:', emailData.template)
       return false
     }
 
@@ -151,7 +215,7 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
 
     const mailOptions = {
       from: {
-        name: 'Tarefas - Task Manager',
+        name: 'Contask - Task Manager',
         address: process.env.SMTP_USER!
       },
       to: emailData.to,
@@ -169,11 +233,10 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
   }
 }
 
-// ✅ FUNÇÃO EXISTENTE PARA TESTAR CONEXÃO
 export const testEmailConnection = async (): Promise<boolean> => {
   try {
     await transporter.verify()
-    console.log('✅ Conexão com email configurada corretamente')
+    console.log('✅ Conexão com email OK')
     return true
   } catch (error) {
     console.error('❌ Erro na configuração de email:', error)

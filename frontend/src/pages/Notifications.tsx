@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
+// frontend/src/pages/Notifications.tsx - COMPLETA COM PAGINAÇÃO
+
+import React, { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { 
   Bell, 
   CheckCircle, 
@@ -14,117 +17,168 @@ import {
   Calendar,
   User,
   CheckSquare,
-  Settings
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Archive,
+  RefreshCw,
+  Users,
+  Edit,
+  X,
+  AlertCircle
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
 import { 
-  getNotifications, 
-  markNotificationAsRead, 
-  markAllNotificationsAsRead,
-  deleteNotification 
-} from '../services/taskService'
-import type { Notification } from '../types'
+  notificationService
+} from '../services/notificationService'
+import type { 
+  Notification, 
+  NotificationTypeLabels, 
+  NotificationFilters 
+} from '../types'
+
+import { 
+  NotificationTypeColors 
+} from '../types'
+
+const ITEMS_PER_PAGE = 10
 
 const Notifications: React.FC = () => {
-  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'TASK_ASSIGNED' | 'TASK_COMPLETED' | 'TASK_OVERDUE'>('all')
+  // ✅ ESTADOS
+  const [currentPage, setCurrentPage] = useState(1)
+  const [filters, setFilters] = useState<NotificationFilters>({
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    type: 'all',
+    read: 'all'
+  })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
   
   const queryClient = useQueryClient()
 
-  // ✅ BUSCAR NOTIFICAÇÕES
-  const { data: notificationsData, isLoading, error } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: getNotifications,
-    refetchInterval: 30000, // Refetch a cada 30 segundos
+  // ✅ QUERY PARA BUSCAR NOTIFICAÇÕES COM PAGINAÇÃO
+  const { 
+    data: notificationsResponse, 
+    isLoading, 
+    error,
+    isFetching 
+  } = useQuery({
+    queryKey: ['notifications', filters],
+    queryFn: () => notificationService.getNotifications(filters),
     staleTime: 1000 * 60 * 2, // 2 minutos
+    refetchInterval: 1000 * 60 * 5, // 5 minutos
   })
 
-  const notifications: Notification[] = notificationsData?.notifications || []
+  // ✅ QUERY PARA CONTADOR NÃO LIDAS
+  const { data: unreadData } = useQuery({
+    queryKey: ['notifications-unread-count'],
+    queryFn: notificationService.getUnreadCount,
+    refetchInterval: 1000 * 30, // 30 segundos
+  })
 
-  // ✅ MARCAR COMO LIDA
+  // ✅ MUTATIONS
   const markAsReadMutation = useMutation({
-    mutationFn: markNotificationAsRead,
+    mutationFn: notificationService.markAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
     }
   })
 
-  // ✅ MARCAR TODAS COMO LIDAS
+  const markAsUnreadMutation = useMutation({
+    mutationFn: notificationService.markAsUnread,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+    }
+  })
+
   const markAllAsReadMutation = useMutation({
-    mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => {
+    mutationFn: notificationService.markAllAsRead,
+    onSuccess: (data) => {
+      toast.success(`${data.updatedCount} notificações marcadas como lidas`)
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+    },
+    onError: () => {
+      toast.error('Erro ao marcar todas como lidas')
     }
   })
 
-  // ✅ DELETAR NOTIFICAÇÃO
   const deleteNotificationMutation = useMutation({
-    mutationFn: deleteNotification,
+    mutationFn: notificationService.deleteNotification,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
     }
   })
 
-  // ✅ FILTRAR NOTIFICAÇÕES
-  const filteredNotifications = React.useMemo(() => {
-    let filtered = notifications
-
-    // Filtro por status de leitura
-    if (filter === 'unread') {
-      filtered = filtered.filter(n => !n.read)
-    } else if (filter === 'read') {
-      filtered = filtered.filter(n => n.read)
+  const deleteAllReadMutation = useMutation({
+    mutationFn: notificationService.deleteAllRead,
+    onSuccess: (data) => {
+      toast.success(`${data.deletedCount} notificações lidas excluídas`)
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+    },
+    onError: () => {
+      toast.error('Erro ao excluir notificações lidas')
     }
+  })
 
-    // Filtro por tipo
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(n => n.type === typeFilter)
-    }
-
-    // Ordenar por data (mais recentes primeiro)
-    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [notifications, filter, typeFilter])
+  // ✅ DADOS PROCESSADOS
+  const notifications = notificationsResponse?.notifications || []
+  const totalCount = notificationsResponse?.totalCount || 0
+  const totalPages = notificationsResponse?.totalPages || 1
+  const hasNextPage = notificationsResponse?.hasNextPage || false
+  const hasPreviousPage = notificationsResponse?.hasPreviousPage || false
+  const unreadCount = unreadData?.unreadCount || 0
 
   // ✅ ESTATÍSTICAS
-  const stats = React.useMemo(() => {
-    const unreadCount = notifications.filter(n => !n.read).length
+  const stats = useMemo(() => {
     const todayCount = notifications.filter(n => 
       new Date(n.createdAt).toDateString() === new Date().toDateString()
     ).length
 
-    return { unreadCount, todayCount, total: notifications.length }
-  }, [notifications])
+    const typeStats = notifications.reduce((acc, notification) => {
+      acc[notification.type] = (acc[notification.type] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
 
+    return { 
+      unreadCount, 
+      todayCount, 
+      total: totalCount,
+      typeStats
+    }
+  }, [notifications, unreadCount, totalCount])
+
+  // ✅ FUNÇÕES DE UTILIDADE
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'TASK_ASSIGNED':
-        return <Mail className="h-5 w-5 text-blue-600" />
+        return <Mail className="h-5 w-5" />
       case 'TASK_COMPLETED':
-        return <CheckCircle className="h-5 w-5 text-green-600" />
+        return <CheckCircle className="h-5 w-5" />
       case 'TASK_OVERDUE':
-        return <AlertTriangle className="h-5 w-5 text-red-600" />
+        return <AlertTriangle className="h-5 w-5" />
       case 'TASK_UPDATED':
-        return <Clock className="h-5 w-5 text-orange-600" />
+        return <Edit className="h-5 w-5" />
+      case 'TASK_CANCELLED':
+        return <X className="h-5 w-5" />
+      case 'TASK_REASSIGNED':
+        return <Users className="h-5 w-5" />
       default:
-        return <Bell className="h-5 w-5 text-gray-600" />
+        return <Bell className="h-5 w-5" />
     }
   }
 
-  const getNotificationColor = (type: Notification['type']) => {
-    switch (type) {
-      case 'TASK_ASSIGNED':
-        return 'blue'
-      case 'TASK_COMPLETED':
-        return 'green'
-      case 'TASK_OVERDUE':
-        return 'red'
-      case 'TASK_UPDATED':
-        return 'orange'
-      default:
-        return 'gray'
-    }
+  const getNotificationColors = (type: Notification['type']) => {
+    return NotificationTypeColors[type] || NotificationTypeColors.TASK_ASSIGNED
   }
 
   const formatDate = (dateString: string) => {
@@ -152,15 +206,58 @@ const Notifications: React.FC = () => {
     }
   }
 
+  // ✅ HANDLERS
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markAsReadMutation.mutate(notification.id)
     }
   }
 
-  const clearFilters = () => {
-    setFilter('all')
-    setTypeFilter('all')
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    setFilters(prev => ({ ...prev, page: newPage }))
+  }
+
+  const handleFilterChange = (key: keyof NotificationFilters, value: any) => {
+    setCurrentPage(1)
+    setFilters(prev => ({ 
+      ...prev, 
+      [key]: value,
+      page: 1 
+    }))
+  }
+
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+      setIsSearching(true)
+      handleFilterChange('search', searchTerm.trim())
+    } else {
+      clearSearch()
+    }
+  }
+
+  const clearSearch = () => {
+    setSearchTerm('')
+    setIsSearching(false)
+    const { search, ...filtersWithoutSearch } = filters
+    setFilters(filtersWithoutSearch)
+  }
+
+  const clearAllFilters = () => {
+    setCurrentPage(1)
+    setSearchTerm('')
+    setIsSearching(false)
+    setFilters({
+      page: 1,
+      limit: ITEMS_PER_PAGE,
+      type: 'all',
+      read: 'all'
+    })
+  }
+
+  const refreshNotifications = () => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
   }
 
   if (error) {
@@ -168,18 +265,26 @@ const Notifications: React.FC = () => {
       <div className="p-6">
         <Card className="text-center py-12 border-red-200 bg-red-50">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">Erro ao carregar notificações</h3>
-          <p className="text-red-600">Tente novamente em alguns instantes</p>
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
+            Erro ao carregar notificações
+          </h3>
+          <p className="text-red-600 mb-4">
+            Tente novamente em alguns instantes
+          </p>
+          <Button onClick={refreshNotifications} variant="secondary">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Tentar Novamente
+          </Button>
         </Card>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-8 scrollbar-modern">
       {/* ✅ HEADER COM ESTATÍSTICAS */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg">
               <Bell className="h-8 w-8 text-white" />
@@ -189,27 +294,53 @@ const Notifications: React.FC = () => {
                 Notificações
               </h1>
               <p className="text-gray-600">
-                Acompanhe as atualizações das suas tarefas
+                Acompanhe todas as atualizações das suas tarefas
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshNotifications}
+              disabled={isFetching}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+
             <Button
               variant="secondary"
               size="sm"
               onClick={() => markAllAsReadMutation.mutate()}
-              disabled={stats.unreadCount === 0 || markAllAsReadMutation.isPending}
+              disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
               className="flex items-center gap-2"
             >
               <CheckSquare className="h-4 w-4" />
               Marcar todas como lidas
             </Button>
+
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                if (confirm('Tem certeza que deseja excluir todas as notificações lidas?')) {
+                  deleteAllReadMutation.mutate()
+                }
+              }}
+              disabled={deleteAllReadMutation.isPending}
+              className="flex items-center gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              Limpar lidas
+            </Button>
           </div>
         </div>
 
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* ✅ ESTATÍSTICAS */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-blue-50 border-blue-200">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -245,25 +376,63 @@ const Notifications: React.FC = () => {
               </div>
             </div>
           </Card>
+
+          <Card className="bg-orange-50 border-orange-200">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-orange-900">
+                  {Math.ceil((currentPage * ITEMS_PER_PAGE) / totalCount * 100) || 0}%
+                </p>
+                <p className="text-sm text-orange-700">Visualizadas</p>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
 
-      {/* ✅ FILTROS */}
+      {/* ✅ FILTROS E BUSCA */}
       <Card className="bg-gray-50 border-gray-200">
-        <div className="p-4 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Filtro por status */}
+        <div className="p-6 space-y-4">
+          {/* Linha 1: Busca */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Buscar notificações..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="flex-1"
+                />
+                <Button onClick={handleSearch} variant="secondary">
+                  <Search className="h-4 w-4" />
+                </Button>
+                {isSearching && (
+                  <Button onClick={clearSearch} variant="ghost">
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Linha 2: Filtros */}
+          <div className="flex flex-wrap gap-4">
+            {/* Filtro por status de leitura */}
             <div className="flex gap-2">
               {[
-                { key: 'all', label: 'Todas', count: notifications.length },
-                { key: 'unread', label: 'Não lidas', count: stats.unreadCount },
-                { key: 'read', label: 'Lidas', count: notifications.length - stats.unreadCount }
+                { key: 'all', label: 'Todas', count: totalCount },
+                { key: false, label: 'Não lidas', count: stats.unreadCount },
+                { key: true, label: 'Lidas', count: totalCount - stats.unreadCount }
               ].map(({ key, label, count }) => (
                 <button
-                  key={key}
-                  onClick={() => setFilter(key as any)}
+                  key={String(key)}
+                  onClick={() => handleFilterChange('read', key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === key
+                    filters.read === key
                       ? 'bg-blue-600 text-white shadow-md'
                       : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-300'
                   }`}
@@ -275,67 +444,74 @@ const Notifications: React.FC = () => {
 
             {/* Filtro por tipo */}
             <div className="flex gap-2">
-              {[
-                { key: 'all', label: 'Todos os tipos' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setTypeFilter(key as any)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    typeFilter === key
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+              <select
+                value={filters.type || 'all'}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
+                className="px-3 py-2 rounded-lg text-sm border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Todos os tipos</option>
+                <option value="TASK_ASSIGNED">Tarefas Atribuídas</option>
+                <option value="TASK_UPDATED">Tarefas Atualizadas</option>
+                <option value="TASK_COMPLETED">Tarefas Concluídas</option>
+                <option value="TASK_OVERDUE">Tarefas Atrasadas</option>
+                <option value="TASK_CANCELLED">Tarefas Canceladas</option>
+                <option value="TASK_REASSIGNED">Tarefas Reatribuídas</option>
+              </select>
             </div>
 
             {/* Limpar filtros */}
-            {(filter !== 'all' || typeFilter !== 'all') && (
+            {(filters.read !== 'all' || filters.type !== 'all' || isSearching) && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={clearFilters}
+                onClick={clearAllFilters}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Limpar
+                Limpar Filtros
               </Button>
             )}
           </div>
 
           {/* Indicador de resultados */}
-          {filteredNotifications.length !== notifications.length && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
               <span>
-                Mostrando {filteredNotifications.length} de {notifications.length} notificações
+                Mostrando {notifications.length} de {totalCount} notificações
               </span>
             </div>
-          )}
+            
+            {totalPages > 1 && (
+              <span>
+                Página {currentPage} de {totalPages}
+              </span>
+            )}
+          </div>
         </div>
       </Card>
 
       {/* ✅ LISTA DE NOTIFICAÇÕES */}
       {isLoading ? (
         <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-20 bg-gray-200 rounded-xl animate-pulse"></div>
+          {[...Array(ITEMS_PER_PAGE)].map((_, i) => (
+            <div key={i} className="h-24 bg-gray-200 rounded-xl animate-pulse"></div>
           ))}
         </div>
-      ) : filteredNotifications.length > 0 ? (
+      ) : notifications.length > 0 ? (
         <div className="space-y-3">
-          {filteredNotifications.map((notification, index) => {
-            const color = getNotificationColor(notification.type)
+          {notifications.map((notification, index) => {
+            const colors = getNotificationColors(notification.type)
             
             return (
               <Card 
                 key={notification.id}
                 className={`
-                  group cursor-pointer hover:shadow-lg transition-all duration-200
-                  ${!notification.read ? `bg-${color}-50 border-${color}-200 ring-1 ring-${color}-300` : 'hover:bg-gray-50'}
+                  group cursor-pointer hover:shadow-lg transition-all duration-200 animate-fade-in
+                  ${!notification.read 
+                    ? `${colors.bg} ${colors.border} ring-1 ring-opacity-30` 
+                    : 'hover:bg-gray-50'
+                  }
                 `}
                 onClick={() => handleNotificationClick(notification)}
                 style={{ animationDelay: `${index * 0.05}s` }}
@@ -343,10 +519,12 @@ const Notifications: React.FC = () => {
                 <div className="flex items-start space-x-4 p-4">
                   {/* Ícone da notificação */}
                   <div className={`
-                    p-2.5 rounded-xl shadow-sm
-                    ${!notification.read ? `bg-${color}-100` : 'bg-gray-100'}
+                    p-2.5 rounded-xl shadow-sm flex-shrink-0
+                    ${!notification.read ? colors.bg : 'bg-gray-100'}
                   `}>
-                    {getNotificationIcon(notification.type)}
+                    <div className={colors.icon}>
+                      {getNotificationIcon(notification.type)}
+                    </div>
                   </div>
 
                   {/* Conteúdo da notificação */}
@@ -368,11 +546,23 @@ const Notifications: React.FC = () => {
                           <div className="mt-3 flex items-center gap-2">
                             <span className={`
                               inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
-                              bg-${color}-100 text-${color}-800
+                              ${colors.bg} ${colors.text}
                             `}>
                               <CheckSquare className="h-3 w-3 mr-1" />
                               {notification.task.title}
                             </span>
+                          </div>
+                        )}
+
+                        {/* Metadata adicional */}
+                        {notification.metadata && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            {notification.metadata.changedFields && (
+                              <span>Campos alterados: {notification.metadata.changedFields.join(', ')}</span>
+                            )}
+                            {notification.metadata.oldAssignee && notification.metadata.newAssignee && (
+                              <span>De: {notification.metadata.oldAssignee} → Para: {notification.metadata.newAssignee}</span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -391,7 +581,7 @@ const Notifications: React.FC = () => {
 
                         {/* Ações */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!notification.read && (
+                          {!notification.read ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -399,10 +589,23 @@ const Notifications: React.FC = () => {
                                 e.stopPropagation()
                                 markAsReadMutation.mutate(notification.id)
                               }}
-                              className="p-1 h-6 w-6"
+                              className="p-1 h-8 w-8"
                               title="Marcar como lida"
                             >
                               <Eye className="h-3 w-3" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                markAsUnreadMutation.mutate(notification.id)
+                              }}
+                              className="p-1 h-8 w-8"
+                              title="Marcar como não lida"
+                            >
+                              <EyeOff className="h-3 w-3" />
                             </Button>
                           )}
                           
@@ -415,7 +618,7 @@ const Notifications: React.FC = () => {
                                 deleteNotificationMutation.mutate(notification.id)
                               }
                             }}
-                            className="p-1 h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                             title="Excluir notificação"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -436,24 +639,87 @@ const Notifications: React.FC = () => {
               <Bell className="h-16 w-16 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">
-              {filter === 'unread' && notifications.length > 0
-                ? 'Todas as notificações foram lidas!'
-                : 'Nenhuma notificação'
+              {isSearching ? 'Nenhum resultado encontrado' :
+               filters.read === false ? 'Todas as notificações foram lidas!' :
+               'Nenhuma notificação'
               }
             </h3>
             <p className="text-gray-600 mb-8">
-              {filter === 'unread' && notifications.length > 0
-                ? 'Parabéns! Você está em dia com todas as suas notificações.'
-                : 'Você está em dia com todas as suas tarefas!'
+              {isSearching ? 'Tente buscar com outros termos.' :
+               filters.read === false ? 'Parabéns! Você está em dia com todas as suas notificações.' :
+               'Você está em dia com todas as suas tarefas!'
               }
             </p>
             
-            {(filter !== 'all' || typeFilter !== 'all') && (
-              <Button onClick={clearFilters} className="mt-4">
+            {(filters.read !== 'all' || filters.type !== 'all' || isSearching) && (
+              <Button onClick={clearAllFilters} className="mt-4">
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Ver todas as notificações
               </Button>
             )}
+          </div>
+        </Card>
+      )}
+
+      {/* ✅ PAGINAÇÃO */}
+      {totalPages > 1 && (
+        <Card className="bg-gray-50">
+          <div className="flex items-center justify-between p-4">
+            <div className="text-sm text-gray-600">
+              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} de {totalCount} notificações
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!hasPreviousPage || isLoading}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNumber
+                  
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1
+                  } else if (currentPage > totalPages - 3) {
+                    pageNumber = totalPages - 4 + i
+                  } else {
+                    pageNumber = currentPage - 2 + i
+                  }
+
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant={currentPage === pageNumber ? "primary" : "ghost"}
+                      size="sm"
+                      onClick={() => handlePageChange(pageNumber)}
+                      className="w-8 h-8"
+                    >
+                      {pageNumber}
+                    </Button>
+                  )
+                })}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!hasNextPage || isLoading}
+                className="flex items-center gap-1"
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </Card>
       )}

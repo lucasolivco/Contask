@@ -330,9 +330,22 @@ export const bulkDeleteTasks = async (taskIds: string[]): Promise<{
   return response.data
 }
 
-// ✅ FUNÇÕES DE NOTIFICAÇÃO PERMANECEM IGUAIS...
-export const getNotifications = async (): Promise<any> => {
-  const response = await api.get('/api/notifications')
+// ✅ FUNÇÕES DE NOTIFICAÇÃO ATUALIZADAS
+export const getNotifications = async (filters?: any): Promise<any> => {
+  const params = new URLSearchParams()
+  
+  if (filters?.page) params.append('page', filters.page.toString())
+  if (filters?.limit) params.append('limit', filters.limit.toString())
+  if (filters?.type && filters.type !== 'all') params.append('type', filters.type)
+  if (filters?.read !== undefined && filters.read !== 'all') {
+    params.append('read', filters.read.toString())
+  }
+  if (filters?.search) params.append('search', filters.search)
+
+  const queryString = params.toString()
+  const url = queryString ? `/api/notifications?${queryString}` : '/api/notifications'
+  
+  const response = await api.get(url)
   return response.data
 }
 
@@ -346,6 +359,11 @@ export const markNotificationAsRead = async (id: string): Promise<any> => {
   return response.data
 }
 
+export const markNotificationAsUnread = async (id: string): Promise<any> => {
+  const response = await api.patch(`/api/notifications/${id}/unread`)
+  return response.data
+}
+
 export const markAllNotificationsAsRead = async (): Promise<{
   message: string
   updatedCount: number
@@ -356,5 +374,18 @@ export const markAllNotificationsAsRead = async (): Promise<{
 
 export const deleteNotification = async (id: string): Promise<any> => {
   const response = await api.delete(`/api/notifications/${id}`)
+  return response.data
+}
+
+export const deleteAllReadNotifications = async (): Promise<{
+  message: string
+  deletedCount: number
+}> => {
+  const response = await api.delete('/api/notifications/read')
+  return response.data
+}
+
+export const getNotificationStats = async (): Promise<any> => {
+  const response = await api.get('/api/notifications/stats')
   return response.data
 }

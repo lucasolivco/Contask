@@ -6,6 +6,12 @@ import fs from 'fs-extra'
 import path from 'path'
 import { sendEmail } from '../services/emailService'
 import moment from 'moment-timezone'
+import { 
+  sendTaskAssignedNotification, 
+  sendTaskCompletedNotification,
+  sendTaskUpdatedNotification,
+  sendTaskCancelledNotification
+} from '../services/notificationService'
 
 // Interface para tipar as requisições com usuário autenticado
 interface AuthRequest extends Request {
@@ -881,7 +887,6 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
     const { id } = req.params
     const { title, description, priority, status, dueDate, targetDate, assignedToId } = req.body
 
-    // Verifica autenticação
     if (!req.user) {
       return res.status(401).json({ error: 'Usuário não autenticado' })
     }
@@ -889,12 +894,10 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
     const userRole = req.user.role
     const userId = req.user.userId
 
-    // Verificar se é MANAGER
     if (userRole !== 'MANAGER') {
       return res.status(403).json({ error: 'Apenas gerentes podem editar tarefas' })
     }
 
-    // Verificar se a tarefa existe
     const existingTask = await prisma.task.findUnique({
       where: { id },
       include: {
@@ -907,42 +910,64 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Tarefa não encontrada' })
     }
 
-    // ✅ MODIFICAR: Apenas o CRIADOR pode editar (não o atribuído)
-    const canEdit = existingTask.createdById === userId
-
-    if (!canEdit) {
+    if (existingTask.createdById !== userId) {
       return res.status(403).json({ 
-        error: 'Apenas o criador da tarefa pode editá-la. Você pode apenas alterar o status se foi atribuído a você.' 
+        error: 'Apenas o criador da tarefa pode editá-la.' 
       })
     }
 
-    // ✅ MODIFICAR: Verificar se o usuário a ser atribuído existe (QUALQUER USUÁRIO VERIFICADO)
+    // ✅ DETECTAR MUDANÇAS
+    const changes = {
+      changedFields: [] as string[],
+      statusChange: null as any,
+      assigneeChange: null as any
+    }
+
+    if (title !== undefined && title !== existingTask.title) changes.changedFields.push('Título')
+    if (description !== undefined && description !== existingTask.description) changes.changedFields.push('Descrição')
+    if (priority !== undefined && priority !== existingTask.priority) changes.changedFields.push('Prioridade')
+    if (dueDate !== undefined) changes.changedFields.push('Data de vencimento')
+    if (targetDate !== undefined) changes.changedFields.push('Data meta')
+    
+    if (status !== undefined && status !== existingTask.status) {
+      changes.changedFields.push('Status')
+      changes.statusChange = {
+        from: existingTask.status,
+        to: status
+      }
+    }
+
+    if (assignedToId !== undefined && assignedToId !== existingTask.assignedToId) {
+      changes.changedFields.push('Responsável')
+      changes.assigneeChange = {
+        from: existingTask.assignedTo,
+        to: assignedToId
+      }
+    }
+
+    // Verificar novo usuário
+    let newAssignedUser = null
     if (assignedToId && assignedToId !== existingTask.assignedToId) {
-      const assignedUser = await prisma.user.findFirst({
+      newAssignedUser = await prisma.user.findFirst({
         where: { 
           id: assignedToId,
           emailVerified: true
-          // ✅ NÃO FILTRAR POR ROLE - permitir MANAGERS e EMPLOYEES
         }
       })
 
-      if (!assignedUser) {
+      if (!newAssignedUser) {
         return res.status(400).json({ error: 'Usuário para atribuição não encontrado' })
       }
     }
 
-    // Monta o objeto de atualização apenas com campos enviados
-    const data: any = {
-      updatedAt: new Date()
-    }
+    // Preparar dados de atualização
+    const data: any = { updatedAt: new Date() }
 
     if (title !== undefined && title !== null) data.title = title
-    // permitir descrição vazia (string), por isso checamos !== undefined
     if (description !== undefined) data.description = description
     if (priority !== undefined && priority !== null) data.priority = priority
     if (status !== undefined && status !== null) data.status = status
 
-    // dueDate: undefined = sem mudança, '' or null = limpar (set null), string válida = new Date(...)
     if (dueDate !== undefined) {
       if (dueDate === '' || dueDate === null) {
         data.dueDate = null
@@ -955,7 +980,6 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
       }
     }
 
-     // ✅ ADICIONADO: Tratar targetDate (ESTAVA FALTANDO!)
     if (targetDate !== undefined) {
       if (targetDate === '' || targetDate === null) {
         data.targetDate = null
@@ -969,66 +993,58 @@ export const editTarefa = async (req: AuthRequest, res: Response) => {
     }
 
     if (assignedToId !== undefined) {
-      // permitir atribuir null para desatribuir
       data.assignedToId = assignedToId || null
     }
 
-    // Executa update
+    // Atualizar tarefa
     const updatedTask = await prisma.task.update({
       where: { id },
       data,
       include: {
-        assignedTo: {
-          select: { id: true, name: true, email: true }
-        },
-        createdBy: {
-          select: { id: true, name: true, email: true }
-        }
+        assignedTo: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true, email: true } }
       }
     })
 
-        // Se mudou o assignedTo, cria notificação para o novo responsável
-    if (assignedToId && assignedToId !== existingTask.assignedToId) {
-      const newAssignedUser = await prisma.user.findUnique({
-        where: { id: assignedToId },
-        select: { name: true, role: true }
-      })
+    // ✅ ENVIAR NOTIFICAÇÕES BASEADAS NAS MUDANÇAS
 
-      // ✅ PERSONALIZAR notificação baseada no role
-      const notificationMessage = newAssignedUser?.role === 'MANAGER'
-        ? `Você foi atribuído à tarefa "${updatedTask.title}" por ${existingTask.createdBy.name}`
-        : `Você foi atribuído à tarefa "${updatedTask.title}"`
-
-      await prisma.notification.create({
-        data: {
-          type: 'TASK_ASSIGNED',
-          title: 'Tarefa reatribuída',
-          message: notificationMessage,
-          userId: assignedToId,
-          taskId: updatedTask.id
-        }
-      })
-
-      console.log(`🔄 Tarefa reatribuída: ${updatedTask.title} para ${newAssignedUser?.name} (${newAssignedUser?.role})`)
+    // 1. Se mudou o responsável (reatribuição)
+    if (changes.assigneeChange && newAssignedUser) {
+      await sendTaskAssignedNotification({
+        task: updatedTask,
+        assignedTo: newAssignedUser,
+        createdBy: existingTask.createdBy,
+        previousAssignee: existingTask.assignedTo.name
+      }, true) // isReassignment = true
     }
+
+    // 2. Se mudou status para cancelado
+    if (changes.statusChange && status === 'CANCELLED') {
+      await sendTaskCancelledNotification({
+        task: updatedTask,
+        assignedTo: updatedTask.assignedTo,
+        cancelledBy: existingTask.createdBy
+      })
+    }
+
+    // 3. Se houve outras mudanças (e não mudou responsável)
+    if (changes.changedFields.length > 0 && !changes.assigneeChange) {
+      await sendTaskUpdatedNotification({
+        task: updatedTask,
+        assignedTo: updatedTask.assignedTo,
+        updatedBy: existingTask.createdBy
+      }, changes)
+    }
+
+    console.log(`🔄 Tarefa "${updatedTask.title}" atualizada. Mudanças:`, changes.changedFields)
 
     res.json({
       message: 'Tarefa atualizada com sucesso!',
       task: updatedTask
     })
+
   } catch (error: any) {
     console.error('Erro ao atualizar tarefa:', error)
-
-    // Tratamento específico para erros do Prisma
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        return res.status(400).json({ error: 'Dados duplicados' })
-      }
-      if (error.code === 'P2025') {
-        return res.status(404).json({ error: 'Tarefa não encontrada' })
-      }
-    }
-
     res.status(500).json({ error: 'Erro interno do servidor' })
   }
 }
