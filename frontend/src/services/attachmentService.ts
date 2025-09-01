@@ -80,3 +80,20 @@ export const downloadAttachment = async (attachmentId: string, fileName: string)
     throw error
   }
 }
+
+// ✅ NOVA FUNÇÃO: DELETAR ANEXO
+export const deleteAttachment = async (attachmentId: string): Promise<{
+  message: string
+  attachmentId: string
+  fileName: string
+}> => {
+  try {
+    console.log('🗑️ Excluindo anexo:', attachmentId)
+    const response = await api.delete(`/api/tasks/attachments/${attachmentId}`)
+    console.log('✅ Anexo excluído:', response.data.fileName)
+    return response.data
+  } catch (error) {
+    console.error('❌ Erro ao excluir anexo:', error)
+    throw error
+  }
+}

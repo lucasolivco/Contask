@@ -1,4 +1,4 @@
-// frontend/src/components/tasks/TaskDetailsModal.tsx - CRIAR/CORRIGIR
+// frontend/src/components/tasks/TaskDetailsModal.tsx - VERSÃO COMPLETA
 
 import React, { useEffect, useState } from 'react'
 import { 
@@ -19,17 +19,17 @@ import {
   Image,
   File,
   Loader2,
-  CalendarPlus
+  CalendarPlus,
+  Trash2 // ✅ NOVO ÍCONE
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskStatusLabels, TaskPriorityLabels } from '../../types'
 import type { Task } from '../../types'
 import { getTaskComments, createComment, type Comment } from '../../services/commentService'
-import { getTaskAttachments, uploadAttachments, downloadAttachment, type Attachment } from '../../services/attachmentService'
+import { getTaskAttachments, uploadAttachments, downloadAttachment, deleteAttachment, type Attachment } from '../../services/attachmentService'
 import Portal from '../ui/Portal'
 import moment from 'moment-timezone'
 
-// ✅ INTERFACE CORRIGIDA PARA TASKDETAILSMODAL
 interface TaskDetailsModalProps {
   task: Task
   isOpen: boolean
@@ -54,14 +54,14 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const [isDeletingAttachment, setIsDeletingAttachment] = useState<string | null>(null) // ✅ NOVO
+  const [isDeletingComment, setIsDeletingComment] = useState<string | null>(null) // ✅ NOVO
 
-  // ✅ VERIFICAÇÃO DE SEGURANÇA PARA CURRENTUSER
   if (!currentUser) {
     console.warn('TaskDetailsModal: currentUser não fornecido')
     if (!isOpen) return null
   }
 
-  // ✅ PREVENIR SCROLL DO BODY QUANDO MODAL ABERTO
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -74,7 +74,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }, [isOpen])
 
-  // ✅ FECHAR COM ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -91,7 +90,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }, [isOpen, onClose])
 
-  // ✅ CARREGAR dados ao abrir modal
   useEffect(() => {
     if (isOpen && task.id) {
       loadComments()
@@ -101,7 +99,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   if (!isOpen) return null
 
-  // Carregar comentários
   const loadComments = async () => {
     setIsLoadingComments(true)
     try {
@@ -115,7 +112,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }
 
-  // Carregar anexos
   const loadAttachments = async () => {
     setIsLoadingAttachments(true)
     try {
@@ -129,10 +125,98 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setIsUploadingFile(true)
+    
+    try {
+      const filesArray = Array.from(files)
+      const data = await uploadAttachments(task.id, filesArray)
+      
+      setAttachments(prev => [...data.attachments, ...prev])
+      toast.success(data.message)
+      
+      e.target.value = ''
+    } catch (error: any) {
+      console.error('Erro ao fazer upload:', error)
+      toast.error(error.response?.data?.error || 'Erro ao fazer upload do arquivo')
+    } finally {
+      setIsUploadingFile(false)
+    }
+  }
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newComment.trim()) return
+
+    setIsSubmittingComment(true)
+    
+    try {
+      const data = await createComment(task.id, newComment.trim())
+      
+      setComments(prev => [...prev, data.comment])
+      setNewComment('')
+      toast.success('Comentário adicionado com sucesso')
+    } catch (error: any) {
+      console.error('Erro ao enviar comentário:', error)
+      toast.error(error.response?.data?.error || 'Erro ao enviar comentário')
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  const handleDownload = async (attachment: Attachment) => {
+    try {
+      await downloadAttachment(attachment.id, attachment.originalName)
+      toast.success(`Download de ${attachment.originalName} iniciado`)
+    } catch (error: any) {
+      console.error('Erro ao fazer download:', error)
+      toast.error('Erro ao fazer download do arquivo')
+    }
+  }
+
+  // ✅ NOVA FUNÇÃO: DELETAR ANEXO
+  const handleDeleteAttachment = async (attachment: Attachment) => {
+    if (!confirm(`Tem certeza que deseja excluir o arquivo "${attachment.originalName}"?`)) {
+      return
+    }
+
+    setIsDeletingAttachment(attachment.id)
+    
+    try {
+      const data = await deleteAttachment(attachment.id)
+      
+      setAttachments(prev => prev.filter(a => a.id !== attachment.id))
+      toast.success(`Arquivo "${data.fileName}" excluído com sucesso`)
+    } catch (error: any) {
+      console.error('Erro ao excluir anexo:', error)
+      toast.error(error.response?.data?.error || 'Erro ao excluir arquivo')
+    } finally {
+      setIsDeletingAttachment(null)
+    }
+  }
+
+  // ✅ FUNÇÃO PARA VERIFICAR PERMISSÃO DE DELETAR ANEXO
+  const canDeleteAttachment = (attachment: Attachment): boolean => {
+    if (userRole === 'MANAGER') return true // Manager pode deletar qualquer anexo
+    if (attachment.uploadedBy.id === currentUser?.id) return true // Quem fez upload pode deletar
+    if (task.createdBy.id === currentUser?.id) return true // Criador da tarefa pode deletar
+    return false
+  }
+
+  // ✅ FUNÇÃO PARA VERIFICAR PERMISSÃO DE DELETAR COMENTÁRIO
+  const canDeleteComment = (comment: Comment): boolean => {
+    if (userRole === 'MANAGER') return true // Manager pode deletar qualquer comentário
+    if (comment.author.id === currentUser?.id) return true // Autor pode deletar seu comentário
+    if (task.createdBy.id === currentUser?.id) return true // Criador da tarefa pode deletar
+    return false
+  }
+
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
   const isNearTarget = task.targetDate && new Date(task.targetDate) < new Date() && task.status !== 'COMPLETED'
 
-  // Função para obter ícone de status
   const getStatusIcon = (status: Task['status']) => {
     switch (status) {
       case 'COMPLETED': return <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -142,7 +226,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }
 
-  // Função para obter cores de prioridade
   const getPriorityStyles = (priority: Task['priority']) => {
     switch (priority) {
       case 'URGENT': return {
@@ -168,66 +251,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }
 
-  const priorityStyles = getPriorityStyles(task.priority)
-
-  // ✅ UPLOAD REAL de arquivo
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
-    setIsUploadingFile(true)
-    
-    try {
-      const filesArray = Array.from(files)
-      const data = await uploadAttachments(task.id, filesArray)
-      
-      // Atualizar lista de anexos
-      setAttachments(prev => [...data.attachments, ...prev])
-      toast.success(data.message)
-      
-      // Limpar input
-      e.target.value = ''
-    } catch (error: any) {
-      console.error('Erro ao fazer upload:', error)
-      toast.error(error.response?.data?.error || 'Erro ao fazer upload do arquivo')
-    } finally {
-      setIsUploadingFile(false)
-    }
-  }
-
-  // ✅ ENVIO REAL de comentário
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newComment.trim()) return
-
-    setIsSubmittingComment(true)
-    
-    try {
-      const data = await createComment(task.id, newComment.trim())
-      
-      // Adicionar comentário à lista
-      setComments(prev => [...prev, data.comment])
-      setNewComment('')
-      toast.success('Comentário adicionado com sucesso')
-    } catch (error: any) {
-      console.error('Erro ao enviar comentário:', error)
-      toast.error(error.response?.data?.error || 'Erro ao enviar comentário')
-    } finally {
-      setIsSubmittingComment(false)
-    }
-  }
-
-  // ✅ DOWNLOAD REAL de anexo
-  const handleDownload = async (attachment: Attachment) => {
-    try {
-      await downloadAttachment(attachment.id, attachment.originalName)
-      toast.success(`Download de ${attachment.originalName} iniciado`)
-    } catch (error: any) {
-      console.error('Erro ao fazer download:', error)
-      toast.error('Erro ao fazer download do arquivo')
-    }
-  }
-
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase()
     
@@ -240,7 +263,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     return <File className="h-4 w-4 md:h-5 md:w-5 text-gray-500" />
   }
 
-  // ✅ FUNÇÃO para formatar tamanho do arquivo
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
@@ -249,7 +271,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  // ✅ FUNÇÃO PARA FORMATAR DATA
   const formatDateBrazil = (dateString: string) => {
     if (!dateString) return ''
     
@@ -262,15 +283,15 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   }
 
+  const priorityStyles = getPriorityStyles(task.priority)
+
   return (
     <Portal>
-      {/* Overlay */}
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 z-50"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4 z-50">
         <div 
           className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
@@ -302,7 +323,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             </button>
           </div>
 
-          {/* Conteúdo */}
           <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
             
             {/* Conteúdo principal */}
@@ -346,7 +366,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                   <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3">Informações</h3>
                   <div className="grid grid-cols-2 gap-2 md:gap-4">
                     
-                    {/* Responsável */}
                     <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg">
                       <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -355,7 +374,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Criado por */}
                     <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
                       <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -364,7 +382,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Data de vencimento */}
                     {task.dueDate ? (
                       <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
                         <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
@@ -390,7 +407,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       </div>
                     )}
 
-                    {/* Data meta */}
                     {task.targetDate && (
                       <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg">
                         <Target className="h-4 w-4 text-blue-500 flex-shrink-0" />
@@ -408,7 +424,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                   </div>
                 </div>
 
-                {/* Anexos */}
+                {/* ✅ ANEXOS COM BOTÃO DELETE */}
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                     <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
@@ -452,22 +468,45 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                   ) : attachments.length > 0 ? (
                     <div className="space-y-2 max-h-32 lg:max-h-none overflow-y-auto">
                       {attachments.map((attachment) => (
-                        <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {getFileIcon(attachment.originalName)}
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-gray-900 text-sm truncate">{attachment.originalName}</p>
-                              <p className="text-xs text-gray-500 truncate">
-                                {formatFileSize(attachment.fileSize)}
-                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span>{formatFileSize(attachment.fileSize)}</span>
+                                <span>•</span>
+                                <span>Por: {attachment.uploadedBy.name}</span>
+                              </div>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => handleDownload(attachment)}
-                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
-                          >
-                            <Download className="h-3 w-3" />
-                          </button>
+                          
+                          {/* ✅ BOTÕES DE AÇÃO */}
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => handleDownload(attachment)}
+                              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+                              title="Download"
+                            >
+                              <Download className="h-3 w-3" />
+                            </button>
+                            
+                            {/* ✅ BOTÃO DELETE (COM PERMISSÃO) */}
+                            {canDeleteAttachment(attachment) && (
+                              <button 
+                                onClick={() => handleDeleteAttachment(attachment)}
+                                disabled={isDeletingAttachment === attachment.id}
+                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Excluir anexo"
+                              >
+                                {isDeletingAttachment === attachment.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3 w-3" />
+                                )}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -481,10 +520,9 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
               </div>
             </div>
 
-            {/* Chat de comentários */}
+            {/* ✅ CHAT DE COMENTÁRIOS COM DELETE */}
             <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col bg-gray-50 flex-1 lg:flex-none min-h-[50vh] lg:min-h-0">
               
-              {/* Header do Chat */}
               <div className="p-3 border-b border-gray-200 bg-white">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
@@ -494,7 +532,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 <p className="text-xs text-gray-500">Conversa da equipe</p>
               </div>
 
-              {/* Lista de comentários */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {isLoadingComments ? (
                   <div className="flex items-center justify-center py-8">
@@ -503,9 +540,9 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                   </div>
                 ) : comments.length > 0 ? (
                   comments.map((comment) => (
-                    <div key={comment.id} className="bg-white rounded-lg p-3 shadow-sm">
+                    <div key={comment.id} className="bg-white rounded-lg p-3 shadow-sm group hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between mb-2 gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span className="font-medium text-gray-900 text-sm truncate">{comment.author.name}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
                             comment.author.role === 'MANAGER' 
@@ -515,14 +552,18 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                             {comment.author.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500 flex-shrink-0">
-                          {new Date(comment.createdAt).toLocaleString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 flex-shrink-0">
+                            {new Date(comment.createdAt).toLocaleString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                          
+                        </div>
                       </div>
                       <p className="text-gray-700 text-sm leading-relaxed">{comment.message}</p>
                     </div>
@@ -536,7 +577,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 )}
               </div>
 
-              {/* Form de comentário */}
               <div className="p-3 border-t border-gray-200 bg-white">
                 <form onSubmit={handleSubmitComment} className="space-y-2">
                   <textarea

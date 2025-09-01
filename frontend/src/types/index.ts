@@ -40,7 +40,7 @@ export interface Task {
 // ✅ INTERFACE PRINCIPAL DE NOTIFICAÇÃO
 export interface Notification {
     id: string;
-    type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE' | 'TASK_CANCELLED' | 'TASK_REASSIGNED';
+    type: 'TASK_ASSIGNED' | 'TASK_UPDATED' | 'TASK_COMPLETED' | 'TASK_OVERDUE' | 'TASK_CANCELLED' | 'TASK_REASSIGNED' | 'COMMENT_ADDED' | 'ATTACHMENT_ADDED'; // ✅ ADICIONAR NOVOS TIPOS
     title: string;
     message: string;
     read: boolean;
@@ -61,6 +61,12 @@ export interface Notification {
         previousStatus?: string;
         newStatus?: string;
         reason?: string;
+        commentAuthor?: string; // ✅ NOVO
+        commentPreview?: string; // ✅ NOVO
+        uploader?: string; // ✅ NOVO
+        fileCount?: number; // ✅ NOVO
+        fileNames?: string; // ✅ NOVO
+        recipientType?: 'creator' | 'assignee'; // ✅ NOVO
     };
 }
 
@@ -110,7 +116,9 @@ export const NotificationTypeLabels = {
     TASK_COMPLETED: 'Tarefa Concluída',
     TASK_OVERDUE: 'Tarefa Atrasada',
     TASK_CANCELLED: 'Tarefa Cancelada',
-    TASK_REASSIGNED: 'Tarefa Reatribuída'
+    TASK_REASSIGNED: 'Tarefa Reatribuída',
+    COMMENT_ADDED: 'Comentário Adicionado', // ✅ NOVO
+    ATTACHMENT_ADDED: 'Anexo Adicionado' // ✅ NOVO
 } as const;
 
 // ✅ CORES PARA TIPOS DE NOTIFICAÇÃO
@@ -150,6 +158,18 @@ export const NotificationTypeColors = {
         text: 'text-purple-700',
         border: 'border-purple-200',
         icon: 'text-purple-600'
+    },
+    COMMENT_ADDED: { // ✅ NOVO
+        bg: 'bg-cyan-50',
+        text: 'text-cyan-700',
+        border: 'border-cyan-200',
+        icon: 'text-cyan-600'
+    },
+    ATTACHMENT_ADDED: { // ✅ NOVO
+        bg: 'bg-emerald-50',
+        text: 'text-emerald-700',
+        border: 'border-emerald-200',
+        icon: 'text-emerald-600'
     }
 } as const;
 

@@ -6,7 +6,7 @@ dotenv.config()
 interface EmailData {
   to: string
   subject: string
-  template: 'task-assigned' | 'task-completed' | 'task-overdue' | 'task-updated' | 'task-cancelled'
+  template: 'task-assigned' | 'task-completed' | 'task-overdue' | 'task-updated' | 'task-cancelled' | 'comment-added' | 'attachment-added'
   data: any
 }
 
@@ -192,6 +192,84 @@ const emailTemplates = {
             Ver Todas as Tarefas
           </a>
         </div>
+      </div>
+    </div>
+  `,
+  'comment-added': (data: any) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #0891b2; color: white; padding: 20px; text-align: center;">
+      <h1>💬 Novo Comentário</h1>
+    </div>
+    
+    <div style="padding: 20px;">
+      <p>Olá <strong>${data.recipientName}</strong>,</p>
+      
+      <p>${data.commentAuthor} adicionou um comentário ${data.isCreator ? 'na tarefa que você criou' : 'na tarefa'}:</p>
+      
+      <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0891b2;">
+        <h3 style="margin: 0 0 10px 0; color: #164e63;">${data.taskTitle}</h3>
+      </div>
+      
+      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <strong style="color: #374151;">${data.commentAuthor}</strong>
+          <span style="color: #6b7280; font-size: 12px; margin-left: 10px;">${data.commentDate}</span>
+        </div>
+        <p style="margin: 0; color: #374151; line-height: 1.5;">${data.commentMessage}</p>
+      </div>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${data.taskUrl}" 
+          style="background: #0891b2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          Ver Tarefa e Responder
+        </a>
+      </div>
+    </div>
+    
+    <div style="background: #f8fafc; padding: 15px; text-align: center; color: #64748b; font-size: 14px;">
+      Sistema de Gerenciamento de Tarefas - Contask
+    </div>
+  </div>
+  `,
+
+  'attachment-added': (data: any) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #059669; color: white; padding: 20px; text-align: center;">
+        <h1>📎 Novo Anexo</h1>
+      </div>
+      
+      <div style="padding: 20px;">
+        <p>Olá <strong>${data.recipientName}</strong>,</p>
+        
+        <p>${data.uploaderName} anexou ${data.fileCount > 1 ? `${data.fileCount} arquivos` : 'um arquivo'} ${data.isCreator ? 'na tarefa que você criou' : 'na tarefa'}:</p>
+        
+        <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+          <h3 style="margin: 0 0 10px 0; color: #164e63;">${data.taskTitle}</h3>
+        </div>
+        
+        <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <strong style="color: #374151;">📎 ${data.fileCount > 1 ? 'Arquivos anexados' : 'Arquivo anexado'}</strong>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 10px;">${data.attachmentDate}</span>
+          </div>
+          <div style="background: #f9fafb; padding: 10px; border-radius: 6px;">
+            <p style="margin: 0; color: #374151; font-family: monospace; font-size: 14px;">${data.fileNames}</p>
+          </div>
+          <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 12px;">
+            Por: <strong>${data.uploaderName}</strong>
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.taskUrl}" 
+            style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Ver Tarefa e Anexos
+          </a>
+        </div>
+      </div>
+      
+      <div style="background: #f8fafc; padding: 15px; text-align: center; color: #64748b; font-size: 14px;">
+        Sistema de Gerenciamento de Tarefas - Contask
       </div>
     </div>
   `

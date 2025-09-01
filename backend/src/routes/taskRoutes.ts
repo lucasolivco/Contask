@@ -10,11 +10,6 @@ import {
   getAssignableUsers,
   getEmployeeDetails,
   editTarefa,
-  getTaskComments,
-  createComment,
-  getTaskAttachments,
-  uploadAttachment,
-  downloadAttachment,
   getTaskStatsByPeriod,
   debugDates,
   deleteTask,
@@ -24,6 +19,18 @@ import {
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
+
+import { 
+  getTaskAttachments,
+  uploadAttachment,
+  deleteAttachment,
+  downloadAttachment  // ✅ NOVA IMPORTAÇÃO
+} from '../controllers/attachmentController'
+
+import { 
+  getTaskComments,
+  createComment
+} from '../controllers/commentController'
 
 const router = Router()
 
@@ -56,6 +63,7 @@ router.post('/:taskId/comments', createComment)
 router.get('/:taskId/attachments', getTaskAttachments)
 router.post('/:taskId/attachments', upload.array('files', 5), uploadAttachment)
 router.get('/attachments/:attachmentId/download', downloadAttachment)
+router.delete('/attachments/:attachmentId', deleteAttachment) // ✅ NOVA
 
 // Estatísticas
 router.get('/stats/period', getTaskStatsByPeriod)

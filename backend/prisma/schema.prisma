@@ -143,4 +143,6 @@ enum NotificationType {
   TASK_OVERDUE
   TASK_CANCELLED     // ✅ NOVO
   TASK_REASSIGNED    // ✅ NOVO
+  COMMENT_ADDED        // ✅ NOVO
+  ATTACHMENT_ADDED     // ✅ NOVO
 }
