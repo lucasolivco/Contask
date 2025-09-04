@@ -201,7 +201,7 @@ const VerifyEmail: React.FC = () => {
         </Card>
 
         {/* ✅ DEBUG INFO (REMOVER EM PRODUÇÃO) */}
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.VITE_API_URL === 'development' && (
           <Card className="bg-yellow-50 border-yellow-200">
             <div className="text-xs text-yellow-800">
               <p className="font-medium">🐛 Debug Info:</p>

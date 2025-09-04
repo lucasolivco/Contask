@@ -1,0 +1,49 @@
+# ✅ DESENVOLVIMENTO
+dev-up:
+	docker-compose up -d
+
+dev-down:
+	docker-compose down
+
+dev-build:
+	docker-compose build
+
+dev-logs:
+	docker-compose logs -f
+
+dev-reset:
+	docker-compose down -v
+	docker-compose up -d
+
+# ✅ PRODUÇÃO
+prod-up:
+	docker-compose -f docker-compose.prod.yml --env-file ./env/.env.production up -d
+
+prod-down:
+	docker-compose -f docker-compose.prod.yml down
+
+prod-build:
+	docker-compose -f docker-compose.prod.yml build --no-cache
+
+prod-logs:
+	docker-compose -f docker-compose.prod.yml logs -f
+
+prod-deploy:
+	./scripts/deploy.sh
+
+# ✅ TESTE
+test-prod:
+	./scripts/test-prod.sh
+
+backup:
+	./scripts/backup.sh
+
+# ✅ BANCO
+db-migrate:
+	docker-compose exec backend npx prisma migrate deploy
+
+db-reset:
+	docker-compose exec backend npx prisma migrate reset
+
+db-studio:
+	docker-compose exec backend npx prisma studio

@@ -1,2 +1,37 @@
-docker-compose.yml
+
 task-organizer.zip
+
+# Arquivos sensíveis
+.env
+.env.local
+.env.production
+.env.*
+!/.env.example
+
+# Docker
+docker-compose.override.yml
+docker-compose.yml
+
+# Uploads e logs
+/uploads/
+/backups/
+/logs/
+*.log
+
+# SSL
+certbot/
+
+# Database
+postgres_data/
+redis_data/
+
+dist/
+build/
+/env/
+
+Thumbs.db
+
+.vscode/
+
+novo docker compose.txt
+docker-compose teste.txt
