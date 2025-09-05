@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit'
 import slowDown from 'express-slow-down'
 import dotenv from 'dotenv'
 import path from 'path'
+import metricsMiddleware from 'express-prom-bundle';
 
 import authRoutes from './routes/authRoutes'
 import taskRoutes from './routes/taskRoutes'
@@ -131,6 +132,15 @@ app.use('/api/auth/register', authLimiter)
 app.use('/api/tasks/*path/attachments', uploadLimiter)  // ✅ *path com nome
 app.use(speedLimiter)
 app.use(generalLimiter)
+
+// ✅ EXPOR MÉTRICAS PARA PROMETHEUS
+app.use(metricsMiddleware({ 
+    includeMethod: true, 
+    includePath: true,
+    promClient: {
+        collectDefaultMetrics: {}
+    }
+}))
 
 // ✅ MORGAN LOGGING SEGURO
 app.use(morgan(isProduction 

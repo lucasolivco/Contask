@@ -1,0 +1,15 @@
+# docker/monitoring/prometheus.yml
+global:
+  scrape_interval: 15s # A cada 15 segundos, o Prometheus coletará os dados
+
+scrape_configs:
+  - job_name: 'prometheus'
+    # O próprio Prometheus também expõe métricas, vamos monitorá-lo como exemplo
+    static_configs:
+      - targets: ['prometheus:9090']
+
+    # ✅ ADICIONE ESTE BLOCO
+  - job_name: 'backend'
+    static_configs:
+      # O endereço do seu backend dentro da rede Docker
+      - targets: ['backend:3001'] 
