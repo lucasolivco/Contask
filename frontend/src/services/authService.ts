@@ -126,12 +126,12 @@ export const verifyResetToken = async (token: string): Promise<VerifyResetTokenR
 export const logout = async (): Promise<void> => {
     try {
         await api.post('/api/auth/logout'); // ✅ /api/auth/logout
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('access_token'); // ✅ Corrigido
+        localStorage.removeItem('user_data');   // ✅ Corrigido
     } catch (error) {
         console.error('Erro ao fazer logout:', error);
         // Remove do localStorage mesmo se der erro na API
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('access_token'); // ✅ Corrigido
+        localStorage.removeItem('user_data');   // ✅ Corrigido
     }
 };

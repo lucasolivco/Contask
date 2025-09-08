@@ -1,15 +1,20 @@
-# ✅ MULTI-STAGE BUILD PARA PRODUÇÃO
+# backend/Dockerfile.prod - VERSÃO SEGURA E OTIMIZADA PARA PRODUÇÃO
+
+# ✅ BUILD STAGE
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
-RUN npm ci --only=production
+
+# ✅ CORREÇÃO: Instale TODAS as dependências para poder executar o script de build
+RUN npm ci
+
 RUN npx prisma generate
 COPY . .
 RUN npm run build
 
-# ✅ IMAGEM FINAL
+# ✅ IMAGEM FINAL (esta parte já estava correta)
 FROM node:20-alpine AS runner
 
 # Instalar dependências do sistema

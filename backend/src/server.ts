@@ -68,7 +68,6 @@ app.use(cors({
     if (!origin) return callback(null, true)
     
     if (allowedOrigins.includes(origin)) {
-      .06
       callback(null, true)
     } else {
       console.warn(`❌ CORS blocked: ${origin}`)

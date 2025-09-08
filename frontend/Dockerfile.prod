@@ -1,29 +1,33 @@
-# ✅ BUILD STAGE
-FROM node:18-alpine AS builder
+# frontend/Dockerfile.prod - VERSÃO SEGURA E OTIMIZADA PARA PRODUÇÃO
+
+# ✅ BUILD STAGE - Alinhado com a versão do Node.js de desenvolvimento
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+# Instala todas as dependências para que o script de build funcione
+RUN npm ci 
 COPY . .
 RUN npm run build
 
-# ✅ NGINX STAGE
+# ✅ NGINX STAGE - Imagem final e otimizada
 FROM nginx:alpine AS runner
 
-# Copiar build
+# ✅ INSTALAR CURL PARA O HEALTHCHECK
+RUN apk add --no-cache curl
+
+# Copiar apenas os arquivos estáticos construídos do estágio anterior
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Configuração nginx customizada
-COPY docker/nginx/frontend.conf /etc/nginx/conf.d/default.conf
+# Copiar a configuração do Nginx de um local corrigido
+# NOTA: Mova seu arquivo `default.conf` para dentro da pasta `frontend/`
+COPY default.conf /etc/nginx/conf.d/default.conf
 
-# Criar usuário
-RUN adduser -D -s /bin/sh www-data
+# Ajustar permissões para o usuário padrão do Nginx
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx
 
-# Ajustar permissões
-RUN chown -R www-data:www-data /usr/share/nginx/html
-RUN chown -R www-data:www-data /var/cache/nginx
-
-USER www-data
+# Usar o usuário não-root padrão e seguro do Nginx
+USER nginx
 
 EXPOSE 80
 
