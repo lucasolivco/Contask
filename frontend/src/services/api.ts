@@ -28,6 +28,7 @@ const ALLOWED_DOMAINS = [
   'localhost',
   '127.0.0.1',
   // ✅ ADICIONAR SEU DOMÍNIO AQUI
+  '147.93.69.28',
   'seudominio.com',
   'api.seudominio.com'
 ]
@@ -49,9 +50,9 @@ if (!validateURL(baseURL)) {
 }
 
 // ✅ FORÇAR HTTPS EM PRODUÇÃO
-if (import.meta.env.PROD && !baseURL.startsWith('https://')) {
-  throw new Error('HTTPS é obrigatório em produção')
-}
+//if (import.meta.env.PROD && !baseURL.startsWith('https://')) {
+//  throw new Error('HTTPS é obrigatório em produção')
+//}
 
 const api = axios.create({
   baseURL,
@@ -136,8 +137,9 @@ api.interceptors.response.use(
       // TOKEN EXPIRADO (401)
       if (status === 401) {
         console.warn('🔐 Token expirado, fazendo logout...');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_data');
+	localStorage.removeItem('refresh_token');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
