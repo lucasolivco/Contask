@@ -1,6 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
-// Adicionar este bloco para estender a tipagem do Axios
 declare module 'axios' {
   export interface InternalAxiosRequestConfig {
     _retry?: boolean;
@@ -16,21 +15,20 @@ const getBaseURL = (): string => {
 
   // ✅ FALLBACK APENAS PARA DESENVOLVIMENTO LOCAL
   if (import.meta.env.DEV) {
-    return 'http://localhost:3001'
+    return 'http://localhost:3001/api'  // ✅ ADICIONADO /api
   }
 
   // ✅ EM PRODUÇÃO, FORÇAR CONFIGURAÇÃO EXPLÍCITA
   throw new Error('VITE_API_URL deve estar configurado em produção')
 }
 
-// ✅ WHITELIST DE DOMÍNIOS PERMITIDOS
+// ✅ WHITELIST DE DOMÍNIOS PERMITIDOS - ATUALIZADO
 const ALLOWED_DOMAINS = [
   'localhost',
   '127.0.0.1',
-  // ✅ ADICIONAR SEU DOMÍNIO AQUI
-  '147.93.69.28',
-  'seudominio.com',
-  'api.seudominio.com'
+  '147.93.69.28',                    // ✅ SEU IP VPS
+  'contask.canellahub.com.br',       // ✅ SEU SUBDOMÍNIO
+  'canellahub.com.br'                // ✅ DOMÍNIO PRINCIPAL
 ]
 
 const validateURL = (url: string): boolean => {
@@ -49,14 +47,14 @@ if (!validateURL(baseURL)) {
   throw new Error(`Domínio não permitido: ${baseURL}`)
 }
 
-// ✅ FORÇAR HTTPS EM PRODUÇÃO
-//if (import.meta.env.PROD && !baseURL.startsWith('https://')) {
-//  throw new Error('HTTPS é obrigatório em produção')
-//}
+// ✅ FORÇAR HTTPS EM PRODUÇÃO - ATIVADO
+if (import.meta.env.PROD && !baseURL.startsWith('https://')) {
+  throw new Error('HTTPS é obrigatório em produção')
+}
 
 const api = axios.create({
   baseURL,
-  timeout: 5000, // ✅ REDUZIDO DE 10s PARA 5s
+  timeout: 10000, // ✅ AUMENTADO PARA 10s (SSL pode demorar um pouco)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -76,16 +74,18 @@ api.interceptors.request.use(
       console.log(`📡 ${config.method?.toUpperCase()} ${config.url}`)
     }
 
-    // ✅ ADICIONAR TOKEN DO HTTPONLY COOKIE (SE USANDO)
-    // Token será enviado automaticamente via cookie
-    // Não precisamos fazer nada aqui se usando httpOnly cookies
-
-    // ✅ FALLBACK PARA LOCALSTORAGE (MENOS SEGURO)
+    // ✅ ADICIONAR TOKEN DO LOCALSTORAGE
     const tokenData = localStorage.getItem('access_token')
-    // O token está dentro de um objeto JSON, como vimos na sua resposta
-    const token = tokenData ? JSON.parse(tokenData).value : null
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (tokenData) {
+      try {
+        const token = JSON.parse(tokenData).value
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+      } catch (error) {
+        console.warn('⚠️ Token inválido no localStorage')
+        localStorage.removeItem('access_token')
+      }
     }
 
     return config
@@ -103,14 +103,13 @@ api.interceptors.response.use(
     retryCount = 0
     rateLimitExceeded = false
 
-    // ✅ LOG APENAS ERROS OU STATUS IMPORTANTES
-    if (response.status >= 400) {
-      console.warn(`⚠️ ${response.status} ${response.config.url}`)
+    // ✅ LOG SUCCESS EM DEV
+    if (import.meta.env.DEV && response.status >= 200 && response.status < 300) {
+      console.log(`✅ ${response.status} ${response.config.url}`)
     }
 
     return response
   },
-  // CORREÇÃO: Lógica reescrita para ser mais explícita para o TypeScript
   async (error: AxiosError) => {
     const originalRequest: InternalAxiosRequestConfig | undefined = error.config
 
@@ -127,23 +126,42 @@ api.interceptors.response.use(
           endpoint: originalRequest?.url,
         });
 
-        if (window.dispatchEvent) {
-          window.dispatchEvent(new CustomEvent('rateLimitExceeded', { detail: { retryAfter } }));
+        // ✅ DISPATCH EVENT PARA UI MOSTRAR TOAST
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('rateLimitExceeded', { 
+            detail: { retryAfter } 
+          }));
         }
-        // Não tentar novamente, apenas rejeitar
         return Promise.reject(error);
       }
 
       // TOKEN EXPIRADO (401)
       if (status === 401) {
         console.warn('🔐 Token expirado, fazendo logout...');
+        
+        // ✅ LIMPAR TODOS OS DADOS DE AUTH
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_data');
-	localStorage.removeItem('refresh_token');
-        if (window.location.pathname !== '/login') {
+        localStorage.removeItem('refresh_token');
+        
+        // ✅ DISPATCH EVENT PARA LOGOUT GLOBAL
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('authExpired'));
+        }
+        
+        // ✅ REDIRECT APENAS SE NÃO ESTIVER JÁ NO LOGIN
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-        // Não tentar novamente, apenas rejeitar
+        return Promise.reject(error);
+      }
+
+      // ✅ FORBIDDEN (403)
+      if (status === 403) {
+        console.warn('🚫 Acesso negado');
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('accessDenied'));
+        }
         return Promise.reject(error);
       }
     }
@@ -153,7 +171,6 @@ api.interceptors.response.use(
       originalRequest &&
       !originalRequest._retry &&
       retryCount < MAX_RETRIES &&
-      // Condição: ou não houve resposta (erro de rede) ou o status foi 500+
       (!error.response || error.response.status >= 500)
     ) {
       originalRequest._retry = true;
@@ -161,8 +178,11 @@ api.interceptors.response.use(
 
       console.log(`🔄 Tentativa ${retryCount}/${MAX_RETRIES} para ${originalRequest.url}`);
 
-      // BACKOFF EXPONENCIAL
-      const delay = Math.pow(2, retryCount - 1) * 1000;
+      // ✅ BACKOFF EXPONENCIAL COM JITTER
+      const baseDelay = Math.pow(2, retryCount - 1) * 1000;
+      const jitter = Math.random() * 500; // Adiciona randomness
+      const delay = baseDelay + jitter;
+      
       await new Promise(resolve => setTimeout(resolve, delay));
       
       return api(originalRequest);
@@ -170,10 +190,11 @@ api.interceptors.response.use(
 
     // Cenário 3: Log final para todos os outros erros
     console.error('❌ API Error:', {
-      status: error.response?.status, // Optional chaining aqui é seguro apenas para o log
+      status: error.response?.status,
       message: error.message,
       url: error.config?.url,
       method: error.config?.method,
+      timestamp: new Date().toISOString()
     });
 
     return Promise.reject(error);
@@ -183,14 +204,33 @@ api.interceptors.response.use(
 // ✅ FUNÇÃO PARA VERIFICAR STATUS DA API
 export const checkAPIHealth = async (): Promise<boolean> => {
   try {
-    await api.get('/api/health')
-    return true
-  } catch {
+    const response = await api.get('/health') // ✅ SEM /api (já está no baseURL)
+    return response.status === 200
+  } catch (error) {
+    console.warn('🏥 API Health check failed:', error)
     return false
   }
 }
 
 // ✅ FUNÇÃO PARA OBTER STATUS DE RATE LIMIT
 export const isRateLimited = (): boolean => rateLimitExceeded
+
+// ✅ FUNÇÃO PARA LIMPAR RATE LIMIT (útil para testes)
+export const clearRateLimit = (): void => {
+  rateLimitExceeded = false
+  retryCount = 0
+}
+
+// ✅ FUNÇÃO PARA DEBUG (apenas em dev)
+export const getAPIConfig = () => {
+  if (import.meta.env.DEV) {
+    return {
+      baseURL,
+      timeout: api.defaults.timeout,
+      allowedDomains: ALLOWED_DOMAINS
+    }
+  }
+  return null
+}
 
 export default api
