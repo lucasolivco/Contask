@@ -30,7 +30,7 @@ echo "🚀 Iniciando o deploy da aplicação..."
 
 # --- Fase 1: Puxar as atualizações do código-fonte ---
 echo "🔄 Fase 1: Puxando atualizações do repositório Git..."
-git pull origin producao-contask
+git pull origin main
 
 # --- Fase 2: Reconstruir e reiniciar os serviços com Docker Compose ---
 echo "🏗️ Fase 2: Recriando e reiniciando os contêineres..."
