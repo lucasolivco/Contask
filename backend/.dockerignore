@@ -1,0 +1,14 @@
+# Ignorar dependências (serão instaladas dentro do contêiner)
+node_modules
+
+# Ignorar resultados de build anteriores
+dist
+.tsbuildinfo
+
+# Ignorar arquivos de ambiente local
+.env
+*.env
+
+# Ignorar arquivos do Git
+.git
+.gitignore

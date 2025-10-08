@@ -1,47 +1,44 @@
-# backend/Dockerfile.prod - VERSÃO SEGURA E OTIMIZADA PARA PRODUÇÃO
-
-# ✅ BUILD STAGE
-FROM node:20-alpine AS builder
-
+# --- ESTÁGIO DE BUILD ---
+FROM node:20-slim AS builder
 WORKDIR /app
-COPY package*.json ./
-COPY prisma ./prisma/
 
-# ✅ CORREÇÃO: Instale TODAS as dependências para poder executar o script de build
+# copiar package.json e lockfile primeiro para aproveitar cache
+COPY package*.json ./
 RUN npm ci
 
+# copiar schema/prisma antes de gerar client
+COPY prisma ./prisma
+
+# gerar prisma client já no ambiente debian/slim
 RUN npx prisma generate
+
+# copiar resto do código e construir
 COPY . .
 RUN npm run build
 
-# ✅ IMAGEM FINAL (esta parte já estava correta)
-FROM node:20-alpine AS runner
+# --- ESTÁGIO FINAL ---
+FROM node:20-slim AS runner
 
-# Instalar dependências do sistema
-RUN apk add --no-cache curl dumb-init
+RUN apt-get update && apt-get install -y curl dumb-init libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Criar usuário não-root
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S backend -u 1001
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 --ingroup nodejs backend
 
 WORKDIR /app
 
-# Copiar do builder
 COPY --from=builder --chown=backend:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=backend:nodejs /app/dist ./dist
 COPY --from=builder --chown=backend:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=backend:nodejs /app/package.json ./
 
-# Criar diretórios necessários
 RUN mkdir -p /app/uploads /app/logs
 RUN chown -R backend:nodejs /app
 
 USER backend
-
 EXPOSE 3001
-
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/server.js"]
+
