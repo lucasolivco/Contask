@@ -7,10 +7,10 @@ task-organizer.zip
 .env.production
 .env.*
 !/.env.example && !/.env.staging
+!/.env.example.dev
 
 # Docker
 docker-compose.override.yml
-docker-compose.yml
 
 # Uploads e logs
 /uploads/
