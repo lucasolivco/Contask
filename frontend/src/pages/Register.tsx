@@ -240,7 +240,7 @@ const Register: React.FC = () => {
         {/* ✅ FOOTER DISCRETO */}
         <div className="text-center">
           <p className="text-xs text-gray-400">
-            © 2024 Contask. Todos os direitos reservados.
+            © 2025 Contask. Todos os direitos reservados.
           </p>
         </div>
       </div>

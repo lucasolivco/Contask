@@ -1,42 +1,17 @@
-# backend/Dockerfile
-FROM node:20-alpine
-
-# ✅ INSTALAR CURL PARA HEALTHCHECK
-RUN apk add --no-cache curl
-
-# ✅ CRIAR USUÁRIO NÃO-ROOT
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S backend -u 1001
+# Usa a imagem 'slim' que já validamos ser compatível
+FROM node:20-slim
 
 WORKDIR /app
 
-# ✅ COPIAR PACKAGE FILES
+# Copia apenas os arquivos de dependência para aproveitar o cache
 COPY package*.json ./
-COPY prisma ./prisma/
 
-# ✅ INSTALAR DEPENDÊNCIAS
-RUN npm ci
+# Instala as dependências
+RUN npm install
 
-# ✅ GERAR PRISMA CLIENT
-RUN npx prisma generate
-
-# ✅ COPIAR CÓDIGO
-COPY . .
-
-# ✅ ALTERAR OWNERSHIP
-RUN chown -R backend:nodejs /app
-
-# ✅ CRIAR DIRETÓRIOS
-RUN mkdir -p /app/uploads /app/logs
-RUN chown -R backend:nodejs /app/uploads /app/logs
-
-# ✅ USAR USUÁRIO NÃO-ROOT
-USER backend
-
+# O código-fonte será montado via volume no docker-compose
+# Expõe a porta do backend
 EXPOSE 3001
 
-# ✅ HEALTHCHECK
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3001/api/health || exit 1
-
+# Comando para iniciar o servidor em modo de desenvolvimento (com hot-reload)
 CMD ["npm", "run", "dev"]

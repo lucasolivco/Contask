@@ -1,0 +1,73 @@
+services:
+  # Serviço do Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile # Usa o novo Dockerfile de dev
+    container_name: dev_backend
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    volumes:
+      # Espelha o código do seu PC para o contêiner, permitindo hot-reload
+      - ./backend:/app
+      # Evita que o node_modules local sobrescreva o do contêiner
+      - /app/node_modules
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dev-network
+
+  # Serviço do Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dev_frontend
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./.env
+    networks:
+      - dev-network
+
+  # Serviço do Banco de Dados
+  postgres:
+    image: postgres:15-alpine
+    container_name: dev_postgres
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      # Expõe a porta para que você possa conectar um cliente de DB se quiser
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      # Volume separado para o banco de dados de desenvolvimento
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+
+  # Serviço do Redis
+  redis:
+    image: redis:7-alpine
+    container_name: dev_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  # Volumes para manter os dados do DB e Redis de dev separados dos de produção
+  postgres_dev_data:
+  redis_dev_data:
