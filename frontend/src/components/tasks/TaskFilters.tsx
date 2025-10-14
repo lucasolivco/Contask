@@ -12,7 +12,8 @@ import {
   Target,
   Crown,
   Users,
-  ChevronDown
+  ChevronDown,
+  Archive
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getAssignableUsers } from '../../services/taskService' // ✅ MUDANÇA: usar getAssignableUsers
@@ -81,16 +82,19 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   )
 
   // ✅ FILTROS RÁPIDOS PARA TYPES DE TAREFA
-  const applyTaskTypeFilter = (type: 'all' | 'my' | 'created') => {
+  const applyTaskTypeFilter = (type: 'all' | 'my' | 'created' | 'archived') => {
     if (type === 'my' && currentUserId) {
       // Minhas tarefas (atribuídas a mim)
-      setFilters(prev => ({ ...prev, assignedToId: currentUserId }))
+      setFilters(prev => ({ ...prev, assignedToId: currentUserId, archived: undefined }))
     } else if (type === 'created') {
       // Todas as tarefas (padrão para manager)
-      setFilters(prev => ({ ...prev, assignedToId: undefined }))
+      setFilters(prev => ({ ...prev, assignedToId: undefined, archived: undefined }))
+    } else if (type === 'archived') {
+      // Tarefas arquivadas
+      setFilters(prev => ({ ...prev, assignedToId: undefined, archived: true }))
     } else {
       // Todas as tarefas
-      setFilters(prev => ({ ...prev, assignedToId: undefined }))
+      setFilters(prev => ({ ...prev, assignedToId: undefined, archived: undefined }))
     }
   }
 
@@ -171,7 +175,14 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 label: 'Atribuídas a Mim',
                 icon: Target,
                 color: 'blue',
-                isActive: filters.assignedToId === currentUserId
+                isActive: filters.assignedToId === currentUserId && !filters.archived
+              },
+              {
+                key: 'archived',
+                label: 'Arquivadas',
+                icon: Archive,
+                color: 'gray',
+                isActive: filters.archived === true
               }
             ].map(({ key, label, icon: Icon, color, isActive }) => (
               <button
@@ -180,7 +191,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 className={`
                   flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                   ${isActive 
-                    ? `bg-${color}-100 text-${color}-700 border border-${color}-200` 
+                    ? `bg-${color}-100 text-${color}-700 border border-${color}-200 shadow-sm` 
                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
                   }
                 `}

@@ -12,12 +12,13 @@ export interface Task {
     id: string;
     title: string;
     description: string;
-    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED';
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
     dueDate?: string;
     targetDate?: string;
     createdAt: string;
     updatedAt: string;
+    archivedAt?: string;
 
     // Relacionamentos
     createdBy: {
@@ -209,6 +210,7 @@ export interface TaskFilter {
     overdue?: boolean
     dueDateMonth?: number
     dueDateYear?: number
+    archived?: boolean
 }
 
 // ✅ TIPOS DE API RESPONSES ATUALIZADOS
@@ -341,7 +343,8 @@ export const TaskStatusLabels = {
     PENDING: 'Pendente',
     IN_PROGRESS: 'Em Progresso',
     COMPLETED: 'Concluída',
-    CANCELLED: 'Cancelada'
+    CANCELLED: 'Cancelada',
+    ARCHIVED: 'Arquivada'
 } as const;
 
 export const TaskPriorityLabels = {
@@ -355,7 +358,8 @@ export const TaskStatusIcons = {
     PENDING: '📋',
     IN_PROGRESS: '⚡',
     COMPLETED: '✅',
-    CANCELLED: '❌'
+    CANCELLED: '❌',
+    ARCHIVED: '🗄️'
 } as const;
 
 export const TaskPriorityIcons = {
@@ -408,6 +412,11 @@ export const TaskStatusColors = {
     bg: 'bg-gray-50',
     text: 'text-gray-700',
     border: 'border-gray-200'
+  },
+  ARCHIVED: {
+    bg: 'bg-gray-100',
+    text: 'text-gray-600',
+    border: 'border-gray-300'
   }
 } as const;
 

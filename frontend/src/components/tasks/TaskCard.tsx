@@ -11,7 +11,9 @@ import {
   Target, 
   MessageCircle,
   Trash2,
-  Crown
+  Crown,
+  Archive,
+  RotateCcw
 } from 'lucide-react'
 import moment from 'moment-timezone'
 import {  
@@ -37,6 +39,8 @@ interface TaskCardProps {
   onDelete?: (taskId: string) => void
   isSelected?: boolean
   onToggleSelect?: (taskId: string) => void
+  onArchive?: (taskId: string) => void
+  onUnarchive?: (taskId: string) => void
 }
 
 
@@ -48,7 +52,9 @@ const TaskCard = ({
   onViewDetails,
   onDelete,
   isSelected,
-  onToggleSelect
+  onToggleSelect,
+  onArchive,
+  onUnarchive
 }: TaskCardProps) => {
 
   // ✅ NOVO: Gerar o ID de exibição
@@ -123,6 +129,11 @@ const TaskCard = ({
         border: 'border-r-blue-500',
         bgHover: 'hover:bg-blue-50'
       }
+      case 'ARCHIVED': return {
+        border: 'border-r-gray-500',
+        bgHover: 'hover:bg-gray-50',
+        opacity: 'opacity-60'
+      }
       case 'PENDING': return {
         border: 'border-r-gray-400',
         bgHover: 'hover:bg-gray-50'
@@ -164,6 +175,7 @@ const TaskCard = ({
       case 'COMPLETED': return <CheckCircle2 className="h-4 w-4 text-green-600" />
       case 'IN_PROGRESS': return <Clock className="h-4 w-4 text-blue-600" />
       case 'CANCELLED': return <XCircle className="h-4 w-4 text-red-600" />
+      case 'ARCHIVED': return <Archive className="h-4 w-4 text-gray-600" />
       default: return <Pause className="h-4 w-4 text-gray-600" />
     }
   }
@@ -193,8 +205,8 @@ const TaskCard = ({
   return (
     <div 
       className={`
-        bg-white rounded-xl border border-gray-200 border-r-4 ${statusStyles.border} p-4 
-        transition-all duration-200 hover:shadow-lg hover:border-gray-300 ${statusStyles.bgHover}
+        bg-white rounded-xl border border-gray-200 border-r-4 ${statusStyles.border} p-4
+        transition-all duration-200 hover:shadow-lg hover:border-gray-300 ${statusStyles.bgHover} ${statusStyles.opacity || ''}
         ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
         ${task.status === 'COMPLETED' ? 'opacity-75' : ''}
         cursor-pointer group
@@ -244,19 +256,32 @@ const TaskCard = ({
             {TaskPriorityLabels[task.priority]}
           </span>
           
-          {/* BOTÃO DELETE CORRIGIDO */}
-          {canShowDeleteButton() && onDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete(task.id)
-              }}
-              className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-              title="Excluir tarefa"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+            {/* BOTÃO ARQUIVAR */}
+            {task.status !== 'ARCHIVED' && onArchive && canShowDeleteButton() && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
+                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                title="Arquivar tarefa"
+              >
+                <Archive className="h-4 w-4" />
+              </button>
+            )}
+
+            {/* BOTÃO DELETE CORRIGIDO */}
+            {canShowDeleteButton() && onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(task.id)
+                }}
+                className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg"
+                title={task.status === 'ARCHIVED' ? "Excluir Permanentemente" : "Excluir tarefa"}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -331,7 +356,20 @@ const TaskCard = ({
         </div>
         
         <div className="flex items-center gap-1 ml-auto" onClick={handleInteractiveClick}>
-          {task.canChangeStatus && !task.canEdit && (
+          {/* AÇÕES PARA TAREFAS ARQUIVADAS */}
+          {task.status === 'ARCHIVED' && onUnarchive && canShowDeleteButton() && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onUnarchive(task.id); }}
+              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Restaurar
+            </button>
+          )}
+
+
+          {/* AÇÕES PARA TAREFAS ATIVAS */}
+          {task.status !== 'ARCHIVED' && task.canChangeStatus && !task.canEdit && (
             <select
               value={task.status}
               onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
@@ -343,7 +381,7 @@ const TaskCard = ({
             </select>
           )}
           
-          {(task.canEdit || (userRole === 'MANAGER' && task.isCreator)) && (
+          {task.status !== 'ARCHIVED' && (task.canEdit || (userRole === 'MANAGER' && task.isCreator)) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -356,7 +394,7 @@ const TaskCard = ({
             </button>
           )}
           
-          {task.canEdit && task.canChangeStatus && (
+          {task.status !== 'ARCHIVED' && task.canEdit && task.canChangeStatus && (
             <select
               value={task.status}
               onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}

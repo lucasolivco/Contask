@@ -518,8 +518,7 @@ const emailTemplates = {
           </div>
         </div>
       </body>
-      </html>
-    `
+      </html>`
   }
 }
 

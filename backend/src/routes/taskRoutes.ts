@@ -15,7 +15,10 @@ import {
   deleteTask,
   bulkDeleteTasks,
   getMyTasks,
-  getMyAssignedTasks
+  getMyAssignedTasks,
+  archiveTask,
+  unarchiveTask,
+  bulkArchiveTasks
 } from '../controllers/taskController'
 import { authenticateToken, requireManager } from '../middleware/auth'
 import { upload } from '../middleware/upload'
@@ -46,6 +49,7 @@ router.get('/assignable-users', requireManager, getAssignableUsers)
 router.get('/my-tasks', getMyTasks)
 router.get('/assigned-to-me', getMyAssignedTasks)
 router.get('/employees', requireManager, getEmployees)
+router.post('/bulk-archive', requireManager, bulkArchiveTasks) // ✅ NOVA ROTA
 router.delete('/bulk', requireManager, bulkDeleteTasks)
 
 // =====================================================
@@ -67,6 +71,8 @@ router.post('/', requireManager, createTask)
 router.get('/:id', getTask)
 router.put('/:id', requireManager, editTarefa)
 router.patch('/:id/status', updateTaskStatus)
+router.patch('/:id/archive', requireManager, archiveTask) // ✅ NOVA ROTA
+router.patch('/:id/unarchive', requireManager, unarchiveTask) // ✅ NOVA ROTA
 router.delete('/:id', requireManager, deleteTask)
 
 // =====================================================

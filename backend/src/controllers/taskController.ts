@@ -10,7 +10,8 @@ import {
   sendTaskAssignedNotification, 
   sendTaskCompletedNotification,
   sendTaskUpdatedNotification,
-  sendTaskCancelledNotification
+  sendTaskCancelledNotification,
+  sendTaskArchivedNotification
 } from '../services/notificationService'
 
 // Interface para tipar as requisições com usuário autenticado
@@ -168,7 +169,8 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       dueDate, 
       overdue,
       dueDateMonth,
-      dueDateYear
+      dueDateYear,
+      archived // ✅ NOVO: Filtro para arquivadas
     } = req.query
     
     const userId = req.user!.userId
@@ -176,7 +178,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
 
     console.log('🔍 Filtros recebidos:', { 
       status, priority, search, assignedToId, dueDate, overdue,
-      dueDateMonth, dueDateYear, userRole 
+      dueDateMonth, dueDateYear, userRole, archived 
     })
 
     let whereCondition: any = {}
@@ -193,9 +195,24 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       ]
     }
 
+    // ✅ NOVO: Lógica de arquivamento
+    if (archived === 'true') {
+      // Se está buscando arquivadas, mostrar apenas as com status ARCHIVED
+      whereCondition.status = 'ARCHIVED'
+    } else {
+      // Por padrão, excluir as arquivadas da busca normal
+      whereCondition.status = {
+        not: 'ARCHIVED'
+      }
+    }
+
     // Filtros básicos
     if (status && status !== 'all') {
       whereCondition.status = status
+    }
+    // ✅ NOVO: Se o filtro de status for 'all' e não estivermos buscando arquivadas, garantir que não venham
+    if (status === 'all' && archived !== 'true') {
+      whereCondition.status = { not: 'ARCHIVED' }
     }
 
     if (priority && priority !== 'all') {
@@ -298,10 +315,14 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
     // Busca por palavra-chave
     const searchTerm = search as string;
     if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim() !== '') {
-      whereCondition.OR = [
-        { title: { contains: searchTerm, mode: 'insensitive' } },
-        { description: { contains: searchTerm, mode: 'insensitive' } }
-      ]
+      const searchCondition = {
+        OR: [
+          { title: { contains: searchTerm, mode: 'insensitive' } },
+          { description: { contains: searchTerm, mode: 'insensitive' } }
+        ]
+      }
+      // Combina com a condição existente
+      whereCondition.AND = whereCondition.AND ? [...whereCondition.AND, searchCondition] : [searchCondition]
     }
 
     console.log('🔍 Condição final de busca:', JSON.stringify(whereCondition, null, 2))
@@ -359,6 +380,164 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ 
       error: 'Erro interno do servidor' 
     })
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Arquivar uma tarefa
+export const archiveTask = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ error: 'Apenas gerentes podem arquivar tarefas' })
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } }
+      }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    if (task.createdById !== userId) {
+      return res.status(403).json({ error: 'Você só pode arquivar tarefas que criou' })
+    }
+
+    const archivedTask = await prisma.task.update({
+      where: { id },
+      data: {
+        status: 'ARCHIVED',
+        archivedAt: new Date()
+      }
+    })
+
+    // Notificar o usuário atribuído
+    await sendTaskArchivedNotification({
+      task: archivedTask,
+      archivedBy: task.createdBy,
+      assignedTo: task.assignedTo
+    })
+
+    console.log(`🗄️ Tarefa "${task.title}" arquivada por ${userId}`)
+
+    res.json({
+      message: 'Tarefa arquivada com sucesso!',
+      task: archivedTask
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao arquivar tarefa:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Restaurar uma tarefa
+export const unarchiveTask = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ error: 'Apenas gerentes podem restaurar tarefas' })
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id }
+    })
+
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' })
+    }
+
+    if (task.createdById !== userId) {
+      return res.status(403).json({ error: 'Você só pode restaurar tarefas que criou' })
+    }
+
+    if (task.status !== 'ARCHIVED') {
+      return res.status(400).json({ error: 'Esta tarefa não está arquivada' })
+    }
+
+    const restoredTask = await prisma.task.update({
+      where: { id },
+      data: {
+        status: 'PENDING', // Volta para pendente por padrão
+        archivedAt: null
+      }
+    })
+
+    console.log(`🔄 Tarefa "${task.title}" restaurada por ${userId}`)
+
+    res.json({
+      message: 'Tarefa restaurada com sucesso!',
+      task: restoredTask
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao restaurar tarefa:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Arquivar múltiplas tarefas
+export const bulkArchiveTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskIds } = req.body
+    const userId = req.user!.userId
+    const userRole = req.user!.role
+
+    if (userRole !== 'MANAGER') {
+      return res.status(403).json({ error: 'Apenas gerentes podem arquivar tarefas' })
+    }
+
+    if (!Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({ error: 'Lista de IDs de tarefas é obrigatória' })
+    }
+
+    // Buscar tarefas que existem e pertencem ao manager
+    const tasksToArchive = await prisma.task.findMany({
+      where: {
+        id: { in: taskIds },
+        createdById: userId,
+        status: { not: 'ARCHIVED' } // Não arquivar o que já está arquivado
+      }
+    })
+
+    if (tasksToArchive.length === 0) {
+      return res.status(404).json({ error: 'Nenhuma tarefa válida encontrada para arquivar' })
+    }
+
+    const foundIds = tasksToArchive.map(t => t.id)
+
+    // Arquivar as tarefas
+    const archiveResult = await prisma.task.updateMany({
+      where: { id: { in: foundIds } },
+      data: {
+        status: 'ARCHIVED',
+        archivedAt: new Date()
+      }
+    })
+
+    console.log(`🗄️ ${archiveResult.count} tarefas arquivadas em lote por ${userId}`)
+
+    // Futuramente, pode-se adicionar notificações em massa aqui
+
+    res.json({
+      message: `${archiveResult.count} tarefa(s) arquivada(s) com sucesso`,
+      archivedCount: archiveResult.count,
+      archivedIds: foundIds
+    })
+
+  } catch (error) {
+    console.error('❌ Erro ao arquivar tarefas em lote:', error)
+    res.status(500).json({ error: 'Erro interno do servidor' })
   }
 }
 
