@@ -360,17 +360,32 @@ const Tasks: React.FC = () => {
           </div>
           
           {selectedTaskIds.length > 0 && (
-            <Button
-              onClick={handleBulkDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-              size="sm"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>
-                {isDeleting ? 'Excluindo...' : `Excluir ${selectedTaskIds.length}`}
-              </span>
-            </Button>
+            <div className="flex items-center gap-2">
+              {filters.archived !== true && (
+                <Button
+                  onClick={handleBulkArchive}
+                  disabled={isArchiving || isDeleting}
+                  className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2"
+                  size="sm"
+                >
+                  <Archive className="h-4 w-4" />
+                  <span>
+                    {isArchiving ? 'Arquivando...' : `Arquivar`}
+                  </span>
+                </Button>
+              )}
+              <Button
+                onClick={handleBulkDelete}
+                disabled={isDeleting || isArchiving}
+                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                size="sm"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>
+                  {isDeleting ? 'Excluindo...' : `Excluir`}
+                </span>
+              </Button>
+            </div>
           )}
         </div>
       )}

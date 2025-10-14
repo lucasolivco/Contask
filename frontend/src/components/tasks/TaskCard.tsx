@@ -257,19 +257,8 @@ const TaskCard = ({
           </span>
           
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-            {/* BOTÃO ARQUIVAR */}
-            {task.status !== 'ARCHIVED' && onArchive && canShowDeleteButton() && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
-                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-                title="Arquivar tarefa"
-              >
-                <Archive className="h-4 w-4" />
-              </button>
-            )}
-
-            {/* BOTÃO DELETE CORRIGIDO */}
-            {canShowDeleteButton() && onDelete && (
+            {/* BOTÃO DELETE (APENAS PARA ARQUIVADAS) */}
+            {task.status === 'ARCHIVED' && canShowDeleteButton() && onDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation()
