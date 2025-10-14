@@ -1,4 +1,4 @@
-# 🎯 Task Manager
+# 🎯 Contask
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 ## 📋 About The Project
 
-Task Manager is a robust and modern fullstack application for team task management, with user hierarchy (Managers and Employees), email notification system, analytical dashboard and intuitive interface.
+Contask is a robust and modern fullstack application for team task management, with user hierarchy (Managers and Employees), email notification system, analytical dashboard and intuitive interface.
 
 ### ✨ Key Features
 
