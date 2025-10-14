@@ -481,7 +481,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 **Seu Nome**
 
 - GitHub: [@lucasolivco](https://github.com/lucasolivco)
-- LinkedIn: [Lucas Costa](linkedin.com/in/lucas-costa-5479a4120)
+- LinkedIn: [linkedin.com/in/lucas-costa-5479a4120](linkedin.com/in/lucas-costa-5479a4120)
 - Email: lukazcosta03@gmail.com
 
 ---
