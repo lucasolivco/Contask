@@ -8,11 +8,10 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 **Sistema completo de gerenciamento de tarefas com autenticação, notificações em tempo real e dashboard analítico**
 
-[✨ Características](#-principais-características) • [🐳 Docker](#-instalação-com-docker) • [🚀 Instalação Local](#-instalação-local-sem-docker) • [📖 Documentação](#-documentação) • [🤝 Contribuindo](#-contribuindo)
+[✨ Demonstração](#-demonstração) • [🚀 Começando](#-começando) • [📖 Documentação](#-documentação) • [🤝 Contribuindo](#-contribuindo)
 
 </div>
 
@@ -69,258 +68,15 @@ Task Manager é uma aplicação fullstack robusta e moderna para gerenciamento d
 
 ### Pré-requisitos
 
-#### Instalação Local
 - Node.js 20+ e npm/yarn
 - PostgreSQL 14+
 - Conta SMTP para envio de emails (Gmail, SendGrid, etc.)
-
-#### Instalação com Docker (Recomendado)
-- Docker 20.10+
-- Docker Compose 2.0+
-
----
-
-## 🐳 Instalação com Docker
-
-### Quick Start (5 minutos)
-
-```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/task-manager.git
-cd task-manager
-
-# 2. Configure o ambiente
-cp .env.example .env
-# Edite o .env e configure: SMTP_USER, SMTP_PASS, JWT_SECRET
-
-# 3. Inicie com Docker
-docker-compose up -d
-
-# 4. Execute as migrações
-docker-compose exec backend npx prisma migrate dev
-
-# 5. Acesse a aplicação
-# Frontend: http://localhost:5173
-# Backend: http://localhost:3001/api/health
-```
-
-### Desenvolvimento (Detalhado)
-
-1. **Clone o repositório**
-```bash
-git clone https://github.com/seu-usuario/task-manager.git
-cd task-manager
-```
-
-2. **Configure as variáveis de ambiente**
-
-Crie um arquivo `.env` na **raiz do projeto**:
-
-```env
-# Database Configuration
-DB_USER=postgres
-DB_PASSWORD=postgres123
-DB_NAME=task_manager_dev
-DB_PORT=5432
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?schema=public
-
-# Redis
-REDIS_PASSWORD=redis123
-
-# Backend Configuration
-BACKEND_PORT=3001
-NODE_ENV=development
-JWT_SECRET=sua_chave_secreta_super_segura_aqui
-
-# Frontend Configuration
-FRONTEND_PORT=5173
-VITE_API_URL=http://localhost:3001
-
-# SMTP (Email)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=seu-email@gmail.com
-SMTP_PASS=sua-senha-de-aplicativo
-SMTP_FROM="Task Manager <seu-email@gmail.com>"
-
-# URLs
-FRONTEND_URL=http://localhost:5173
-```
-
-3. **Inicie os containers**
-```bash
-docker-compose up -d
-```
-
-Isso irá iniciar:
-- ✅ Backend (Node.js) na porta 3001
-- ✅ Frontend (React + Vite) na porta 5173
-- ✅ PostgreSQL na porta 5432
-- ✅ Redis na porta 6379
-
-4. **Execute as migrações do banco**
-```bash
-docker-compose exec backend npx prisma migrate dev
-docker-compose exec backend npx prisma generate
-```
-
-5. **Acesse a aplicação**
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3001
-- Health Check: http://localhost:3001/api/health
-
-### Comandos Úteis (Docker)
-
-```bash
-# Ver logs dos containers
-docker-compose logs -f
-
-# Ver logs de um serviço específico
-docker-compose logs -f backend
-docker-compose logs -f frontend
-
-# Parar os containers
-docker-compose down
-
-# Parar e remover volumes (CUIDADO: apaga dados do banco)
-docker-compose down -v
-
-# Reconstruir as imagens
-docker-compose build
-
-# Reconstruir e iniciar
-docker-compose up -d --build
-
-# Executar comandos no backend
-docker-compose exec backend npm run db:studio
-docker-compose exec backend npx prisma migrate reset
-
-# Acessar o shell do container
-docker-compose exec backend sh
-docker-compose exec postgres psql -U postgres -d task_manager_dev
-```
-
-### Produção com Docker
-
-1. **Configure as variáveis de produção**
-
-Crie o arquivo `env/.env.production`:
-
-```env
-# Database
-DB_USER=postgres
-DB_PASSWORD=senha_super_segura_aqui
-DB_NAME=task_manager_prod
-DB_PORT=5432
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?schema=public
-
-# Redis
-REDIS_PASSWORD=redis_senha_super_segura
-
-# Backend
-NODE_ENV=production
-JWT_SECRET=sua_chave_jwt_super_segura_de_producao
-PORT=3001
-
-# URLs
-FRONTEND_URL=https://seu-dominio.com
-VITE_API_URL=https://api.seu-dominio.com
-
-# SMTP
-SMTP_HOST=smtp.sendgrid.net
-SMTP_PORT=587
-SMTP_USER=apikey
-SMTP_PASS=sua-api-key-sendgrid
-SMTP_FROM="Task Manager <noreply@seu-dominio.com>"
-```
-
-2. **Inicie em produção**
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-3. **Execute as migrações**
-```bash
-docker-compose -f docker-compose.prod.yml exec backend npx prisma migrate deploy
-```
-
-### Estrutura Docker
-
-```
-task-manager/
-├── docker-compose.yml              # Configuração de desenvolvimento
-├── docker-compose.prod.yml         # Configuração de produção
-├── backend/
-│   ├── Dockerfile                  # Imagem de desenvolvimento
-│   ├── Dockerfile.prod             # Imagem de produção
-│   └── .dockerignore
-├── frontend/
-│   ├── Dockerfile                  # Imagem de desenvolvimento
-│   └── Dockerfile.prod             # Imagem de produção
-└── docker/
-    ├── nginx/                      # Configuração do Nginx (produção)
-    └── monitoring/                 # Prometheus + Grafana (opcional)
-```
-
-### Troubleshooting Docker
-
-#### Problema: Porta já em uso
-```bash
-# Verificar processos usando portas
-# Windows
-netstat -ano | findstr :5173
-netstat -ano | findstr :3001
-
-# Linux/Mac
-lsof -i :5173
-lsof -i :3001
-
-# Solução: Alterar portas no arquivo .env
-FRONTEND_PORT=5174
-BACKEND_PORT=3002
-```
-
-#### Problema: Migrações do Prisma não funcionam
-```bash
-# Limpar e recriar banco
-docker-compose down -v
-docker-compose up -d postgres
-docker-compose exec backend npx prisma migrate reset --force
-docker-compose exec backend npx prisma migrate dev
-```
-
-#### Problema: Hot-reload não funciona
-```bash
-# Windows: Adicione polling no docker-compose.yml
-# No serviço frontend, adicione:
-environment:
-  - CHOKIDAR_USEPOLLING=true
-```
-
-#### Problema: Erro de permissão no volume
-```bash
-# Linux/Mac: Ajustar permissões
-sudo chown -R $USER:$USER ./backend/node_modules
-sudo chown -R $USER:$USER ./frontend/node_modules
-```
-
-### Dicas Importantes (Docker)
-
-- 🔥 **Hot Reload**: Código é montado via volumes, alterações refletem automaticamente
-- 💾 **Dados Persistentes**: Volumes separados para dev e produção
-- 🔒 **Segurança**: Redis protegido por senha, PostgreSQL isolado na rede interna
-- 📊 **Monitoramento**: Acesse Prisma Studio com `docker-compose exec backend npm run db:studio`
-- 🧪 **Testes**: Execute testes dentro do container com `docker-compose exec backend npm test`
-
----
-
-## 📦 Instalação Local (Sem Docker)
 
 ### Instalação
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/task-manager.git
+git clone https://github.com/lucasolivco/task-manager.git
 cd task-manager
 ```
 
@@ -724,9 +480,9 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 **Seu Nome**
 
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [Seu Nome](https://linkedin.com/in/seu-perfil)
-- Email: seu-email@example.com
+- GitHub: [@lucasolivco](https://github.com/lucasolivco)
+- LinkedIn: [Lucas Costa](linkedin.com/in/lucas-costa-5479a4120)
+- Email: lukazcosta03@gmail.com
 
 ---
 
