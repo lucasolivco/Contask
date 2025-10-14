@@ -339,10 +339,7 @@ const TaskCard = ({
       </div>
 
       <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700 transition-colors">
-          <MessageCircle className="h-4 w-4" />
-          <span className="font-medium">Clique para ver detalhes</span>
-        </div>
+
         
         <div className="flex items-center gap-1 ml-auto" onClick={handleInteractiveClick}>
           {/* AÇÕES PARA TAREFAS ARQUIVADAS */}
