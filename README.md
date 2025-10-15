@@ -722,7 +722,7 @@ This project is under the MIT license. See the [LICENSE](LICENSE) file for detai
 
 ## 👨‍💻 Author
 
-**Your Name**
+**Lucas**
 
 - GitHub: [lucasolivco](https://github.com/lucasolivco)
 - LinkedIn: [https://www.linkedin.com/in/lucas-costa-5479a4120/](https://www.linkedin.com/in/lucas-costa-5479a4120/)
