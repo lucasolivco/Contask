@@ -228,11 +228,10 @@ FRONTEND_URL=https://your-domain.com
 VITE_API_URL=https://api.your-domain.com
 
 # SMTP
-SMTP_HOST=smtp.sendgrid.net
+SMTP_HOST="smtp.gmail.com"
 SMTP_PORT=587
-SMTP_USER=apikey
-SMTP_PASS=your-sendgrid-api-key
-SMTP_FROM="Task Manager <noreply@your-domain.com>"
+SMTP_USER="exemplo@gmail.com"
+SMTP_PASS="sua-senha-do-app"<noreply@your-domain.com>"
 ```
 
 2. **Start in production**
