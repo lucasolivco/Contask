@@ -11,7 +11,9 @@ import {
     Menu,
     X,
     Plus,
-    Calendar
+    Calendar,
+    ChevronUp,
+    Mail
 } from 'lucide-react'
 
 import { useAuth } from '../contexts/AuthContext'
@@ -23,6 +25,7 @@ const DashboardLayout: React.FC = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const [sidebarOpen, setSidebarOpen] = React.useState(false)
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false)
 
     const handleLogout = () => {
         logout()
@@ -102,6 +105,21 @@ const DashboardLayout: React.FC = () => {
         </>
     )
 
+    // Ref para o menu de perfil
+    const profileMenuRef = React.useRef<HTMLDivElement>(null)
+
+    // Efeito para fechar o menu ao clicar fora
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setIsProfileMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar Desktop */}
@@ -119,31 +137,60 @@ const DashboardLayout: React.FC = () => {
                         <NavigationItems />
                     </nav>
 
-                    <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center min-w-0 flex-1">
-                                <div className="h-9 w-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span className="text-sm font-semibold text-white">
-                                        {user?.name?.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="ml-3 min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-700 truncate">
-                                        {user?.name}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
-                                    </p>
+                    {/* ✅ MENU DE PERFIL ATUALIZADO (DESKTOP) */}
+                    <div className="relative" ref={profileMenuRef}>
+                        {isProfileMenuOpen && (
+                            <div className="absolute bottom-full left-0 right-0 mb-2 p-2">
+                                <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 animate-fade-in-up">
+                                    <div className="text-center mb-4">
+                                        <p className="font-semibold text-gray-800">{user?.name}</p>
+                                        <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                                            <Mail className="h-3 w-3" />
+                                            {user?.email}
+                                        </p>
+                                        <span className={`mt-2 inline-block text-xs px-2 py-1 rounded-full ${
+                                            user?.role === 'MANAGER' 
+                                            ? 'bg-purple-100 text-purple-700' 
+                                            : 'bg-blue-100 text-blue-700'
+                                        }`}>
+                                            {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={handleLogout}
+                                        className="w-full"
+                                    >
+                                        <LogOut size={16} />
+                                        Sair
+                                    </Button>
                                 </div>
                             </div>
-                            <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={handleLogout}
-                                className="flex-shrink-0 p-2"
-                            >
-                                <LogOut size={16} />
-                            </Button>
+                        )}
+
+                        <div 
+                            className="px-4 py-4 border-t border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center min-w-0 flex-1">
+                                    <div className="h-9 w-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-sm font-semibold text-white">
+                                            {user?.name?.charAt(0).toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="ml-3 min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-gray-700 truncate">
+                                            {user?.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <ChevronUp className={`h-5 w-5 text-gray-500 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -181,34 +228,59 @@ const DashboardLayout: React.FC = () => {
                             <NavigationItems onItemClick={() => setSidebarOpen(false)} />
                         </nav>
 
-                        <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <div className="h-9 w-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                                        <span className="text-sm font-semibold text-white">
-                                            {user?.name?.charAt(0).toUpperCase()}
-                                        </span>
-                                    </div>
-                                    <div className="ml-3">
-                                        <p className="text-sm font-medium text-gray-700">
-                                            {user?.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
-                                        </p>
+                        {/* ✅ MENU DE PERFIL ATUALIZADO (MOBILE) */}
+                        <div className="relative">
+                            {isProfileMenuOpen && (
+                                <div className="absolute bottom-full left-0 right-0 mb-2 p-2">
+                                    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 animate-fade-in-up">
+                                        <div className="text-center mb-4">
+                                            <p className="font-semibold text-gray-800">{user?.name}</p>
+                                            <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                                                <Mail className="h-3 w-3" />
+                                                {user?.email}
+                                            </p>
+                                            <span className={`mt-2 inline-block text-xs px-2 py-1 rounded-full ${
+                                                user?.role === 'MANAGER' 
+                                                ? 'bg-purple-100 text-purple-700' 
+                                                : 'bg-blue-100 text-blue-700'
+                                            }`}>
+                                                {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                                            </span>
+                                        </div>
+                                        <Button
+                                            variant="danger"
+                                            size="sm"
+                                            onClick={handleLogout}
+                                            className="w-full"
+                                        >
+                                            <LogOut size={16} />
+                                            Sair
+                                        </Button>
                                     </div>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        handleLogout()
-                                        setSidebarOpen(false)
-                                    }}
-                                    className="p-2"
-                                >
-                                    <LogOut size={16} />
-                                </Button>
+                            )}
+                            <div 
+                                className="px-4 py-4 border-t border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center min-w-0 flex-1">
+                                        <div className="h-9 w-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <span className="text-sm font-semibold text-white">
+                                                {user?.name?.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <div className="ml-3 min-w-0 flex-1">
+                                            <p className="text-sm font-medium text-gray-700 truncate">
+                                                {user?.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ChevronUp className={`h-5 w-5 text-gray-500 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -230,13 +302,20 @@ const DashboardLayout: React.FC = () => {
                           size="sm" 
                           onClick={() => navigate('/dashboard')}
                         />
-                        <div className="flex items-center gap-2">
+                        {/* ✅ BOTÃO DE PERFIL NO HEADER MOBILE */}
+                        <button 
+                            className="flex items-center gap-2"
+                            onClick={() => {
+                                setSidebarOpen(true)
+                                setIsProfileMenuOpen(true)
+                            }}
+                        >
                             <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                                 <span className="text-xs font-semibold text-white">
                                     {user?.name?.charAt(0).toUpperCase()}
                                 </span>
                             </div>
-                        </div>
+                        </button>
                     </div>
                 </div>
 

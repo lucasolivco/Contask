@@ -1,6 +1,10 @@
 // frontend/src/services/taskService.ts - CORRIGIDO
 import api from './api'
-import type { Task, CreateTaskForm, TaskFilter, TaskResponse, EmployeesResponse, UserDetailsResponse } from '../types'
+import type { 
+    Task, CreateTaskForm, TaskFilter, 
+    TaskResponse, EmployeesResponse, UserDetailsResponse,
+    ApiResponse 
+} from '../types'
 
 // ✅ NOVA INTERFACE PARA USUÁRIOS ATRIBUÍVEIS
 export interface AssignableUsersResponse {
@@ -121,6 +125,10 @@ export const getTasks = async (filters?: TaskFilter): Promise<{
     
     if (filters?.overdue) {
         params.append('overdue', 'true')
+    }
+
+    if (filters?.archived) {
+        params.append('archived', 'true')
     }
     
     const queryString = params.toString()
@@ -329,6 +337,44 @@ export const bulkDeleteTasks = async (taskIds: string[]): Promise<{
   })
   return response.data
 }
+
+
+// ✅ NOVA: Arquivar uma tarefa
+export const archiveTask = async (taskId: string): Promise<ApiResponse<{ task: Task }>> => {
+    try {
+        const response = await api.patch(`/api/tasks/${taskId}/archive`)
+        return response.data
+    } catch (error) {
+        console.error(`Erro ao arquivar tarefa ${taskId}:`, error)
+        throw error
+    }
+}
+
+// ✅ NOVA: Restaurar uma tarefa
+export const unarchiveTask = async (taskId: string): Promise<ApiResponse<{ task: Task }>> => {
+    try {
+        const response = await api.patch(`/api/tasks/${taskId}/unarchive`)
+        return response.data
+    } catch (error) {
+        console.error(`Erro ao restaurar tarefa ${taskId}:`, error)
+        throw error
+    }
+}
+
+// ✅ NOVA: Arquivar tarefas em lote
+export const bulkArchiveTasks = async (taskIds: string[]): Promise<ApiResponse<{ 
+  archivedCount: number, 
+  archivedIds: string[] 
+}>> => {
+    try {
+        const response = await api.post('/api/tasks/bulk-archive', { taskIds })
+        return response.data
+    } catch (error) {
+        console.error('Erro ao arquivar tarefas em lote:', error)
+        throw error
+    }
+}
+
 
 // ✅ FUNÇÕES DE NOTIFICAÇÃO ATUALIZADAS
 export const getNotifications = async (filters?: any): Promise<any> => {

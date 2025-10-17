@@ -17,6 +17,7 @@ type NotificationType =
   | 'TASK_REASSIGNED'
   | 'COMMENT_ADDED'      // ✅ NOVO
   | 'ATTACHMENT_ADDED'   // ✅ NOVO
+  | 'TASK_ARCHIVED'
 
 // ✅ INTERFACE ATUALIZADA COM TODAS AS PROPRIEDADES DE METADATA
 type NotificationData = {
@@ -419,6 +420,47 @@ export const sendAttachmentAddedNotification = async (data: {
 
   } catch (error) {
     console.error('❌ Erro ao enviar notificação de anexo:', error)
+    throw error
+  }
+}
+
+// ✅ NOVA: NOTIFICAÇÃO DE TAREFA ARQUIVADA
+export const sendTaskArchivedNotification = async (data: {
+  task: any
+  archivedBy: any
+  assignedTo: any
+}) => {
+  try {
+    console.log(`📬 Enviando notificação de arquivamento: ${data.task.title}`)
+
+    // Não notificar se o responsável for o mesmo que arquivou
+    if (data.archivedBy.id === data.assignedTo.id) {
+      return
+    }
+
+    const notification = await createNotification({
+      type: 'TASK_ARCHIVED',
+      title: 'Tarefa arquivada',
+      message: `A tarefa "${data.task.title}" foi arquivada por ${data.archivedBy.name}`,
+      userId: data.assignedTo.id,
+      taskId: data.task.id
+    })
+
+    // const emailSent = await sendEmail({
+    //   to: data.assignedTo.email,
+    //   subject: `🗄️ Tarefa arquivada: ${data.task.title}`,
+    //   template: 'task-archived', // Você precisará criar este template
+    //   data: {
+    //     userName: data.assignedTo.name,
+    //     taskTitle: data.task.title,
+    //     archivedBy: data.archivedBy.name,
+    //     archivedDate: getBrazilDate().format('DD/MM/YYYY HH:mm')
+    //   }
+    // })
+
+    return { notification, emailSent: false } // Retorna false pois o email não é mais enviado
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de arquivamento:', error)
     throw error
   }
 }

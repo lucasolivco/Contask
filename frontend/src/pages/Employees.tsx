@@ -434,7 +434,6 @@ const Employees: React.FC = () => {
               {[
                 { key: 'all', label: 'Todos', shortLabel: 'Todos', count: filteredUsers.length },
                 { key: 'active', label: 'Ativos', shortLabel: 'Ativos', count: filteredUsers.filter((u: UserFromAPI) => u._count.assignedTasks > 0).length },
-                { key: 'low-tasks', label: 'Poucas Tarefas', shortLabel: 'Poucos', count: filteredUsers.filter((u: UserFromAPI) => u._count.assignedTasks <= 2).length }
               ].map(({ key, label, shortLabel, count }) => (
                 <button
                   key={key}

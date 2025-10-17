@@ -7,7 +7,8 @@ import {
   CheckSquare, 
   Plus,
   Trash2, 
-  X
+  X,
+  Archive
 } from 'lucide-react'
 
 import Card from '../components/ui/Card'
@@ -16,7 +17,14 @@ import TaskFilters from '../components/tasks/TaskFilters'
 import TaskCard from '../components/tasks/TaskCard'
 import TaskDetailsModal from '../components/tasks/TaskDetailsModal'
 import { useAuth } from '../contexts/AuthContext'
-import { getTasks, updateTaskStatus, deleteTask, bulkDeleteTasks } from '../services/taskService'
+import { 
+  getTasks, 
+  updateTaskStatus, 
+  deleteTask, 
+  bulkDeleteTasks,
+  archiveTask,
+  unarchiveTask,
+  bulkArchiveTasks } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
 import { useNavigate } from 'react-router-dom'
 
@@ -30,6 +38,7 @@ const Tasks: React.FC = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
 
   // ✅ LIMPAR ESTADO QUANDO USUÁRIO MUDA
   useEffect(() => {
@@ -156,6 +165,59 @@ const Tasks: React.FC = () => {
       toast.error(error.response?.data?.error || 'Erro ao excluir tarefa')
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleArchiveTask = async (taskId: string) => {
+    const task = filteredTasks.find(t => t.id === taskId)
+    if (!task) return
+
+    if (!window.confirm(`Tem certeza que deseja arquivar a tarefa "${task.title}"?`)) {
+      return
+    }
+
+    try {
+      setIsArchiving(true)
+      await archiveTask(taskId)
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id, filters] })
+      toast.success('Tarefa arquivada com sucesso!')
+    } catch (error: any) {
+      console.error('Erro ao arquivar tarefa:', error)
+      toast.error(error.response?.data?.error || 'Erro ao arquivar tarefa')
+    } finally {
+      setIsArchiving(false)
+    }
+  }
+
+  const handleUnarchiveTask = async (taskId: string) => {
+    try {
+      await unarchiveTask(taskId)
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id, filters] })
+      toast.success('Tarefa restaurada com sucesso!')
+    } catch (error: any) {
+      console.error('Erro ao restaurar tarefa:', error)
+      toast.error(error.response?.data?.error || 'Erro ao restaurar tarefa')
+    }
+  }
+
+  const handleBulkArchive = async () => {
+    if (selectedTaskIds.length === 0) return
+
+    if (!window.confirm(`Tem certeza que deseja arquivar ${selectedTaskIds.length} tarefa(s)?`)) {
+      return
+    }
+
+    try {
+      setIsArchiving(true)
+      const result = await bulkArchiveTasks(selectedTaskIds)
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id, filters] })
+      setSelectedTaskIds([])
+      toast.success(result.message || `${selectedTaskIds.length} tarefas arquivadas com sucesso!`)
+    } catch (error: any) {
+      console.error('Erro ao arquivar tarefas:', error)
+      toast.error(error.response?.data?.error || 'Erro ao arquivar tarefas')
+    } finally {
+      setIsArchiving(false)
     }
   }
 
@@ -298,17 +360,32 @@ const Tasks: React.FC = () => {
           </div>
           
           {selectedTaskIds.length > 0 && (
-            <Button
-              onClick={handleBulkDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-              size="sm"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>
-                {isDeleting ? 'Excluindo...' : `Excluir ${selectedTaskIds.length}`}
-              </span>
-            </Button>
+            <div className="flex items-center gap-2">
+              {filters.archived !== true && (
+                <Button
+                  onClick={handleBulkArchive}
+                  disabled={isArchiving || isDeleting}
+                  className="bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-2"
+                  size="sm"
+                >
+                  <Archive className="h-4 w-4" />
+                  <span>
+                    {isArchiving ? 'Arquivando...' : `Arquivar`}
+                  </span>
+                </Button>
+              )}
+              <Button
+                onClick={handleBulkDelete}
+                disabled={isDeleting || isArchiving}
+                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                size="sm"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>
+                  {isDeleting ? 'Excluindo...' : `Excluir`}
+                </span>
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -334,6 +411,8 @@ const Tasks: React.FC = () => {
                 onEdit={handleEditTask}
                 onViewDetails={handleViewDetails}
                 onDelete={handleDeleteTask}
+                onArchive={handleArchiveTask}
+                onUnarchive={handleUnarchiveTask}
                 isSelected={selectedTaskIds.includes(task.id)}
                 onToggleSelect={handleToggleSelect}
                 userRole={user?.role || ''}

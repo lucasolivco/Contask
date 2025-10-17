@@ -13,6 +13,7 @@ import {
   EyeOff,
   Trash2,
   Filter,
+  RefreshCw,
   RotateCcw,
   Calendar,
   User,
@@ -22,7 +23,6 @@ import {
   ChevronRight,
   Search,
   Archive,
-  RefreshCw,
   Users,
   Edit,
   X,
@@ -333,7 +333,7 @@ const Notifications: React.FC = () => {
               disabled={deleteAllReadMutation.isPending}
               className="flex items-center gap-2"
             >
-              <Archive className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
               Limpar lidas
             </Button>
           </div>
