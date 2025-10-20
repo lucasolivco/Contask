@@ -26,12 +26,13 @@ import {
   unarchiveTask,
   bulkArchiveTasks } from '../services/taskService'
 import type { Task, TaskFilter } from '../types'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const Tasks: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
   
   const [filters, setFilters] = useState<TaskFilter>({})
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -68,6 +69,21 @@ const Tasks: React.FC = () => {
   })
 
   const tasks = tasksData?.tasks || []
+
+  // ✅ ABRIR MODAL SE VIER DE OUTRA PÁGINA (EX: DASHBOARD)
+  useEffect(() => {
+    if (location.state?.openTaskId && tasks.length > 0) {
+      const taskIdToOpen = location.state.openTaskId
+      const taskToOpen = tasks.find(t => t.id === taskIdToOpen)
+      
+      if (taskToOpen) {
+        handleViewDetails(taskToOpen)
+        // Limpar o state para não reabrir ao navegar
+        navigate(location.pathname, { replace: true, state: {} })
+      }
+    }
+  }, [location.state, tasks, navigate, location.pathname])
+
 
   // ✅ FILTROS SIMPLIFICADOS - SEM LÓGICA COMPLEXA DE VISUALIZAÇÃO
   const filteredTasks = useMemo(() => {
