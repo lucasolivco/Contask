@@ -87,7 +87,7 @@ Contask is a robust and modern fullstack application for team task management, w
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/task-manager.git
+git clone https://github.com/lucasolivco/Contask.git
 cd task-manager
 
 # 2. Configure environment
@@ -109,8 +109,8 @@ docker-compose exec backend npx prisma migrate dev
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/your-username/task-manager.git
-cd task-manager
+git clone https://github.com/lucasolivco/Contask.git
+cd Contask
 ```
 
 2. **Configure environment variables**

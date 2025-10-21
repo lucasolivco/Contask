@@ -37,12 +37,14 @@ import {
   TaskPriorityColors 
 } from '../types'
 import type { Task } from '../types'
+import { useNavigate } from 'react-router-dom'
 import moment from 'moment-timezone'
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-
+  const navigate = useNavigate()
+  
   // ✅ LIMPAR CACHE QUANDO USUÁRIO MUDA
   useEffect(() => {
     if (user) {
@@ -364,12 +366,16 @@ const Dashboard: React.FC = () => {
     const isUrgent = task.priority === 'URGENT'
 
     return (
-      <div className={`
+      <div 
+        onClick={() => navigate('/tasks', { state: { openTaskId: task.id } })}
+        className={`
         flex items-center justify-between py-3 px-3 rounded-lg transition-all duration-200 
-        border border-gray-100 hover:border-gray-200 hover:bg-gray-50
+        border border-gray-100 hover:border-gray-200 hover:bg-gray-50 cursor-pointer
         ${isOverdue ? 'border-rose-200 bg-rose-50/30' : ''}
         ${isUrgent && !isOverdue ? 'border-purple-200 bg-purple-50/30' : ''}
-      `}>
+      `}
+      title={`Clique para ver detalhes de "${task.title}"`}
+      >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {/* ✅ TÍTULO LIMPO SEM TAGS */}
