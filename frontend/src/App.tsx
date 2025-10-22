@@ -18,6 +18,7 @@ import EditTask from './pages/EditTask'
 // ✅ PÁGINAS DE VERIFICAÇÃO DE EMAIL
 import VerifyEmailSent from './pages/VerifyEmailSent'
 import VerifyEmail from './pages/VerifyEmail'
+import SsoLoginPage from './pages/SsoLoginPage' // ✅ NOVA: Importar página SSO
 
 import ForgotPassword from './pages/ForgotPassword'  // ✅ NOVA
 import ResetPassword from './pages/ResetPassword'   
@@ -200,6 +201,15 @@ function App() {
               element={
                 <SemiProtectedRoute>
                   <ResetPassword />
+                </SemiProtectedRoute>
+              }
+            />
+            {/* ✅ NOVA: Rota para login automático vindo do Hub */}
+            <Route
+              path="/sso-login"
+              element={
+                <SemiProtectedRoute>
+                  <SsoLoginPage />
                 </SemiProtectedRoute>
               }
             />

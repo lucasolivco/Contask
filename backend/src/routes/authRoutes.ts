@@ -8,7 +8,9 @@ import {
   resendVerificationEmail,
   requestPasswordReset,     // ✅ NOVA
   resetPassword,           // ✅ NOVA  
-  verifyResetToken        // ✅ NOVA
+  verifyResetToken,        // ✅ NOVA
+  hubLogin,
+  ssoLogin                 // ✅ NOVA: Rota para SSO
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -18,6 +20,8 @@ const router = Router()
 // ✅ ROTAS PÚBLICAS (não precisam de autenticação)
 router.post('/register', register)
 router.post('/login', login)
+router.post('/hub-login', hubLogin);
+router.post('/sso-login', ssoLogin); // ✅ NOVA: Rota para SSO
 router.get('/verify-email', verifyEmail)
 router.post('/resend-verification', resendVerificationEmail)
 

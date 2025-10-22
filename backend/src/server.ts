@@ -58,21 +58,53 @@ app.use(helmet({
 }))
 
 // ✅ CORS SEGURO
-const allowedOrigins = isProduction 
-  ? [process.env.FRONTEND_URL] // ✅ SÓ SEU DOMÍNIO EM PRODUÇÃO
-  : ['http://localhost:5173', 'http://127.0.0.1:5173'] // ✅ SÓ LOCALHOST EM DEV
+const allowedOrigins = isProduction
+  ? [
+      process.env.FRONTEND_URL, // URL do Contask (ex: https://contask.canellahub.com.br)
+      'https://canellahub.com.br', // ✅ URL de produção do CanellaHub
+      'https://www.canellahub.com.br' // ✅ URL com www
+    ].filter(Boolean) // Remove valores undefined
+  : [
+      'http://localhost:5173', // Frontend do Contask (Vite)
+      'http://127.0.0.1:5173',
+      'http://localhost:5500', // ✅ Live Server para o CanellaHub
+      'http://127.0.0.1:5500'  // ✅ Live Server para o CanellaHub
+    ]
 
 app.use(cors({
   origin: (origin, callback) => {
     // ✅ PERMITIR REQUESTS SEM ORIGIN (mobile apps)
     if (!origin) return callback(null, true)
-    
+
+    // ✅ VERIFICAR SE ESTÁ NA LISTA DE ORIGINS PERMITIDAS
     if (allowedOrigins.includes(origin)) {
       callback(null, true)
-    } else {
-      console.warn(`❌ CORS blocked: ${origin}`)
-      callback(new Error('Bloqueado pelo CORS'))
+      return
     }
+
+    // ✅ EM DESENVOLVIMENTO: PERMITIR QUALQUER LOCALHOST/127.0.0.1
+    if (!isProduction && origin) {
+      try {
+        const url = new URL(origin)
+        if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+          console.log(`✅ Dev mode: Permitindo ${origin}`)
+          callback(null, true)
+          return
+        }
+      } catch (e) {
+        // Ignorar erro de URL inválida
+      }
+    }
+
+    // // ✅ EM PRODUÇÃO: PERMITIR DOMÍNIOS VERCEL PARA TESTES (REMOVER APÓS DEPLOY)
+    // if (isProduction && origin.endsWith('.vercel.app')) {
+    //   console.log(`⚠️ Permitindo Vercel preview: ${origin}`)
+    //   callback(null, true)
+    //   return
+    // }
+
+    console.warn(`❌ CORS blocked: ${origin}`)
+    callback(new Error('Bloqueado pelo CORS'))
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -97,6 +129,33 @@ const authLimiter = rateLimit({
   max: 30, // ✅ MUITO RESTRITIVO PARA AUTH
   message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
   skipSuccessfulRequests: true
+})
+
+// ✅ RATE LIMITER ESPECÍFICO PARA HUB LOGIN (AINDA MAIS RESTRITIVO)
+const hubLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20, // ✅ APENAS 20 TENTATIVAS POR IP
+  message: { autenticado: false, mensagem: 'Muitas tentativas de login. Aguarde 15 minutos.' },
+  skipSuccessfulRequests: true, // Não contar requests bem-sucedidos
+  standardHeaders: true,
+  legacyHeaders: false,
+  // ✅ Logging adicional para segurança
+  handler: (req: express.Request, res: express.Response) => {
+    console.warn(`🚨 Rate limit excedido no hub-login: IP=${req.ip}, Email=${req.body?.email || 'N/A'}`)
+    res.status(429).json({
+      autenticado: false,
+      mensagem: 'Muitas tentativas de login. Por favor, aguarde 15 minutos e tente novamente.'
+    })
+  }
+})
+
+// ✅ RATE LIMITER PARA SSO (PROTEGER CONTRA BRUTE FORCE DE TOKENS)
+const ssoLoginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 10, // ✅ APENAS 10 TENTATIVAS (token é de uso único)
+  message: { error: 'Muitas tentativas. Aguarde alguns minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false
 })
 
 const uploadLimiter = rateLimit({
@@ -128,6 +187,8 @@ const speedLimiter = slowDown({
 // ✅ APLICAR LIMITERS
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
+app.use('/api/auth/hub-login', hubLoginLimiter) // ✅ NOVO: Rate limit específico para hub
+app.use('/api/auth/sso-login', ssoLoginLimiter) // ✅ NOVO: Rate limit para SSO
 app.use('/api/tasks/*path/attachments', uploadLimiter)  // ✅ *path com nome
 app.use(speedLimiter)
 app.use(generalLimiter)

@@ -28,6 +28,10 @@ model User {
   passwordResetToken String? @unique
   passwordResetExpiresAt DateTime?
 
+  // ✅ NOVO: Campos para SSO do Hub
+  ssoToken String? @unique
+  ssoTokenExpiresAt DateTime?
+
   // Relacionamentos
   createdTasks     Task[] @relation("CreatedBy")
   assignedTasks    Task[] @relation("AssignedTo")
