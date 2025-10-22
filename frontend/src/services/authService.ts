@@ -122,6 +122,17 @@ export const verifyResetToken = async (token: string): Promise<VerifyResetTokenR
     }
 };
 
+// ✅ NOVA: FUNÇÃO PARA LOGIN SSO
+export const ssoLogin = async (token: string): Promise<LoginResponse> => {
+    try {
+        const response = await api.post('/api/auth/sso-login', { token });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao fazer login SSO:', error);
+        throw error;
+    }
+};
+
 // ✅ LOGOUT (SE EXISTIR)
 export const logout = async (): Promise<void> => {
     try {

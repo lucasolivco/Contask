@@ -413,7 +413,7 @@ const CreateTask: React.FC = () => {
                     <User className="h-4 w-4" />
                     {assignableData.stats.totalEmployees}
                   </div>
-                  <div className="text-xs text-gray-600">Funcionários</div>
+                  <div className="text-xs text-gray-600">Usuários</div>
                 </div>
                 <div className="bg-white rounded-lg p-3">
                   <div className="text-lg font-bold text-blue-600 flex items-center justify-center gap-1">

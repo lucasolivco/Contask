@@ -1,5 +1,6 @@
 // controllers/authController.ts - ADICIONAR RECUPERAÇÃO DE SENHA + VALIDAÇÃO DE NOME
 import { Request, Response } from 'express'
+import crypto from 'crypto'
 import { 
   hashPassword, 
   comparePassword, 
@@ -176,6 +177,115 @@ export const login = async (req: Request, res: Response) => {
         })
     }
 }
+
+// ✅ NOVA: ROTA PARA LOGIN DO HUB
+export const hubLogin = async (req: Request, res: Response) => {
+    const startTime = Date.now();
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            console.warn(`🔐 Hub-login: Tentativa sem credenciais - IP: ${clientIp}`);
+            return res.status(400).json({
+                autenticado: false,
+                mensagem: 'Email e senha são obrigatórios'
+            });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+
+        if (!user) {
+            console.warn(`🔐 Hub-login: Usuário não encontrado - Email: ${email}, IP: ${clientIp}`);
+            return res.status(401).json({
+                autenticado: false,
+                mensagem: 'Credenciais inválidas'
+            });
+        }
+
+        const isValidPassword = await comparePassword(password, user.password);
+        if (!isValidPassword) {
+            console.warn(`🔐 Hub-login: Senha inválida - Email: ${email}, IP: ${clientIp}`);
+            return res.status(401).json({
+                autenticado: false,
+                mensagem: 'Credenciais inválidas'
+            });
+        }
+
+        if (!user.emailVerified) {
+            console.warn(`🔐 Hub-login: Email não verificado - Email: ${email}, IP: ${clientIp}`);
+            return res.status(401).json({
+                autenticado: false,
+                mensagem: 'Seu email ainda não foi verificado. Por favor, verifique sua caixa de entrada.'
+            });
+        }
+
+        // ✅ GERAR TOKEN DE USO ÚNICO (SSO TOKEN)
+        const ssoToken = crypto.randomBytes(32).toString('hex');
+        const ssoTokenExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // Expira em 5 minutos
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                ssoToken,
+                ssoTokenExpiresAt
+            }
+        });
+
+        const elapsed = Date.now() - startTime;
+        console.log(`✅ Hub-login: Sucesso - User: ${user.name} (${email}), IP: ${clientIp}, Time: ${elapsed}ms`);
+
+        res.json({
+            autenticado: true,
+            userName: user.name,
+            ssoToken: ssoToken // ✅ ENVIAR O TOKEN PARA O CANELLAHUB
+        });
+
+    } catch (error) {
+        const elapsed = Date.now() - startTime;
+        console.error(`❌ Hub-login: Erro - IP: ${clientIp}, Time: ${elapsed}ms`, error);
+        res.status(500).json({ autenticado: false, mensagem: 'Erro interno do servidor' });
+    }
+};
+
+// ✅ NOVA: ROTA PARA LOGIN AUTOMÁTICO DO CONTASK (SSO)
+export const ssoLogin = async (req: Request, res: Response) => {
+    try {
+        const { token: ssoToken } = req.body;
+
+        if (!ssoToken) {
+            return res.status(400).json({ error: 'Token SSO é obrigatório' });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { ssoToken }
+        });
+
+        if (!user || !user.ssoTokenExpiresAt || new Date() > user.ssoTokenExpiresAt) {
+            // Limpar token para segurança, mesmo que não encontre
+            if (user) {
+                await prisma.user.update({ where: { id: user.id }, data: { ssoToken: null, ssoTokenExpiresAt: null } });
+            }
+            return res.status(401).json({ error: 'Token SSO inválido ou expirado.' });
+        }
+
+        // Limpar o token após o uso para garantir que seja de uso único
+        await prisma.user.update({ where: { id: user.id }, data: { ssoToken: null, ssoTokenExpiresAt: null } });
+
+        // Gerar o token de sessão normal do Contask
+        const sessionToken = generateToken(user.id);
+        const { password: _, ...userSafe } = user;
+
+        res.json({ message: 'Login SSO realizado com sucesso', user: userSafe, token: sessionToken });
+
+    } catch (error) {
+        console.error('Erro no login SSO:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+};
 
 // ✅ VERIFICAR EMAIL
 // controllers/authController.ts - VERIFICAR SE ESTÁ RETORNANDO CORRETAMENTE

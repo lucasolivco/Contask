@@ -15,7 +15,7 @@ const getBaseURL = (): string => {
 
   // ✅ FALLBACK APENAS PARA DESENVOLVIMENTO LOCAL
   if (import.meta.env.DEV) {
-    return 'http://localhost:3001/api'  // ✅ ADICIONADO /api
+    return 'http://localhost:3001'  // ✅ CORRIGIDO: Removido /api
   }
 
   // ✅ EM PRODUÇÃO, FORÇAR CONFIGURAÇÃO EXPLÍCITA
