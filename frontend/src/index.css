@@ -1,4 +1,4 @@
-/* frontend/src/index.css - USANDO CORES PADRÃO CYAN */
+/* frontend/src/index.css - COM DARK MODE COMPLETO */
 
 @tailwind base;
 @tailwind components;
@@ -10,150 +10,180 @@
   box-sizing: border-box;
 }
 
+/* ✅ VARIÁVEIS DE TEMA */
+@layer base {
+  :root {
+    /* Light Mode */
+    --bg-primary: 250 250 250;
+    --bg-secondary: 255 255 255;
+    --text-primary: 31 41 55;
+    --text-secondary: 107 114 128;
+  }
+
+  .dark {
+    /* Dark Mode */
+    --bg-primary: 15 23 42;
+    --bg-secondary: 30 41 59;
+    --text-primary: 241 245 249;
+    --text-secondary: 203 213 225;
+  }
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.6;
-  color: #1f2937;
-  background-color: #fafafa;
+  @apply bg-gray-50 text-gray-900 dark:bg-slate-900 dark:text-slate-50 transition-colors duration-300;
   font-feature-settings: "cv11", "ss01";
   font-optical-sizing: auto;
 }
 
 @layer components {
-  /* ✅ BOTÕES COM CORES PADRÃO CYAN (AZUL ESVERDADO) */
+  /* ✅ BOTÕES COM CORES PADRÃO CYAN (AZUL ESVERDADO) + DARK MODE */
   .btn-primary {
-    @apply bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:bg-cyan-300 disabled:cursor-not-allowed;
+    @apply bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-700 dark:active:bg-cyan-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:bg-cyan-300 dark:disabled:bg-cyan-700 disabled:cursor-not-allowed;
   }
-  
+
   .btn-secondary {
-    @apply bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-700 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 border border-emerald-200 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 shadow-sm hover:shadow-md;
+    @apply bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:active:bg-emerald-900/70 text-emerald-700 dark:text-emerald-300 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 border border-emerald-200 dark:border-emerald-700 hover:border-emerald-300 dark:hover:border-emerald-600 focus:ring-2 focus:ring-emerald-500 shadow-sm hover:shadow-md;
   }
-  
+
   .btn-ghost {
-    @apply hover:bg-cyan-50 active:bg-cyan-100 text-cyan-600 hover:text-cyan-700 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 focus:ring-2 focus:ring-cyan-500;
+    @apply hover:bg-cyan-50 active:bg-cyan-100 dark:hover:bg-cyan-900/30 dark:active:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 focus:ring-2 focus:ring-cyan-500;
   }
-  
+
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:bg-red-400;
+    @apply bg-red-600 hover:bg-red-700 active:bg-red-800 dark:bg-red-700 dark:hover:bg-red-800 dark:active:bg-red-900 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:bg-red-400 dark:disabled:bg-red-800;
   }
-  
-  /* ✅ INPUTS COM FOCO CYAN */
+
+  /* ✅ INPUTS COM FOCO CYAN + DARK MODE */
   .input-field {
-    @apply w-full rounded-xl border border-gray-200 px-4 py-3 text-sm placeholder:text-gray-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200 shadow-sm hover:border-gray-300;
+    @apply w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 px-4 py-3 text-sm placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:border-cyan-400 dark:focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-slate-700 disabled:text-gray-500 dark:disabled:text-slate-400 transition-all duration-200 shadow-sm hover:border-gray-300 dark:hover:border-slate-500;
   }
-  
+
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-200;
+    @apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 transition-all duration-200;
   }
-  
+
   .card-hover {
-    @apply hover:shadow-md hover:border-gray-200 transition-all duration-300 cursor-pointer;
+    @apply hover:shadow-md hover:border-gray-200 dark:hover:border-slate-600 transition-all duration-300 cursor-pointer;
   }
-  
-  /* ✅ SISTEMA DE PRIORIDADES */
+
+  /* ✅ SISTEMA DE PRIORIDADES + DARK MODE */
   .priority-urgent {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 border border-red-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700;
   }
-  
+
   .priority-high {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700;
   }
-  
+
   .priority-medium {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700;
   }
-  
+
   .priority-low {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600;
   }
-  
-  /* ✅ CARDS COM INDICAÇÃO DE PRIORIDADE */
+
+  /* ✅ CARDS COM INDICAÇÃO DE PRIORIDADE + DARK MODE */
   .card-urgent {
-    @apply border-l-4 border-l-red-500 bg-white;
+    @apply border-l-4 border-l-red-500 dark:border-l-red-600 bg-white dark:bg-slate-800;
   }
-  
+
   .card-high {
-    @apply border-l-4 border-l-orange-500 bg-white;
+    @apply border-l-4 border-l-orange-500 dark:border-l-orange-600 bg-white dark:bg-slate-800;
   }
-  
+
   .card-medium {
-    @apply border-l-4 border-l-cyan-500 bg-white;
+    @apply border-l-4 border-l-cyan-500 dark:border-l-cyan-600 bg-white dark:bg-slate-800;
   }
-  
+
   .card-low {
-    @apply border-l-4 border-l-slate-400 bg-white;
+    @apply border-l-4 border-l-slate-400 dark:border-l-slate-500 bg-white dark:bg-slate-800;
   }
-  
+
   .card-overdue {
-    @apply border-2 border-red-400 bg-red-50/30;
+    @apply border-2 border-red-400 dark:border-red-600 bg-red-50/30 dark:bg-red-900/20;
   }
-  
+
   .badge-overdue {
-    @apply inline-flex items-center gap-1.5 bg-red-100 text-red-800 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-300 animate-pulse;
+    @apply inline-flex items-center gap-1.5 bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-300 dark:border-red-700 animate-pulse;
   }
-  
-  /* ✅ STATUS BADGES */
+
+  /* ✅ STATUS BADGES + DARK MODE */
   .status-pending {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600;
   }
-  
+
   .status-in-progress {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700;
   }
-  
+
   .status-completed {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700;
   }
-  
+
   .status-cancelled {
-    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200;
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600;
   }
 }
 
 @layer utilities {
-  /* ✅ CORES PARA ESTATÍSTICAS */
+  /* ✅ CORES PARA ESTATÍSTICAS + DARK MODE */
   .stat-card-total {
-    @apply bg-cyan-50 border-cyan-200 text-cyan-700;
+    @apply bg-cyan-50 dark:bg-cyan-900/30 border-cyan-200 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300;
   }
-  
+
   .stat-card-pending {
-    @apply bg-slate-50 border-slate-200 text-slate-700;
+    @apply bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300;
   }
-  
+
   .stat-card-completed {
-    @apply bg-emerald-50 border-emerald-200 text-emerald-700;
+    @apply bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300;
   }
-  
+
   .stat-card-overdue {
-    @apply bg-red-50 border-red-200 text-red-700;
+    @apply bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300;
   }
-  
+
   /* ✅ GRADIENTES */
   .gradient-contask {
     background: linear-gradient(135deg, #ecfeff 0%, #cffafe 50%, #a5f3fc 100%);
   }
-  
+
+  .dark .gradient-contask {
+    background: linear-gradient(135deg, #164e63 0%, #155e75 50%, #0e7490 100%);
+  }
+
   .gradient-primary {
     background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
   }
-  
+
+  .dark .gradient-primary {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  }
+
   .gradient-secondary {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   }
-  
+
+  .dark .gradient-secondary {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  }
+
   /* ANIMAÇÕES */
   .animate-fade-in {
     animation: fadeIn 0.4s ease-out;
   }
-  
+
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
   }
-  
+
   .animate-scale-in {
     animation: scaleIn 0.2s ease-out;
   }
-  
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -164,7 +194,7 @@ body {
       transform: translateY(0);
     }
   }
-  
+
   @keyframes slideUp {
     from {
       opacity: 0;
@@ -175,7 +205,7 @@ body {
       transform: translateY(0);
     }
   }
-  
+
   @keyframes scaleIn {
     from {
       opacity: 0;
@@ -186,64 +216,64 @@ body {
       transform: scale(1);
     }
   }
-  
-  /* ✅ SCROLLBAR */
+
+  /* ✅ SCROLLBAR + DARK MODE */
   .scrollbar-modern::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   .scrollbar-modern::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-full;
+    @apply bg-gray-100 dark:bg-slate-800 rounded-full;
   }
-  
+
   .scrollbar-modern::-webkit-scrollbar-thumb {
-    @apply bg-cyan-300 rounded-full hover:bg-cyan-400;
+    @apply bg-cyan-300 dark:bg-cyan-700 rounded-full hover:bg-cyan-400 dark:hover:bg-cyan-600;
   }
-  
+
   /* INTERAÇÕES */
   .interactive-scale {
     @apply transition-transform duration-200 hover:scale-105 active:scale-95;
   }
-  
+
   .interactive-glow {
     @apply transition-shadow duration-200 hover:shadow-lg;
   }
-  
-  /* TIPOGRAFIA */
+
+  /* TIPOGRAFIA + DARK MODE */
   .heading-xl {
-    @apply text-3xl font-bold text-gray-900 tracking-tight;
+    @apply text-3xl font-bold text-gray-900 dark:text-slate-100 tracking-tight;
   }
-  
+
   .heading-lg {
-    @apply text-2xl font-bold text-gray-900 tracking-tight;
+    @apply text-2xl font-bold text-gray-900 dark:text-slate-100 tracking-tight;
   }
-  
+
   .heading-md {
-    @apply text-xl font-semibold text-gray-900;
+    @apply text-xl font-semibold text-gray-900 dark:text-slate-100;
   }
-  
+
   .heading-sm {
-    @apply text-lg font-semibold text-gray-900;
+    @apply text-lg font-semibold text-gray-900 dark:text-slate-100;
   }
-  
+
   .text-muted {
-    @apply text-gray-600;
+    @apply text-gray-600 dark:text-slate-400;
   }
-  
+
   .text-subtle {
-    @apply text-gray-500;
+    @apply text-gray-500 dark:text-slate-500;
   }
-  
-  /* ✅ ELEMENTOS DE DESTAQUE */
+
+  /* ✅ ELEMENTOS DE DESTAQUE + DARK MODE */
   .header-accent {
-    @apply text-cyan-600;
+    @apply text-cyan-600 dark:text-cyan-400;
   }
-  
+
   .icon-accent {
-    @apply text-cyan-500;
+    @apply text-cyan-500 dark:text-cyan-400;
   }
-  
+
   .border-accent {
-    @apply border-cyan-200;
+    @apply border-cyan-200 dark:border-cyan-700;
   }
 }

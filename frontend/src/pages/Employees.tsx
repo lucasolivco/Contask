@@ -173,11 +173,11 @@ const Employees: React.FC = () => {
     }, [userDetails, totalTasks, detailsError])
 
     return (
-      <Card 
+      <Card
         className={`group hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 h-full ${
-          user.role === 'MANAGER' 
-            ? 'border-l-blue-500 hover:border-l-blue-600' 
-            : 'border-l-emerald-500 hover:border-l-emerald-600'
+          user.role === 'MANAGER'
+            ? 'border-l-blue-500 dark:border-l-cyan-500 hover:border-l-blue-600 dark:hover:border-l-cyan-400'
+            : 'border-l-emerald-500 dark:border-l-emerald-400 hover:border-l-emerald-600 dark:hover:border-l-emerald-300'
         }`}
         onClick={() => handleViewEmployee(user)}
       >
@@ -196,31 +196,31 @@ const Employees: React.FC = () => {
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white ${
-                  totalTasks > 0 ? 'bg-green-500' : 'bg-gray-400'
+                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white dark:border-slate-800 ${
+                  totalTasks > 0 ? 'bg-green-500 dark:bg-green-400' : 'bg-gray-400 dark:bg-slate-600'
                 }`}></div>
               </div>
-              
+
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-cyan-400 transition-colors line-clamp-2">
                   {user.name}
                   {isCurrentUser && (
-                    <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                    <span className="ml-2 text-xs bg-blue-100 dark:bg-cyan-900/30 text-blue-700 dark:text-cyan-300 px-2 py-1 rounded-full">
                       Você
                     </span>
                   )}
                 </h3>
-                <div className="flex items-center text-xs sm:text-sm text-gray-600 mt-1">
+                <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-1">
                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 flex-shrink-0" />
                   <span className="truncate">{user.email}</span>
                 </div>
-                
+
                 {/* ✅ BADGES SEM COROA */}
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'MANAGER' 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'bg-emerald-100 text-emerald-700'
+                    user.role === 'MANAGER'
+                      ? 'bg-blue-100 dark:bg-cyan-900/30 text-blue-700 dark:text-cyan-300'
+                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
                   }`}>
                     <User className="h-3 w-3 mr-1" />
                     <span className="hidden xs:inline">
@@ -232,9 +232,9 @@ const Employees: React.FC = () => {
                   </span>
                   {totalTasks > 0 && (
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      realStats.completionRate >= 80 ? 'bg-green-100 text-green-700' :
-                      realStats.completionRate >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
+                      realStats.completionRate >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                      realStats.completionRate >= 50 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                      'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                     }`}>
                       {realStats.completionRate}%
                     </span>
@@ -259,23 +259,23 @@ const Employees: React.FC = () => {
           {/* Estatísticas */}
           <div className="space-y-3 sm:space-y-4 flex-1">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-gray-700">Tarefas Atribuídas</h4>
-              <span className="text-xl sm:text-2xl font-bold text-gray-900">{totalTasks}</span>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Tarefas Atribuídas</h4>
+              <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">{totalTasks}</span>
             </div>
-            
+
             {totalTasks > 0 ? (
               <>
                 {/* Barra de progresso */}
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-slate-400">
                     <span>Taxa de Conclusão</span>
                     <span>{realStats.completionRate}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                    <div
                       className={`h-2 rounded-full transition-all duration-500 ${
-                        realStats.completionRate >= 80 ? 'bg-green-500' : 
-                        realStats.completionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                        realStats.completionRate >= 80 ? 'bg-green-500 dark:bg-green-400' :
+                        realStats.completionRate >= 50 ? 'bg-yellow-500 dark:bg-yellow-400' : 'bg-red-500 dark:bg-red-400'
                       }`}
                       style={{ width: `${Math.max(realStats.completionRate, 5)}%` }}
                     ></div>
@@ -284,54 +284,54 @@ const Employees: React.FC = () => {
 
                 {/* Grid de estatísticas */}
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg border border-green-100">
+                  <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-100 dark:border-green-700">
                     <div className="flex items-center justify-center mb-1">
-                      <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                      <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
                     </div>
-                    <p className="text-sm sm:text-lg font-bold text-green-700">{realStats.completed}</p>
-                    <p className="text-xs text-green-600 hidden sm:block">Concluídas</p>
-                    <p className="text-xs text-green-600 sm:hidden">✓</p>
-                  </div>
-                  
-                  <div className="text-center p-2 sm:p-3 bg-blue-50 rounded-lg border border-blue-100">
-                    <div className="flex items-center justify-center mb-1">
-                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                    </div>
-                    <p className="text-sm sm:text-lg font-bold text-blue-700">{realStats.inProgress}</p>
-                    <p className="text-xs text-blue-600 hidden sm:block">Em Progresso</p>
-                    <p className="text-xs text-blue-600 sm:hidden">→</p>
+                    <p className="text-sm sm:text-lg font-bold text-green-700 dark:text-green-300">{realStats.completed}</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 hidden sm:block">Concluídas</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 sm:hidden">✓</p>
                   </div>
 
-                  <div className="text-center p-2 sm:p-3 bg-red-50 rounded-lg border border-red-100">
+                  <div className="text-center p-2 sm:p-3 bg-blue-50 dark:bg-cyan-900/30 rounded-lg border border-blue-100 dark:border-cyan-700">
                     <div className="flex items-center justify-center mb-1">
-                      <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-cyan-400" />
                     </div>
-                    <p className="text-sm sm:text-lg font-bold text-red-700">{realStats.overdue}</p>
-                    <p className="text-xs text-red-600 hidden sm:block">Atrasadas</p>
-                    <p className="text-xs text-red-600 sm:hidden">!</p>
+                    <p className="text-sm sm:text-lg font-bold text-blue-700 dark:text-cyan-300">{realStats.inProgress}</p>
+                    <p className="text-xs text-blue-600 dark:text-cyan-400 hidden sm:block">Em Progresso</p>
+                    <p className="text-xs text-blue-600 dark:text-cyan-400 sm:hidden">→</p>
+                  </div>
+
+                  <div className="text-center p-2 sm:p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-100 dark:border-red-700">
+                    <div className="flex items-center justify-center mb-1">
+                      <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    <p className="text-sm sm:text-lg font-bold text-red-700 dark:text-red-300">{realStats.overdue}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 hidden sm:block">Atrasadas</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 sm:hidden">!</p>
                   </div>
                 </div>
 
                 {/* ✅ INDICADORES TIPADOS */}
                 {detailsLoading && (
                   <div className="text-center py-2">
-                    <div className="text-xs text-gray-500">Carregando estatísticas...</div>
+                    <div className="text-xs text-gray-500 dark:text-slate-400">Carregando estatísticas...</div>
                   </div>
                 )}
-                
+
                 {detailsError && (
                   <div className="text-center py-2">
-                    <div className="text-xs text-orange-500">
+                    <div className="text-xs text-orange-500 dark:text-orange-400">
                       ⚠️ Estatísticas indisponíveis
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg border border-gray-200">
-                <User className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-xs sm:text-sm text-gray-500 font-medium">Sem tarefas atribuídas</p>
-                <p className="text-xs text-gray-400 hidden sm:block">
+              <div className="text-center py-4 sm:py-6 bg-gray-50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-slate-700">
+                <User className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 font-medium">Sem tarefas atribuídas</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
                   {user.role === 'MANAGER' ? 'Pode criar tarefas para a equipe' : 'Disponível para novas atribuições'}
                 </p>
               </div>
@@ -339,12 +339,12 @@ const Employees: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="pt-3 sm:pt-4 border-t border-gray-100 mt-auto">
+          <div className="pt-3 sm:pt-4 border-t border-gray-100 dark:border-slate-700 mt-auto">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-gray-500 hidden sm:block">
+              <div className="text-xs text-gray-500 dark:text-slate-400 hidden sm:block">
                 Clique para ver detalhes
               </div>
-              <div className="flex items-center gap-1 text-xs text-blue-600 font-medium ml-auto">
+              <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-cyan-400 font-medium ml-auto">
                 <TrendingUp className="h-3 w-3" />
                 <span className="hidden sm:inline">Ver Performance</span>
                 <span className="sm:hidden">Detalhes</span>
@@ -359,10 +359,10 @@ const Employees: React.FC = () => {
   if (error) {
     return (
       <div className="p-4 sm:p-6">
-        <Card className="text-center py-12 border-red-200 bg-red-50">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">Erro ao carregar equipe</h3>
-          <p className="text-red-600">Tente novamente em alguns instantes</p>
+        <Card className="text-center py-12 border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+          <AlertTriangle className="h-12 w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">Erro ao carregar equipe</h3>
+          <p className="text-red-600 dark:text-red-400">Tente novamente em alguns instantes</p>
         </Card>
       </div>
     )
@@ -377,21 +377,21 @@ const Employees: React.FC = () => {
             <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Equipe</h1>
-            <p className="text-gray-600 text-sm sm:text-lg">
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-slate-100">Equipe</h1>
+            <p className="text-gray-600 dark:text-slate-400 text-sm sm:text-lg">
               Gerencie toda sua equipe
             </p>
           </div>
         </div>
-        
+
         {/* Estatísticas */}
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-600">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-600 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-blue-500" />
+            <User className="w-4 h-4 text-blue-500 dark:text-cyan-400" />
             <span>{managersFiltered.length} managers</span>
           </div>
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-emerald-500" />
+            <User className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
             <span>{employeesFiltered.length} usuários</span>
           </div>
           <div className="flex items-center gap-2">
@@ -402,34 +402,34 @@ const Employees: React.FC = () => {
       </div>
 
       {/* Filtros */}
-      <Card className="bg-gray-50 border-gray-200">
+      <Card className="bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-700">
         <div className="p-4 sm:p-6 space-y-4">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-500" />
                 <input
                   type="text"
                   placeholder="Buscar por nome ou email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 focus:border-cyan-500 dark:focus:border-cyan-400 text-sm sm:text-base bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
                 />
               </div>
             </div>
-            
+
             <div className="md:w-48">
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value as typeof filterRole)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 focus:border-cyan-500 dark:focus:border-cyan-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
               >
                 <option value="ALL">Todos os Usuários</option>
                 <option value="MANAGER">Apenas Managers</option>
                 <option value="EMPLOYEE">Apenas Colaboradores</option>
               </select>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {[
                 { key: 'all', label: 'Todos', shortLabel: 'Todos', count: filteredUsers.length },
@@ -440,8 +440,8 @@ const Employees: React.FC = () => {
                   onClick={() => setStatusFilter(key as any)}
                   className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                     statusFilter === key
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-300'
+                      ? 'bg-cyan-600 dark:bg-cyan-500 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-300 dark:border-slate-600'
                   }`}
                 >
                   <span className="hidden sm:inline">{label}</span>
@@ -449,22 +449,22 @@ const Employees: React.FC = () => {
                   <span className="ml-1">({count})</span>
                 </button>
               ))}
-              
+
               {(searchTerm || statusFilter !== 'all' || filterRole !== 'ALL') && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               )}
             </div>
           </div>
-          
+
           {filteredUsers.length !== allUsers.length && (
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-slate-400">
               <Filter className="h-4 w-4" />
               <span>
                 {filteredUsers.length} de {allUsers.length} usuários
@@ -480,15 +480,15 @@ const Employees: React.FC = () => {
         {managersFiltered.length > 0 && (filterRole === 'ALL' || filterRole === 'MANAGER') && (
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-blue-500" />
-              <h2 className="text-xl font-semibold text-gray-900">
+              <User className="w-5 h-5 text-blue-500 dark:text-cyan-400" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100">
                 Managers ({managersFiltered.length})
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {managersFiltered.map((user: UserFromAPI, index: number) => (
-                <div 
+                <div
                   key={user.id}
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
@@ -504,15 +504,15 @@ const Employees: React.FC = () => {
         {employeesFiltered.length > 0 && (filterRole === 'ALL' || filterRole === 'EMPLOYEE') && (
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-emerald-500" />
-              <h2 className="text-xl font-semibold text-gray-900">
+              <User className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100">
                 Usuários ({employeesFiltered.length})
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {employeesFiltered.map((user: UserFromAPI, index: number) => (
-                <div 
+                <div
                   key={user.id}
                   className="animate-fade-in"
                   style={{ animationDelay: `${(managersFiltered.length + index) * 0.1}s` }}
@@ -529,7 +529,7 @@ const Employees: React.FC = () => {
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 sm:h-80 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div key={i} className="h-64 sm:h-80 bg-gray-200 dark:bg-slate-700 rounded-xl animate-pulse"></div>
           ))}
         </div>
       )}
@@ -538,16 +538,16 @@ const Employees: React.FC = () => {
       {!isLoading && filteredUsers.length === 0 && (
         <Card className="text-center py-12 sm:py-16">
           <div className="max-w-md mx-auto px-4">
-            <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-6">
-              <Users className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400" />
+            <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-full w-fit mx-auto mb-6">
+              <Users className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 dark:text-slate-600" />
             </div>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-slate-100 mb-3">
               {searchTerm || statusFilter !== 'all' || filterRole !== 'ALL'
-                ? 'Nenhum usuário encontrado' 
+                ? 'Nenhum usuário encontrado'
                 : 'Nenhum usuário cadastrado'
               }
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mb-6 sm:mb-8">
               {searchTerm || statusFilter !== 'all' || filterRole !== 'ALL'
                 ? 'Tente ajustar os filtros de busca'
                 : 'Aguarde novos usuários se cadastrarem no sistema'

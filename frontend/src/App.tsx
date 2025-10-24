@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import DashboardLayout from './layouts/DashboardLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -43,12 +44,12 @@ const queryClient = new QueryClient({
   },
 })
 
-// ✅ LOADING COMPONENT REUTILIZÁVEL
+// ✅ LOADING COMPONENT REUTILIZÁVEL COM DARK MODE
 const LoadingScreen: React.FC<{ message?: string }> = ({ message = "Carregando..." }) => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50 dark:from-slate-900 dark:to-slate-800">
     <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto"></div>
-      <p className="mt-4 text-rose-600 font-medium">{message}</p>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 dark:border-cyan-500 mx-auto"></div>
+      <p className="mt-4 text-rose-600 dark:text-cyan-400 font-medium">{message}</p>
     </div>
   </div>
 )
@@ -100,26 +101,26 @@ const SemiProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children 
   return <>{children}</>
 }
 
-// ✅ NOT FOUND PAGE MELHORADA
+// ✅ NOT FOUND PAGE MELHORADA COM DARK MODE
 const NotFoundPage: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50 dark:from-slate-900 dark:to-slate-800">
     <div className="text-center space-y-6">
       <div className="text-9xl">🔍</div>
       <div>
-        <h1 className="text-6xl font-bold text-gray-900 mb-2">404</h1>
-        <h2 className="text-2xl font-semibold text-rose-600 mb-4">Página não encontrada</h2>
-        <p className="text-gray-600 mb-8">A página que você está procurando não existe.</p>
+        <h1 className="text-6xl font-bold text-gray-900 dark:text-slate-100 mb-2">404</h1>
+        <h2 className="text-2xl font-semibold text-rose-600 dark:text-rose-400 mb-4">Página não encontrada</h2>
+        <p className="text-gray-600 dark:text-slate-400 mb-8">A página que você está procurando não existe.</p>
       </div>
       <div className="space-x-4">
         <button
           onClick={() => window.history.back()}
-          className="px-6 py-3 bg-rose-100 text-rose-700 rounded-lg font-medium hover:bg-rose-200 transition-colors"
+          className="px-6 py-3 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors"
         >
           ← Voltar
         </button>
         <a
           href="/dashboard"
-          className="px-6 py-3 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 transition-colors"
+          className="px-6 py-3 bg-rose-500 dark:bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-600 dark:hover:bg-rose-700 transition-colors"
         >
           🏠 Ir ao Dashboard
         </a>
@@ -131,23 +132,17 @@ const NotFoundPage: React.FC = () => (
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          {/* ✅ TOASTER OTIMIZADO */}
-          <Toaster 
-            position="top-right" 
-            richColors 
-            closeButton
-            theme="light"
-            duration={4000}
-            toastOptions={{
-              style: {
-                background: '#fdf2f8',
-                color: '#be185d',
-                border: '1px solid #fce7f3'
-              }
-            }}
-          />
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            {/* ✅ TOASTER OTIMIZADO COM DARK MODE */}
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              theme="system"
+              duration={4000}
+            />
           
           <Routes>
             {/* ✅ REDIRECIONAMENTO PRINCIPAL */}
@@ -245,6 +240,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

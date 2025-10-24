@@ -126,9 +126,9 @@ const Dashboard: React.FC = () => {
   const PieChartCSS: React.FC = () => {
     if (chartData.length === 0) {
       return (
-        <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="h-64 flex items-center justify-center text-gray-500 dark:text-slate-400">
           <div className="text-center">
-            <PieChart className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <PieChart className="h-12 w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="font-medium text-sm">Nenhuma tarefa encontrada</p>
             <p className="text-xs">Os dados aparecerão aqui</p>
           </div>
@@ -216,23 +216,23 @@ const Dashboard: React.FC = () => {
                 />
               ))}
               
-              {/* ✅ CENTRO BRANCO */}
+              {/* ✅ CENTRO BRANCO/DARK */}
               <circle
                 cx="80"
                 cy="80"
                 r="30"
-                fill="white"
-                stroke="#f3f4f6"
+                fill="currentColor"
+                stroke="currentColor"
                 strokeWidth="2"
-                className="drop-shadow-sm"
+                className="drop-shadow-sm fill-white dark:fill-slate-800 stroke-gray-100 dark:stroke-slate-700"
               />
-              
+
               {/* ✅ TEXTO CENTRAL */}
               <text
                 x="80"
                 y="76"
                 textAnchor="middle"
-                className="text-xl font-bold fill-gray-700"
+                className="text-xl font-bold fill-gray-700 dark:fill-slate-200"
               >
                 {stats.total}
               </text>
@@ -240,7 +240,7 @@ const Dashboard: React.FC = () => {
                 x="80"
                 y="90"
                 textAnchor="middle"
-                className="text-xs fill-gray-500"
+                className="text-xs fill-gray-500 dark:fill-slate-400"
               >
                 Total
               </text>
@@ -250,22 +250,22 @@ const Dashboard: React.FC = () => {
           {/* ✅ LEGENDA COM CORES BALANCEADAS */}
           <div className="mt-3 space-y-2">
             {chartData.map((item, index) => (
-              <div 
+              <div
                 key={`legend-${index}`}
-                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border border-gray-100 dark:border-slate-700"
               >
                 <div className="flex items-center gap-3">
-                  <div 
-                    className="w-3 h-3 rounded-full flex-shrink-0 border-2 border-white shadow-sm"
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0 border-2 border-white dark:border-slate-700 shadow-sm"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-sm text-gray-700 font-medium">
+                  <span className="text-sm text-gray-700 dark:text-slate-300 font-medium">
                     {item.name}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-bold text-gray-900">{item.value}</span>
-                  <span className="text-gray-500">({item.percentage}%)</span>
+                  <span className="font-bold text-gray-900 dark:text-slate-100">{item.value}</span>
+                  <span className="text-gray-500 dark:text-slate-400">({item.percentage}%)</span>
                 </div>
               </div>
             ))}
@@ -308,46 +308,74 @@ const Dashboard: React.FC = () => {
     description: string
     trend?: number
   }> = ({ title, value, icon: Icon, color, description, trend }) => {
-    
-    // ✅ MAPEAMENTO CORRETO DE CORES DE FUNDO PARA ÍCONES
-    const getIconBackground = (colorClass: string) => {
-      const colorMap: { [key: string]: string } = {
-        'text-blue-500': 'bg-blue-100',
-        'text-green-500': 'bg-green-100', 
-        'text-orange-500': 'bg-orange-100',
-        'text-purple-500': 'bg-purple-100',
-        'text-red-500': 'bg-red-100',
-        'text-yellow-500': 'bg-yellow-100',
-        'text-indigo-500': 'bg-indigo-100',
-        'text-pink-500': 'bg-pink-100',
-        'text-gray-500': 'bg-gray-100',
+
+    const getColors = (colorClass: string) => {
+      const colorMap: { [key: string]: { bg: string, iconBg: string, icon: string, text: string, value: string } } = {
+        'text-purple-500': {
+          bg: 'bg-purple-50 dark:bg-purple-900/30',
+          iconBg: 'bg-purple-100 dark:bg-purple-800/50',
+          icon: 'text-purple-600 dark:text-purple-400',
+          text: 'text-purple-700 dark:text-purple-300',
+          value: 'text-purple-900 dark:text-purple-200'
+        },
+        'text-green-500': {
+          bg: 'bg-green-50 dark:bg-green-900/30',
+          iconBg: 'bg-green-100 dark:bg-green-800/50',
+          icon: 'text-green-600 dark:text-green-400',
+          text: 'text-green-700 dark:text-green-300',
+          value: 'text-green-900 dark:text-green-200'
+        },
+        'text-gray-500': {
+          bg: 'bg-gray-100 dark:bg-slate-800',
+          iconBg: 'bg-gray-200 dark:bg-slate-700',
+          icon: 'text-gray-600 dark:text-slate-400',
+          text: 'text-gray-700 dark:text-slate-300',
+          value: 'text-gray-900 dark:text-slate-200'
+        },
+        'text-blue-500': {
+          bg: 'bg-blue-50 dark:bg-cyan-900/30',
+          iconBg: 'bg-blue-100 dark:bg-cyan-800/50',
+          icon: 'text-blue-600 dark:text-cyan-400',
+          text: 'text-blue-700 dark:text-cyan-300',
+          value: 'text-blue-900 dark:text-cyan-200'
+        }
       }
-      return colorMap[colorClass] || 'bg-gray-100'
+      return colorMap[colorClass] || {
+        bg: 'bg-gray-50 dark:bg-slate-900/30',
+        iconBg: 'bg-gray-100 dark:bg-slate-800/50',
+        icon: 'text-gray-600 dark:text-slate-400',
+        text: 'text-gray-700 dark:text-slate-300',
+        value: 'text-gray-900 dark:text-slate-200'
+      }
     }
 
+    const getBorderColor = (colorClass: string) => {
+      const borderMap: { [key: string]: string } = {
+        'text-purple-500': 'border-purple-200 dark:border-purple-700',
+        'text-green-500': '', // Sem borda
+        'text-gray-500': '', // Sem borda
+        'text-blue-500': 'border-blue-200 dark:border-cyan-700'
+      }
+      return borderMap[colorClass] || ''
+    }
+
+    const colors = getColors(color)
+
     return (
-      <Card className="relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              {/* ✅ ÍCONE COM FUNDO GARANTIDO */}
-              <div className={`p-2.5 rounded-xl ${getIconBackground(color)} transition-transform hover:scale-105 duration-200`}>
-                <Icon className={`h-5 w-5 ${color}`} />
+      <Card className={`relative overflow-hidden ${colors.bg} ${getBorderColor(color)}`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 ${colors.iconBg} rounded-lg`}>
+            <Icon className={`h-5 w-5 ${colors.icon}`} />
+          </div>
+          <div>
+            <p className={`text-2xl font-bold ${colors.value}`}>{value}</p>
+            <p className={`text-sm ${colors.text}`}>{description}</p>
+            {trend !== undefined && (
+              <div className={`flex items-center gap-1 text-xs font-medium mt-1 ${trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <TrendingUp className={`h-3 w-3 ${trend < 0 ? 'rotate-180' : ''}`} />
+                <span>{trend > 0 ? '+' : ''}{trend}%</span>
               </div>
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                {title}
-              </h3>
-            </div>
-            <div className="space-y-1">
-              <p className="text-3xl font-bold text-gray-900">{value}</p>
-              <p className="text-xs text-gray-500 font-medium">{description}</p>
-              {trend !== undefined && (
-                <div className={`flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  <TrendingUp className={`h-3 w-3 ${trend < 0 ? 'rotate-180' : ''}`} />
-                  <span>{trend > 0 ? '+' : ''}{trend}% vs semana passada</span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </Card>
@@ -366,33 +394,33 @@ const Dashboard: React.FC = () => {
     const isUrgent = task.priority === 'URGENT'
 
     return (
-      <div 
+      <div
         onClick={() => navigate('/tasks', { state: { openTaskId: task.id } })}
         className={`
-        flex items-center justify-between py-3 px-3 rounded-lg transition-all duration-200 
-        border border-gray-100 hover:border-gray-200 hover:bg-gray-50 cursor-pointer
-        ${isOverdue ? 'border-rose-200 bg-rose-50/30' : ''}
-        ${isUrgent && !isOverdue ? 'border-purple-200 bg-purple-50/30' : ''}
+        flex items-center justify-between py-3 px-3 rounded-lg transition-all duration-200
+        border border-gray-100 dark:border-slate-700 hover:border-gray-200 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer
+        ${isOverdue ? 'border-rose-200 dark:border-rose-700 bg-rose-50/30 dark:bg-rose-900/20' : ''}
+        ${isUrgent && !isOverdue ? 'border-purple-200 dark:border-purple-700 bg-purple-50/30 dark:bg-purple-900/20' : ''}
       `}
       title={`Clique para ver detalhes de "${task.title}"`}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {/* ✅ TÍTULO LIMPO SEM TAGS */}
-            <h4 className="text-sm font-semibold truncate text-gray-900">
+            <h4 className="text-sm font-semibold truncate text-gray-900 dark:text-slate-100">
               {task.title}
             </h4>
           </div>
-          
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-slate-400">
             <span>
-              {user?.role === 'MANAGER' 
+              {user?.role === 'MANAGER'
                 ? `Para: ${task.assignedTo.name}`
                 : `Por: ${task.createdBy.name}`
               }
             </span>
             {task.dueDate && (
-              <span className={isOverdue ? 'text-rose-600 font-medium' : 'text-gray-500'}>
+              <span className={isOverdue ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-gray-500 dark:text-slate-400'}>
                 <Calendar className="inline h-3 w-3 mr-1" />
                 {isOverdue ? 'Venceu' : 'Vence'}: {moment(task.dueDate).tz('America/Sao_Paulo').format('DD/MM/YYYY')}
               </span>
@@ -405,10 +433,10 @@ const Dashboard: React.FC = () => {
           {showPriority && (
             <span className={`
               px-2 py-1 text-xs font-medium rounded-full border
-              ${task.priority === 'URGENT' ? 'bg-purple-100 text-purple-700 border-purple-200' : ''}
-              ${task.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 border-orange-200' : ''}
-              ${task.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
-              ${task.priority === 'LOW' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
+              ${task.priority === 'URGENT' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' : ''}
+              ${task.priority === 'HIGH' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700' : ''}
+              ${task.priority === 'MEDIUM' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700' : ''}
+              ${task.priority === 'LOW' ? 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-600' : ''}
             `}>
               {/* ✅ MOSTRAR "URGENTE" NO LUGAR DE "ALTA" QUANDO FOR URGENT */}
               {task.priority === 'URGENT' ? 'URGENTE' : TaskPriorityLabels[task.priority]}
@@ -419,10 +447,10 @@ const Dashboard: React.FC = () => {
           {showStatus && (
             <span className={`
               px-2 py-1 text-xs font-medium rounded-full border
-              ${task.status === 'PENDING' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
-              ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
-              ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700 border-green-200' : ''}
-              ${task.status === 'CANCELLED' ? 'bg-gray-100 text-gray-600 border-gray-200' : ''}
+              ${task.status === 'PENDING' ? 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-600' : ''}
+              ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 dark:bg-cyan-900/30 text-blue-700 dark:text-cyan-300 border-blue-200 dark:border-cyan-700' : ''}
+              ${task.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700' : ''}
+              ${task.status === 'CANCELLED' ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-600' : ''}
             `}>
               {TaskStatusLabels[task.status]}
             </span>
@@ -437,8 +465,8 @@ const Dashboard: React.FC = () => {
     return (
       <div className="p-6 flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dados do usuário...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-slate-400">Carregando dados do usuário...</p>
         </div>
       </div>
     )
@@ -448,16 +476,16 @@ const Dashboard: React.FC = () => {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-8">
-          <div className="h-12 bg-gray-200 rounded-xl w-1/3"></div>
+          <div className="h-12 bg-gray-200 dark:bg-slate-700 rounded-xl w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+              <div key={i} className="h-32 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="h-96 bg-gray-200 rounded-2xl"></div>
-            <div className="h-96 bg-gray-200 rounded-2xl"></div>
-            <div className="h-96 bg-gray-200 rounded-2xl"></div>
+            <div className="h-96 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
+            <div className="h-96 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
+            <div className="h-96 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
           </div>
         </div>
       </div>
@@ -491,7 +519,7 @@ const Dashboard: React.FC = () => {
           title="Total de Tarefas"
           value={stats.total}
           icon={Target}
-          color="text-pink-500"
+          color="text-purple-500"
           description="Todas as tarefas"
         />
         <StatCard
@@ -522,7 +550,7 @@ const Dashboard: React.FC = () => {
         {/* ✅ GRÁFICO DE PIZZA COM CORES BALANCEADAS */}
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center gap-2 mb-4">
-            <PieChart className="h-6 w-6 text-blue-500" />
+            <PieChart className="h-6 w-6 text-blue-500 dark:text-cyan-400" />
             <h3 className="heading-md">Distribuição de Tarefas</h3>
           </div>
           <PieChartCSS />
@@ -532,26 +560,26 @@ const Dashboard: React.FC = () => {
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6 text-rose-500" />
+              <AlertTriangle className="h-6 w-6 text-rose-500 dark:text-rose-400" />
               <h3 className="heading-md">Tarefas Prioritárias</h3>
             </div>
-            <span className="text-sm text-gray-500">{priorityTasks.length} urgentes</span>
+            <span className="text-sm text-gray-500 dark:text-slate-400">{priorityTasks.length} urgentes</span>
           </div>
-          
+
           {priorityTasks.length > 0 ? (
             <div className="space-y-3 max-h-72 overflow-y-auto">
               {priorityTasks.map((task) => (
-                <TaskItem 
-                  key={task.id} 
-                  task={task} 
+                <TaskItem
+                  key={task.id}
+                  task={task}
                   showPriority={true}
                   showStatus={false}
                 />
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <CheckSquare className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+            <div className="text-center py-8 text-gray-500 dark:text-slate-400">
+              <CheckSquare className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-600 mb-3" />
               <p className="font-medium">Nenhuma tarefa urgente</p>
               <p className="text-sm">Tudo sob controle! 🎉</p>
             </div>
@@ -562,33 +590,33 @@ const Dashboard: React.FC = () => {
         <Card className="lg:col-span-1 min-h-96">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-blue-500" />
+              <Calendar className="h-6 w-6 text-blue-500 dark:text-cyan-400" />
               <h3 className="heading-md">Atividade Recente</h3>
             </div>
-            <span className="text-sm text-gray-500">{recentTasks.length} tarefas</span>
+            <span className="text-sm text-gray-500 dark:text-slate-400">{recentTasks.length} tarefas</span>
           </div>
-          
+
           {recentTasks.length > 0 ? (
             <div className="space-y-3 max-h-72 overflow-y-auto">
               {recentTasks.map((task) => (
-                <TaskItem 
-                  key={task.id} 
-                  task={task} 
+                <TaskItem
+                  key={task.id}
+                  task={task}
                   showPriority={true}
                   showStatus={true}
                 />
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+            <div className="text-center py-8 text-gray-500 dark:text-slate-400">
+              <Calendar className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-600 mb-3" />
               <p className="font-medium">Nenhuma atividade recente</p>
               <p className="text-sm">Comece criando uma tarefa!</p>
             </div>
           )}
           
           {/* ✅ BOTÃO PARA VER TODAS AS TAREFAS */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
             <Button 
               variant="ghost" 
               size="sm"

@@ -295,17 +295,17 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       />
 
       <div className="fixed inset-0 flex items-center justify-center p-2 md:p-4 z-50">
-        <div 
-          className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
+        <div
+          className="bg-white dark:bg-slate-800 rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-start md:items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-white">
+          <div className="flex items-start md:items-center justify-between p-4 md:p-6 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 min-w-0 flex-1 mr-4">
-              <h2 className="text-lg md:text-2xl font-bold text-gray-900 line-clamp-2">{task.title}</h2>
+              <h2 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-slate-100 line-clamp-2">{task.title}</h2>
               <div className="flex items-center gap-2 flex-wrap">
                 {/* ✅ NOVO: Exibindo o ID formatado */}
-                <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+                <span className="text-xs font-mono bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-1 rounded-md">
                   {displayId}
                 </span>
 
@@ -324,7 +324,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              className="p-2 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
             >
               <X className="h-5 w-5 md:h-6 md:w-6" />
             </button>
@@ -363,8 +363,8 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 {/* Descrição */}
                 {task.description && (
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">Descrição</h3>
-                    <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg line-clamp-3 lg:line-clamp-none">
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Descrição</h3>
+                    <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg line-clamp-3 lg:line-clamp-none">
                       {task.description}
                     </p>
                   </div>
@@ -372,44 +372,44 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
                 {/* Informações principais */}
                 <div>
-                  <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3">Informações</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">Informações</h3>
                   <div className="grid grid-cols-2 gap-2 md:gap-4">
-                    
-                    <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg">
-                      <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
+
+                    <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                      <User className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-blue-600">Responsável</p>
-                        <p className="font-medium text-xs md:text-sm text-blue-700 truncate">{task.assignedTo.name}</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">Responsável</p>
+                        <p className="font-medium text-xs md:text-sm text-blue-700 dark:text-blue-300 truncate">{task.assignedTo.name}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
-                      <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                      <User className="h-4 w-4 text-gray-500 dark:text-slate-400 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-600">Criado por</p>
-                        <p className="font-medium text-xs md:text-sm text-gray-900 truncate">{task.createdBy.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-slate-400">Criado por</p>
+                        <p className="font-medium text-xs md:text-sm text-gray-900 dark:text-slate-200 truncate">{task.createdBy.name}</p>
                       </div>
                     </div>
 
                     {task.dueDate ? (
-                      <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
-                        <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                        <Calendar className="h-4 w-4 text-gray-500 dark:text-slate-400 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-600">Vence em</p>
-                          <p className={`font-medium text-xs md:text-sm ${isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
+                          <p className="text-xs text-gray-600 dark:text-slate-400">Vence em</p>
+                          <p className={`font-medium text-xs md:text-sm ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-slate-200'}`}>
                             {formatDateBrazil(task.dueDate)}
                             {isOverdue && (
-                              <span className="ml-1 text-red-600 animate-pulse">⚠️</span>
+                              <span className="ml-1 text-red-600 dark:text-red-400 animate-pulse">⚠️</span>
                             )}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 rounded-lg">
-                        <CalendarPlus className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 p-2 md:p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                        <CalendarPlus className="h-4 w-4 text-gray-500 dark:text-slate-400 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-600">Sem prazo</p>
-                          <p className="font-medium text-xs md:text-sm text-gray-500">
+                          <p className="text-xs text-gray-600 dark:text-slate-400">Sem prazo</p>
+                          <p className="font-medium text-xs md:text-sm text-gray-500 dark:text-slate-400">
                             Não definido
                           </p>
                         </div>
@@ -417,14 +417,14 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                     )}
 
                     {task.targetDate && (
-                      <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg">
-                        <Target className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 p-2 md:p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                        <Target className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-blue-600">Data Meta</p>
-                          <p className={`font-medium text-xs md:text-sm ${isNearTarget ? 'text-orange-600' : 'text-blue-700'}`}>
+                          <p className="text-xs text-blue-600 dark:text-blue-400">Data Meta</p>
+                          <p className={`font-medium text-xs md:text-sm ${isNearTarget ? 'text-orange-600 dark:text-orange-400' : 'text-blue-700 dark:text-blue-300'}`}>
                             {formatDateBrazil(task.targetDate)}
                             {isNearTarget && (
-                              <span className="ml-1 text-orange-600 animate-pulse">🎯</span>
+                              <span className="ml-1 text-orange-600 dark:text-orange-400 animate-pulse">🎯</span>
                             )}
                           </p>
                         </div>
@@ -436,15 +436,15 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 {/* ANEXOS COM BOTÃO DELETE */}
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
                       <Paperclip className="h-4 w-4" />
                       Anexos ({attachments.length})
                       {isLoadingAttachments && <Loader2 className="h-4 w-4 animate-spin" />}
                     </h3>
                     <label className={`cursor-pointer text-white px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm ${
-                      isUploadingFile 
-                        ? 'bg-gray-400 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700'
+                      isUploadingFile
+                        ? 'bg-gray-400 dark:bg-slate-600 cursor-not-allowed'
+                        : 'bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800'
                     }`}>
                       {isUploadingFile ? (
                         <>
@@ -471,39 +471,39 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
                   {isLoadingAttachments ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                      <span className="ml-2 text-sm text-gray-500">Carregando...</span>
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400 dark:text-slate-500" />
+                      <span className="ml-2 text-sm text-gray-500 dark:text-slate-400">Carregando...</span>
                     </div>
                   ) : attachments.length > 0 ? (
                     <div className="space-y-2 max-h-32 lg:max-h-none overflow-y-auto">
                       {attachments.map((attachment) => (
-                        <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
+                        <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {getFileIcon(attachment.originalName)}
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium text-gray-900 text-sm truncate">{attachment.originalName}</p>
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <p className="font-medium text-gray-900 dark:text-slate-200 text-sm truncate">{attachment.originalName}</p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400">
                                 <span>{formatFileSize(attachment.fileSize)}</span>
                                 <span>•</span>
                                 <span>Por: {attachment.uploadedBy.name}</span>
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
+                            <button
                               onClick={() => handleDownload(attachment)}
-                              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+                              className="p-1.5 text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex-shrink-0"
                               title="Download"
                             >
                               <Download className="h-3 w-3" />
                             </button>
-                            
+
                             {canDeleteAttachment(attachment) && (
-                              <button 
+                              <button
                                 onClick={() => handleDeleteAttachment(attachment)}
                                 disabled={isDeletingAttachment === attachment.id}
-                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-1.5 text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Excluir anexo"
                               >
                                 {isDeletingAttachment === attachment.id ? (
@@ -518,8 +518,8 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
-                      <Paperclip className="h-6 w-6 mx-auto mb-2 text-gray-300" />
+                    <div className="text-center py-4 text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                      <Paperclip className="h-6 w-6 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
                       <p className="font-medium text-sm">Nenhum anexo</p>
                     </div>
                   )}
@@ -528,40 +528,40 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             </div>
 
             {/* CHAT DE COMENTÁRIOS COM DELETE */}
-            <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col bg-gray-50 flex-1 lg:flex-none min-h-[50vh] lg:min-h-0">
-              
-              <div className="p-3 border-b border-gray-200 bg-white">
-                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-slate-700 flex flex-col bg-gray-50 dark:bg-slate-900/50 flex-1 lg:flex-none min-h-[50vh] lg:min-h-0">
+
+              <div className="p-3 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
                   Comentários ({comments.length})
                   {isLoadingComments && <Loader2 className="h-4 w-4 animate-spin" />}
                 </h3>
-                <p className="text-xs text-gray-500">Conversa da equipe</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Conversa da equipe</p>
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {isLoadingComments ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                    <span className="ml-2 text-sm text-gray-500">Carregando comentários...</span>
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400 dark:text-slate-500" />
+                    <span className="ml-2 text-sm text-gray-500 dark:text-slate-400">Carregando comentários...</span>
                   </div>
                 ) : comments.length > 0 ? (
                   comments.map((comment) => (
-                    <div key={comment.id} className="bg-white rounded-lg p-3 shadow-sm group hover:shadow-md transition-shadow">
+                    <div key={comment.id} className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm group hover:shadow-md transition-shadow border border-gray-100 dark:border-slate-700">
                       <div className="flex items-start justify-between mb-2 gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="font-medium text-gray-900 text-sm truncate">{comment.author.name}</span>
+                          <span className="font-medium text-gray-900 dark:text-slate-100 text-sm truncate">{comment.author.name}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
-                            comment.author.role === 'MANAGER' 
-                              ? 'bg-purple-100 text-purple-700' 
-                              : 'bg-blue-100 text-blue-700'
+                            comment.author.role === 'MANAGER'
+                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                              : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                           }`}>
                             {comment.author.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-slate-400 flex-shrink-0">
                             {new Date(comment.createdAt).toLocaleString('pt-BR', {
                               day: '2-digit',
                               month: '2-digit',
@@ -569,34 +569,34 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                               minute: '2-digit'
                             })}
                           </span>
-                          
+
                         </div>
                       </div>
-                      <p className="text-gray-700 text-sm leading-relaxed">{comment.message}</p>
+                      <p className="text-gray-700 dark:text-slate-300 text-sm leading-relaxed">{comment.message}</p>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageSquare className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+                  <div className="text-center py-8 text-gray-500 dark:text-slate-400">
+                    <MessageSquare className="h-10 w-10 mx-auto mb-3 text-gray-300 dark:text-slate-600" />
                     <p className="font-medium text-sm">Nenhum comentário ainda</p>
                     <p className="text-xs">Seja o primeiro a comentar!</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-3 border-t border-gray-200 bg-white">
+              <div className="p-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                 <form onSubmit={handleSubmitComment} className="space-y-2">
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Escreva um comentário..."
-                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full p-3 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-blue-500 dark:focus:border-blue-600 text-sm"
                     rows={3}
                   />
                   <button
                     type="submit"
                     disabled={!newComment.trim() || isSubmittingComment}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                    className="w-full bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed text-white py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                   >
                     {isSubmittingComment ? (
                       <>

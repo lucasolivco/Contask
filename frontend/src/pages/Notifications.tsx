@@ -263,12 +263,12 @@ const Notifications: React.FC = () => {
   if (error) {
     return (
       <div className="p-6">
-        <Card className="text-center py-12 border-red-200 bg-red-50">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">
+        <Card className="text-center py-12 border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+          <AlertTriangle className="h-12 w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">
             Erro ao carregar notificações
           </h3>
-          <p className="text-red-600 mb-4">
+          <p className="text-red-600 dark:text-red-400 mb-4">
             Tente novamente em alguns instantes
           </p>
           <Button onClick={refreshNotifications} variant="secondary">
@@ -290,10 +290,10 @@ const Notifications: React.FC = () => {
               <Bell className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
                 Notificações
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-slate-400">
                 Acompanhe todas as atualizações das suas tarefas
               </p>
             </div>
@@ -341,38 +341,38 @@ const Notifications: React.FC = () => {
 
         {/* ✅ ESTATÍSTICAS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-blue-50 dark:bg-cyan-900/30 border-blue-200 dark:border-cyan-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Bell className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-cyan-800/50 rounded-lg">
+                <Bell className="h-5 w-5 text-blue-600 dark:text-cyan-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-900">{stats.unreadCount}</p>
-                <p className="text-sm text-blue-700">Não lidas</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-cyan-200">{stats.unreadCount}</p>
+                <p className="text-sm text-blue-700 dark:text-cyan-300">Não lidas</p>
               </div>
             </div>
           </Card>
 
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-800/50 rounded-lg">
+                <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-900">{stats.todayCount}</p>
-                <p className="text-sm text-green-700">Hoje</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-200">{stats.todayCount}</p>
+                <p className="text-sm text-green-700 dark:text-green-300">Hoje</p>
               </div>
             </div>
           </Card>
 
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <CheckSquare className="h-5 w-5 text-purple-600" />
+              <div className="p-2 bg-purple-100 dark:bg-purple-800/50 rounded-lg">
+                <CheckSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-purple-900">{stats.total}</p>
-                <p className="text-sm text-purple-700">Total</p>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">{stats.total}</p>
+                <p className="text-sm text-purple-700 dark:text-purple-300">Total</p>
               </div>
             </div>
           </Card>
@@ -380,7 +380,7 @@ const Notifications: React.FC = () => {
       </div>
 
       {/* ✅ FILTROS E BUSCA */}
-      <Card className="bg-gray-50 border-gray-200">
+      <Card className="bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-700">
         <div className="p-6 space-y-4">
           {/* Linha 1: Busca */}
           <div className="flex gap-4">
@@ -419,8 +419,8 @@ const Notifications: React.FC = () => {
                   onClick={() => handleFilterChange('read', key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.read === key
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-300'
+                      ? 'bg-cyan-600 dark:bg-cyan-500 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-300 dark:border-slate-600'
                   }`}
                 >
                   {label} ({count})
@@ -433,7 +433,7 @@ const Notifications: React.FC = () => {
               <select
                 value={filters.type || 'all'}
                 onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="px-3 py-2 rounded-lg text-sm border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 rounded-lg text-sm border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 focus:border-cyan-500 dark:focus:border-cyan-400"
               >
                 <option value="all">Todos os tipos</option>
                 <option value="TASK_ASSIGNED">Tarefas Atribuídas</option>
@@ -451,7 +451,7 @@ const Notifications: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Limpar Filtros
@@ -460,14 +460,14 @@ const Notifications: React.FC = () => {
           </div>
 
           {/* Indicador de resultados */}
-          <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
               <span>
                 Mostrando {notifications.length} de {totalCount} notificações
               </span>
             </div>
-            
+
             {totalPages > 1 && (
               <span>
                 Página {currentPage} de {totalPages}
@@ -481,7 +481,7 @@ const Notifications: React.FC = () => {
       {isLoading ? (
         <div className="space-y-4">
           {[...Array(ITEMS_PER_PAGE)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-xl animate-pulse"></div>
+            <div key={i} className="h-24 bg-gray-200 dark:bg-slate-700 rounded-xl animate-pulse"></div>
           ))}
         </div>
       ) : notifications.length > 0 ? (
@@ -506,7 +506,7 @@ const Notifications: React.FC = () => {
                   {/* Ícone da notificação */}
                   <div className={`
                     p-2.5 rounded-xl shadow-sm flex-shrink-0
-                    ${!notification.read ? colors.bg : 'bg-gray-100'}
+                    ${!notification.read ? colors.bg : 'bg-gray-100 dark:bg-slate-700'}
                   `}>
                     <div className={colors.icon}>
                       {getNotificationIcon(notification.type)}
@@ -519,12 +519,12 @@ const Notifications: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className={`
                           text-sm font-semibold truncate
-                          ${!notification.read ? 'text-gray-900' : 'text-gray-700'}
+                          ${!notification.read ? 'text-gray-900 dark:text-slate-100' : 'text-gray-700 dark:text-slate-300'}
                         `}>
                           {notification.title}
                         </h3>
-                        
-                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+
+                        <p className="mt-1 text-sm text-gray-600 dark:text-slate-400 line-clamp-2">
                           {notification.message}
                         </p>
 
@@ -542,7 +542,7 @@ const Notifications: React.FC = () => {
 
                         {/* Metadata adicional */}
                         {notification.metadata && (
-                          <div className="mt-2 text-xs text-gray-500">
+                          <div className="mt-2 text-xs text-gray-500 dark:text-slate-500">
                             {notification.metadata.changedFields && (
                               <span>Campos alterados: {notification.metadata.changedFields.join(', ')}</span>
                             )}
@@ -552,15 +552,15 @@ const Notifications: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <div className="text-right">
-                          <span className="text-xs text-gray-500 block">
+                          <span className="text-xs text-gray-500 dark:text-slate-400 block">
                             {formatDate(notification.createdAt)}
                           </span>
                           {!notification.read && (
                             <div className="flex items-center justify-end mt-1">
-                              <div className="h-2 w-2 bg-blue-600 rounded-full"></div>
+                              <div className="h-2 w-2 bg-cyan-600 dark:bg-cyan-400 rounded-full"></div>
                             </div>
                           )}
                         </div>
@@ -604,7 +604,7 @@ const Notifications: React.FC = () => {
                                 deleteNotificationMutation.mutate(notification.id)
                               }
                             }}
-                            className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="p-1 h-8 w-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
                             title="Excluir notificação"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -621,22 +621,22 @@ const Notifications: React.FC = () => {
       ) : (
         <Card className="text-center py-16">
           <div className="max-w-md mx-auto">
-            <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-6">
-              <Bell className="h-16 w-16 text-gray-400" />
+            <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-full w-fit mx-auto mb-6">
+              <Bell className="h-16 w-16 text-gray-400 dark:text-slate-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-3">
               {isSearching ? 'Nenhum resultado encontrado' :
                filters.read === false ? 'Todas as notificações foram lidas!' :
                'Nenhuma notificação'
               }
             </h3>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 dark:text-slate-400 mb-8">
               {isSearching ? 'Tente buscar com outros termos.' :
                filters.read === false ? 'Parabéns! Você está em dia com todas as suas notificações.' :
                'Você está em dia com todas as suas tarefas!'
               }
             </p>
-            
+
             {(filters.read !== 'all' || filters.type !== 'all' || isSearching) && (
               <Button onClick={clearAllFilters} className="mt-4">
                 <RotateCcw className="h-4 w-4 mr-2" />
@@ -649,9 +649,9 @@ const Notifications: React.FC = () => {
 
       {/* ✅ PAGINAÇÃO */}
       {totalPages > 1 && (
-        <Card className="bg-gray-50">
+        <Card className="bg-gray-50 dark:bg-slate-900/50">
           <div className="flex items-center justify-between p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-slate-400">
               Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} de {totalCount} notificações
             </div>
             

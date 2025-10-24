@@ -132,52 +132,58 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
   const TaskItem: React.FC<{ task: Task }> = ({ task }) => {
     const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
-    
+
     return (
-      <div className={`border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow ${
-        isOverdue ? 'border-red-200 bg-red-50' : ''
+      <div className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow ${
+        isOverdue
+          ? 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
+          : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800'
       }`}>
         <div className="space-y-2 sm:space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-gray-900 line-clamp-2 text-sm sm:text-base">{task.title}</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-slate-100 line-clamp-2 text-sm sm:text-base">{task.title}</h4>
               {task.description && (
-                <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{task.description}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-1 line-clamp-2">{task.description}</p>
               )}
               {/* ✅ MOSTRAR QUEM CRIOU A TAREFA */}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
                 Criada por: {task.createdBy.name}
               </p>
             </div>
             <span className={`
               px-2 py-1 text-xs font-medium rounded whitespace-nowrap w-fit
-              ${TaskStatusColors[task.status]?.bg || 'bg-gray-50'} 
-              ${TaskStatusColors[task.status]?.text || 'text-gray-700'}
+              ${TaskStatusColors[task.status]?.bg || 'bg-gray-50 dark:bg-slate-700'}
+              ${TaskStatusColors[task.status]?.text || 'text-gray-700 dark:text-slate-300'}
             `}>
               {TaskStatusLabels[task.status] || task.status}
             </span>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className={`
                 px-2 py-1 rounded text-xs
-                ${TaskPriorityColors[task.priority]?.bg || 'bg-gray-50'} 
-                ${TaskPriorityColors[task.priority]?.text || 'text-gray-700'}
+                ${TaskPriorityColors[task.priority]?.bg || 'bg-gray-50 dark:bg-slate-700'}
+                ${TaskPriorityColors[task.priority]?.text || 'text-gray-700 dark:text-slate-300'}
               `}>
                 {TaskPriorityLabels[task.priority] || task.priority}
               </span>
-              
+
               {task._count && task._count.attachments > 0 && (
-                <div className="flex items-center gap-1 text-gray-500">
+                <div className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
                   <FileText className="h-3 w-3" />
                   <span>{task._count.attachments}</span>
                 </div>
               )}
             </div>
-            
+
             {task.dueDate && (
-              <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+              <span className={`flex items-center gap-1 ${
+                isOverdue
+                  ? 'text-red-600 dark:text-red-400 font-medium'
+                  : 'text-gray-500 dark:text-slate-400'
+              }`}>
                 <Calendar className="h-3 w-3" />
                 <span className="text-xs">{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
               </span>
@@ -205,16 +211,16 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
   return (
     <Portal>
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm"
+      <div
+        className="fixed inset-0 bg-black bg-opacity-60 dark:bg-opacity-80 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm"
         onClick={onClose}
       >
-        <div 
-          className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl sm:max-w-6xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
+        <div
+          className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl sm:max-w-6xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden border border-gray-200 dark:border-slate-700"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-700 gap-3 sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
               <div className={`h-12 w-12 sm:h-16 sm:w-16 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 ${
                 employee.role === 'MANAGER'
@@ -226,34 +232,34 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 line-clamp-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2 line-clamp-1">
                   <span className="truncate">{employee.name}</span>
                   {stats.completionRate >= 80 && (
-                    <span className="text-yellow-500 flex-shrink-0" title="Top Performer">
+                    <span className="text-yellow-500 dark:text-yellow-400 flex-shrink-0" title="Top Performer">
                       <Star className="h-4 w-4 sm:h-5 sm:w-5" />
                     </span>
                   )}
                 </h2>
-                <div className="flex items-center text-gray-600 mt-1 text-sm sm:text-base">
+                <div className="flex items-center text-gray-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="truncate">{employee.email}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     employee.role === 'MANAGER'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-emerald-100 text-emerald-700'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
                   }`}>
                     <User className="h-3 w-3 mr-1" />
                     {employee.role === 'MANAGER' ? 'Manager' : 'Colaborador'}
                   </span>
-                  
+
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    stats.completionRate >= 80 
-                      ? 'bg-green-100 text-green-700'
+                    stats.completionRate >= 80
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       : stats.completionRate >= 50
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-gray-100 text-gray-700'
+                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
                   }`}>
                     <Award className="h-3 w-3 mr-1" />
                     <span className="hidden sm:inline">{stats.completionRate}% de conclusão</span>
@@ -269,7 +275,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </div>
 
           {/* Tabs */}
-          <div className="flex overflow-x-auto border-b border-gray-200 bg-gray-50">
+          <div className="flex overflow-x-auto border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50">
             {[
               { key: 'overview', label: 'Visão Geral', shortLabel: 'Visão', icon: BarChart3 },
               { key: 'tasks', label: `Tarefas (${tasks.length})`, shortLabel: `Tarefas (${tasks.length})`, icon: CheckSquare },
@@ -280,8 +286,8 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 onClick={() => setActiveTab(key as any)}
                 className={`flex items-center gap-2 px-4 sm:px-6 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === key
-                    ? 'border-b-2 border-blue-500 text-blue-600 bg-white'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'border-b-2 border-cyan-500 dark:border-cyan-400 text-cyan-600 dark:text-cyan-400 bg-white dark:bg-slate-800'
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700/50'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -292,24 +298,24 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </div>
 
           {/* Conteúdo */}
-          <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-12rem)] sm:max-h-[60vh]">
+          <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-12rem)] sm:max-h-[60vh] bg-gray-50 dark:bg-slate-900">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600 text-sm sm:text-base">Carregando detalhes...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-cyan-500 dark:border-cyan-400 mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-slate-400 text-sm sm:text-base">Carregando detalhes...</p>
                 </div>
               </div>
             ) : error ? (
               <div className="text-center py-12">
-                <AlertTriangle className="h-8 w-8 sm:h-12 sm:w-12 text-red-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-red-700 mb-2">Erro ao carregar dados</h3>
-                <p className="text-red-600 mb-4">
+                <AlertTriangle className="h-8 w-8 sm:h-12 sm:w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">Erro ao carregar dados</h3>
+                <p className="text-red-600 dark:text-red-400 mb-4">
                   {error instanceof Error ? error.message : 'Erro desconhecido'}
                 </p>
-                <Button 
-                  onClick={() => window.location.reload()} 
-                  className="bg-blue-600 text-white hover:bg-blue-700"
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-cyan-600 dark:bg-cyan-500 text-white hover:bg-cyan-700 dark:hover:bg-cyan-600"
                 >
                   Recarregar Página
                 </Button>
@@ -320,70 +326,70 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                   <div className="space-y-4 sm:space-y-6">
                     {/* Grid de estatísticas */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                      <Card className="text-center bg-blue-50 border-blue-200 p-3 sm:p-4">
-                        <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mx-auto mb-2" />
-                        <div className="text-xl sm:text-2xl font-bold text-blue-900">{stats.totalTasks}</div>
-                        <div className="text-xs sm:text-sm text-blue-700">Total</div>
+                      <Card className="text-center bg-blue-50 dark:bg-cyan-900/30 border-blue-200 dark:border-cyan-700 p-3 sm:p-4">
+                        <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 dark:text-cyan-400 mx-auto mb-2" />
+                        <div className="text-xl sm:text-2xl font-bold text-blue-900 dark:text-cyan-200">{stats.totalTasks}</div>
+                        <div className="text-xs sm:text-sm text-blue-700 dark:text-cyan-300">Total</div>
                       </Card>
-                      
-                      <Card className="text-center bg-yellow-50 border-yellow-200 p-3 sm:p-4">
-                        <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 mx-auto mb-2" />
-                        <div className="text-xl sm:text-2xl font-bold text-yellow-900">{stats.pendingTasks}</div>
-                        <div className="text-xs sm:text-sm text-yellow-700">Pendentes</div>
+
+                      <Card className="text-center bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-700 p-3 sm:p-4">
+                        <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
+                        <div className="text-xl sm:text-2xl font-bold text-yellow-900 dark:text-yellow-200">{stats.pendingTasks}</div>
+                        <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">Pendentes</div>
                       </Card>
-                      
-                      <Card className="text-center bg-green-50 border-green-200 p-3 sm:p-4">
-                        <CheckSquare className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mx-auto mb-2" />
-                        <div className="text-xl sm:text-2xl font-bold text-green-900">{stats.completedTasks}</div>
-                        <div className="text-xs sm:text-sm text-green-700">Concluídas</div>
+
+                      <Card className="text-center bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 p-3 sm:p-4">
+                        <CheckSquare className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                        <div className="text-xl sm:text-2xl font-bold text-green-900 dark:text-green-200">{stats.completedTasks}</div>
+                        <div className="text-xs sm:text-sm text-green-700 dark:text-green-300">Concluídas</div>
                       </Card>
-                      
-                      <Card className="text-center bg-red-50 border-red-200 p-3 sm:p-4">
-                        <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 mx-auto mb-2" />
-                        <div className="text-xl sm:text-2xl font-bold text-red-900">{stats.overdueTasks}</div>
-                        <div className="text-xs sm:text-sm text-red-700">Atrasadas</div>
+
+                      <Card className="text-center bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 p-3 sm:p-4">
+                        <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 dark:text-red-400 mx-auto mb-2" />
+                        <div className="text-xl sm:text-2xl font-bold text-red-900 dark:text-red-200">{stats.overdueTasks}</div>
+                        <div className="text-xs sm:text-sm text-red-700 dark:text-red-300">Atrasadas</div>
                       </Card>
                     </div>
 
                     {/* ✅ BARRA DE PROGRESSO CORRIGIDA */}
                     <Card className="p-4 sm:p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">Performance Geral</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-slate-100">Performance Geral</h3>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          stats.completionRate >= 80 ? 'bg-green-100 text-green-700' :
-                          stats.completionRate >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-700'
+                          stats.completionRate >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                          stats.completionRate >= 50 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                          'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
                         }`}>
                           {stats.completionRate}%
                         </span>
                       </div>
                       <div className="space-y-3">
                         {/* ✅ BARRA DE PROGRESSO COM LARGURA MÍNIMA */}
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div 
+                        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                          <div
                             className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                              stats.completionRate >= 80 ? 'bg-green-500' : 
-                              stats.completionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                              stats.completionRate >= 80 ? 'bg-green-500 dark:bg-green-400' :
+                              stats.completionRate >= 50 ? 'bg-yellow-500 dark:bg-yellow-400' : 'bg-red-500 dark:bg-red-400'
                             }`}
-                            style={{ 
+                            style={{
                               width: stats.totalTasks === 0 ? '0%' : `${Math.max(stats.completionRate, 2)}%`,
                               minWidth: stats.totalTasks > 0 && stats.completionRate > 0 ? '8px' : '0px'
                             }}
                           ></div>
                         </div>
-                        
-                        <div className="flex justify-between text-xs text-gray-500">
+
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-slate-400">
                           <span>
                             {stats.completedTasks} de {stats.totalTasks} tarefas concluídas
                           </span>
                           <span>{stats.completionRate}%</span>
                         </div>
-                        
-                        <p className="text-sm text-gray-600">{roleLabels.performanceText}</p>
-                        
+
+                        <p className="text-sm text-gray-600 dark:text-slate-400">{roleLabels.performanceText}</p>
+
                         {/* ✅ INFO ADICIONAL SOBRE TAREFAS */}
-                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                          <p className="text-xs text-blue-700">
+                        <div className="bg-blue-50 dark:bg-cyan-900/30 p-3 rounded-lg border border-blue-200 dark:border-cyan-700">
+                          <p className="text-xs text-blue-700 dark:text-cyan-300">
                             💡 <strong>Visualizando apenas tarefas atribuídas</strong> a {employee.name}
                             {employee.role === 'MANAGER' && ' (não inclui tarefas criadas por ele)'}
                           </p>
@@ -396,8 +402,8 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 {activeTab === 'tasks' && (
                   <div className="space-y-4 sm:space-y-6">
                     {/* Info sobre tarefas */}
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-700">
+                    <div className="bg-blue-50 dark:bg-cyan-900/30 p-3 rounded-lg border border-blue-200 dark:border-cyan-700">
+                      <p className="text-sm text-blue-700 dark:text-cyan-300">
                         📋 Mostrando <strong>apenas tarefas atribuídas</strong> a {employee.name}
                       </p>
                     </div>
@@ -416,8 +422,8 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                           onClick={() => setTaskFilter(key as any)}
                           className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                             taskFilter === key
-                              ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'
+                              ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700'
+                              : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600 border border-gray-300 dark:border-slate-600'
                           }`}
                         >
                           {label} ({count})
@@ -434,9 +440,9 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       </div>
                     ) : (
                       <div className="text-center py-12">
-                        <CheckSquare className="h-8 w-8 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 font-medium text-sm sm:text-base">
-                          {taskFilter === 'all' 
+                        <CheckSquare className="h-8 w-8 sm:h-12 sm:w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+                        <p className="text-gray-500 dark:text-slate-400 font-medium text-sm sm:text-base">
+                          {taskFilter === 'all'
                             ? roleLabels.emptyTasks
                             : 'Nenhuma tarefa encontrada para este filtro'
                           }
@@ -449,19 +455,19 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 {activeTab === 'history' && (
                   <div className="space-y-4 sm:space-y-6">
                     <Card className="p-4 sm:p-6">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Atividade Recente</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Atividade Recente</h3>
                       <div className="space-y-3">
                         {tasks.slice(0, 10).map((task) => (
-                          <div key={task.id} className="flex items-center gap-3 py-2 sm:py-3 border-b border-gray-100 last:border-0">
+                          <div key={task.id} className="flex items-center gap-3 py-2 sm:py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
                             <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                              task.status === 'COMPLETED' ? 'bg-green-500' :
-                              task.status === 'IN_PROGRESS' ? 'bg-blue-500' :
-                              task.status === 'PENDING' ? 'bg-yellow-500' :
-                              'bg-gray-400'
+                              task.status === 'COMPLETED' ? 'bg-green-500 dark:bg-green-400' :
+                              task.status === 'IN_PROGRESS' ? 'bg-blue-500 dark:bg-cyan-400' :
+                              task.status === 'PENDING' ? 'bg-yellow-500 dark:bg-yellow-400' :
+                              'bg-gray-400 dark:bg-slate-500'
                             }`}></div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 line-clamp-1">{task.title}</p>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1">
+                              <p className="text-sm font-medium text-gray-900 dark:text-slate-100 line-clamp-1">{task.title}</p>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-slate-400 mt-1">
                                 <span>{new Date(task.updatedAt).toLocaleDateString('pt-BR')}</span>
                                 <span>•</span>
                                 <span>{TaskStatusLabels[task.status] || task.status}</span>
@@ -471,11 +477,11 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                             </div>
                           </div>
                         ))}
-                        
+
                         {tasks.length === 0 && (
                           <div className="text-center py-6">
-                            <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-gray-300 mx-auto mb-2" />
-                            <p className="text-xs sm:text-sm text-gray-500">Nenhuma atividade registrada</p>
+                            <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Nenhuma atividade registrada</p>
                           </div>
                         )}
                       </div>

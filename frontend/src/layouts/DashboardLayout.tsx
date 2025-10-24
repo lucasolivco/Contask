@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import Button from '../components/ui/Button'
 import Logo from '../components/ui/Logo'
+import ThemeToggle from '../components/ui/ThemeToggle'
 
 const DashboardLayout: React.FC = () => {
     const { user, logout } = useAuth()
@@ -79,8 +80,8 @@ const DashboardLayout: React.FC = () => {
                     className={`
                         w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
                         ${isActivePath(item.path)
-                            ? 'bg-cyan-100 text-cyan-700 border border-cyan-200'
-                            : 'text-gray-700 hover:bg-cyan-50 hover:text-cyan-600'
+                            ? 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700'
+                            : 'text-gray-700 dark:text-slate-300 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 hover:text-cyan-600 dark:hover:text-cyan-400'
                         }
                     `}
                 >
@@ -121,12 +122,12 @@ const DashboardLayout: React.FC = () => {
         }
     }, [])
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
             {/* Sidebar Desktop */}
             <div className="hidden md:flex md:w-64 md:flex-col">
-                <div className="flex flex-col flex-grow bg-white border-r border-gray-200 shadow-sm">
+                <div className="flex flex-col flex-grow bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 shadow-sm transition-colors duration-200">
                     {/* ✅ LOGO PNG NO SIDEBAR DESKTOP */}
-                    <div className="flex items-center justify-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
+                    <div className="flex items-center justify-center px-6 py-5 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-green-50 dark:from-slate-700 dark:to-slate-700">
                         <Logo 
                           size="lg" 
                           onClick={() => navigate('/dashboard')}
@@ -137,21 +138,26 @@ const DashboardLayout: React.FC = () => {
                         <NavigationItems />
                     </nav>
 
+                    {/* ✅ THEME TOGGLE (DESKTOP) */}
+                    <div className="px-4 pb-2">
+                        <ThemeToggle />
+                    </div>
+
                     {/* ✅ MENU DE PERFIL ATUALIZADO (DESKTOP) */}
                     <div className="relative" ref={profileMenuRef}>
                         {isProfileMenuOpen && (
                             <div className="absolute bottom-full left-0 right-0 mb-2 p-2">
-                                <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 animate-fade-in-up">
+                                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 p-4 animate-fade-in-up">
                                     <div className="text-center mb-4">
-                                        <p className="font-semibold text-gray-800">{user?.name}</p>
-                                        <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                                        <p className="font-semibold text-gray-800 dark:text-slate-100">{user?.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400 flex items-center justify-center gap-1">
                                             <Mail className="h-3 w-3" />
                                             {user?.email}
                                         </p>
                                         <span className={`mt-2 inline-block text-xs px-2 py-1 rounded-full ${
-                                            user?.role === 'MANAGER' 
-                                            ? 'bg-purple-100 text-purple-700' 
-                                            : 'bg-blue-100 text-blue-700'
+                                            user?.role === 'MANAGER'
+                                            ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                                            : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
                                         }`}>
                                             {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
                                         </span>
@@ -169,27 +175,27 @@ const DashboardLayout: React.FC = () => {
                             </div>
                         )}
 
-                        <div 
-                            className="px-4 py-4 border-t border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                        <div
+                            className="px-4 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-900 cursor-pointer transition-colors"
                             onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center min-w-0 flex-1">
-                                    <div className="h-9 w-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <div className="h-9 w-9 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-cyan-500 dark:to-cyan-600 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-sm font-semibold text-white">
                                             {user?.name?.charAt(0).toUpperCase()}
                                         </span>
                                     </div>
                                     <div className="ml-3 min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-700 truncate">
+                                        <p className="text-sm font-medium text-gray-700 dark:text-slate-200 truncate">
                                             {user?.name}
                                         </p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-gray-500 dark:text-slate-400">
                                             {user?.role === 'MANAGER' ? 'Gerente' : 'Funcionário'}
                                         </p>
                                     </div>
                                 </div>
-                                <ChevronUp className={`h-5 w-5 text-gray-500 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                                <ChevronUp className={`h-5 w-5 text-gray-500 dark:text-slate-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                             </div>
                         </div>
                     </div>
@@ -203,18 +209,18 @@ const DashboardLayout: React.FC = () => {
                         className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity" 
                         onClick={() => setSidebarOpen(false)} 
                     />
-                    <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl">
+                    <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white dark:bg-slate-800 shadow-xl transition-colors duration-200">
                         <div className="absolute top-0 right-0 -mr-12 pt-2">
                             <button
                                 onClick={() => setSidebarOpen(false)}
-                                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white dark:focus:ring-cyan-500"
                             >
                                 <X className="h-6 w-6 text-white" />
                             </button>
                         </div>
 
                         {/* ✅ LOGO PNG NO SIDEBAR MOBILE */}
-                        <div className="flex items-center justify-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
+                        <div className="flex items-center justify-center px-6 py-5 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-green-50 dark:from-slate-700 dark:to-slate-700">
                             <Logo 
                               size="md" 
                               onClick={() => {
@@ -290,36 +296,39 @@ const DashboardLayout: React.FC = () => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* ✅ TOP BAR MOBILE COM LOGO PNG */}
-                <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
+                <div className="md:hidden bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 py-3 shadow-sm transition-colors duration-200">
                     <div className="flex items-center justify-between">
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="text-gray-500 hover:text-gray-600 p-2"
+                            className="text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300 p-2"
                         >
                             <Menu size={24} />
                         </button>
-                        <Logo 
-                          size="sm" 
+                        <Logo
+                          size="sm"
                           onClick={() => navigate('/dashboard')}
                         />
-                        {/* ✅ BOTÃO DE PERFIL NO HEADER MOBILE */}
-                        <button 
-                            className="flex items-center gap-2"
-                            onClick={() => {
-                                setSidebarOpen(true)
-                                setIsProfileMenuOpen(true)
-                            }}
-                        >
-                            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                                <span className="text-xs font-semibold text-white">
-                                    {user?.name?.charAt(0).toUpperCase()}
-                                </span>
-                            </div>
-                        </button>
+                        {/* ✅ THEME TOGGLE E PERFIL */}
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle />
+                            <button
+                                className="flex items-center gap-2"
+                                onClick={() => {
+                                    setSidebarOpen(true)
+                                    setIsProfileMenuOpen(true)
+                                }}
+                            >
+                                <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                                    <span className="text-xs font-semibold text-white">
+                                        {user?.name?.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <main className="flex-1 overflow-y-auto bg-gray-50 scrollbar-thin">
+                <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-900 scrollbar-thin transition-colors duration-200">
                     <Outlet />
                 </main>
             </div>

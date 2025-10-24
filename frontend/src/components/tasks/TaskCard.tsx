@@ -148,23 +148,23 @@ const TaskCard = ({
   const getPriorityStyles = (priority: Task['priority']) => {
     switch (priority) {
       case 'URGENT': return {
-        text: 'text-purple-700 bg-purple-50 border-purple-200',
+        text: 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700',
         icon: '🚨'
       }
       case 'HIGH': return {
-        text: 'text-orange-700 bg-orange-50 border-orange-200',
+        text: 'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700',
         icon: '⚡'
       }
       case 'MEDIUM': return {
-        text: 'text-blue-700 bg-blue-50 border-blue-200',
+        text: 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700',
         icon: '📋'
       }
       case 'LOW': return {
-        text: 'text-slate-700 bg-slate-50 border-slate-200',
+        text: 'text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600',
         icon: '📝'
       }
       default: return {
-        text: 'text-blue-700 bg-blue-50 border-blue-200',
+        text: 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700',
         icon: '📋'
       }
     }
@@ -203,11 +203,11 @@ const TaskCard = ({
 
 
   return (
-    <div 
+    <div
       className={`
-        bg-white rounded-xl border border-gray-200 border-r-4 ${statusStyles.border} p-4
-        transition-all duration-200 hover:shadow-lg hover:border-gray-300 ${statusStyles.bgHover} ${statusStyles.opacity || ''}
-        ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
+        bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 border-r-4 ${statusStyles.border} p-4
+        transition-all duration-200 hover:shadow-lg hover:border-gray-300 dark:hover:border-slate-600 ${statusStyles.bgHover} ${statusStyles.opacity || ''}
+        ${isSelected ? 'ring-2 ring-blue-500 dark:ring-cyan-500 bg-blue-50 dark:bg-cyan-900/20' : ''}
         ${task.status === 'COMPLETED' ? 'opacity-75' : ''}
         cursor-pointer group
       `}
@@ -228,7 +228,7 @@ const TaskCard = ({
                     e.stopPropagation()
                     onToggleSelect?.(task.id)
                   }}
-                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                  className="w-5 h-5 text-blue-600 dark:text-cyan-500 bg-white dark:bg-slate-700 border-2 border-gray-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:focus:ring-cyan-500 focus:ring-2 cursor-pointer"
                 />
               </label>
             </div>
@@ -246,7 +246,7 @@ const TaskCard = ({
         {/* PRIORIDADE + BOTÃO DELETE NO HOVER */}
         <div className="flex items-center gap-2">
            {/* ✅ NOVO: Exibindo o ID formatado no card */}
-           <span className="text-xs font-mono bg-gray-100 text-gray-500 px-2 py-1 rounded">
+           <span className="text-xs font-mono bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-1 rounded">
              {displayId}
            </span>
 
@@ -264,7 +264,7 @@ const TaskCard = ({
                   e.stopPropagation()
                   onDelete(task.id)
                 }}
-                className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg"
+                className="p-1.5 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
                 title={task.status === 'ARCHIVED' ? "Excluir Permanentemente" : "Excluir tarefa"}
               >
                 <Trash2 className="h-4 w-4" />
@@ -276,32 +276,32 @@ const TaskCard = ({
 
       {/* O restante do componente permanece exatamente o mesmo, sem alterações */}
       {/* ... */}
-      <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 text-base hover:text-blue-600 transition-colors">
+      <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-3 line-clamp-2 text-base hover:text-blue-600 dark:hover:text-cyan-400 transition-colors">
         {task.title}
       </h3>
 
-      <div className="space-y-2 mb-4 text-sm text-gray-600">
+      <div className="space-y-2 mb-4 text-sm text-gray-600 dark:text-slate-400">
         <div className="space-y-1">
           {/* Criado por */}
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-400" />
-            <span className="text-xs text-gray-500">Criado por:</span>
+            <User className="h-4 w-4 text-gray-400 dark:text-slate-500" />
+            <span className="text-xs text-gray-500 dark:text-slate-400">Criado por:</span>
             <div className="flex items-center gap-1">
-              <span className="text-gray-700">{task.createdBy.name}</span>
+              <span className="text-gray-700 dark:text-slate-300">{task.createdBy.name}</span>
               {task.isCreator && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Você</span>
+                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">Você</span>
               )}
             </div>
           </div>
-          
+
           {/* Atribuído para */}
           <div className="flex items-center gap-2">
-            <Crown className="h-4 w-4 text-purple-400" />
-            <span className="text-xs text-gray-500">Atribuído para:</span>
+            <Crown className="h-4 w-4 text-purple-400 dark:text-purple-500" />
+            <span className="text-xs text-gray-500 dark:text-slate-400">Atribuído para:</span>
             <div className="flex items-center gap-1">
-              <span className="text-gray-700">{task.assignedTo.name}</span>
+              <span className="text-gray-700 dark:text-slate-300">{task.assignedTo.name}</span>
               {task.isAssigned && (
-                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Você</span>
+                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">Você</span>
               )}
             </div>
           </div>
@@ -311,26 +311,26 @@ const TaskCard = ({
           {/* Data de vencimento */}
           {task.dueDate && (
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-xs text-gray-500">Vencimento:</span>
-              <span className={isOverdue ? 'text-red-600 font-medium' : 'text-gray-700'}>
+              <Calendar className="h-4 w-4 text-gray-400 dark:text-slate-500" />
+              <span className="text-xs text-gray-500 dark:text-slate-400">Vencimento:</span>
+              <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-700 dark:text-slate-300'}>
                 {formatDateBrazil(task.dueDate)}
                 {isOverdue && (
-                  <span className="ml-1 text-red-600 text-xs font-bold animate-pulse">⚠️ Atrasada</span>
+                  <span className="ml-1 text-red-600 dark:text-red-400 text-xs font-bold animate-pulse">⚠️ Atrasada</span>
                 )}
               </span>
             </div>
           )}
-          
+
           {/* Data meta */}
           {task.targetDate && (
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-gray-500">Meta:</span>
-              <span className={isNearTarget ? 'text-orange-600 font-medium' : 'text-gray-600'}>
+              <Target className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+              <span className="text-xs text-gray-500 dark:text-slate-400">Meta:</span>
+              <span className={isNearTarget ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-600 dark:text-slate-400'}>
                 {formatDateBrazil(task.targetDate)}
                 {isNearTarget && (
-                  <span className="ml-1 text-orange-600 text-xs font-bold animate-pulse">🎯 Próxima</span>
+                  <span className="ml-1 text-orange-600 dark:text-orange-400 text-xs font-bold animate-pulse">🎯 Próxima</span>
                 )}
               </span>
             </div>
@@ -338,7 +338,7 @@ const TaskCard = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+      <div className="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">
 
         
         <div className="flex items-center gap-1 ml-auto" onClick={handleInteractiveClick}>
@@ -346,7 +346,7 @@ const TaskCard = ({
           {task.status === 'ARCHIVED' && onUnarchive && canShowDeleteButton() && (
             <button
               onClick={(e) => { e.stopPropagation(); onUnarchive(task.id); }}
-              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
+              className="flex items-center gap-2 text-sm bg-blue-600 dark:bg-cyan-600 hover:bg-blue-700 dark:hover:bg-cyan-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
             >
               <RotateCcw className="h-3 w-3" />
               Restaurar
@@ -359,7 +359,7 @@ const TaskCard = ({
             <select
               value={task.status}
               onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all bg-white"
+              className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:border-blue-300 dark:focus:border-cyan-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-cyan-900 focus:outline-none transition-all"
             >
               <option value="PENDING">⏳ Pendente</option>
               <option value="IN_PROGRESS">🔄 Em Progresso</option>
@@ -373,7 +373,7 @@ const TaskCard = ({
                 e.stopPropagation()
                 onEdit?.(task.id)
               }}
-              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
+              className="flex items-center gap-2 text-sm bg-blue-600 dark:bg-cyan-600 hover:bg-blue-700 dark:hover:bg-cyan-700 text-white py-2 px-3 rounded-lg transition-colors font-medium"
             >
               <Edit3 className="h-3 w-3" />
               Editar
@@ -384,7 +384,7 @@ const TaskCard = ({
             <select
               value={task.status}
               onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
-              className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:border-blue-300 focus:ring-1 focus:ring-blue-100 focus:outline-none transition-all bg-white ml-1"
+              className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:border-blue-300 dark:focus:border-cyan-500 focus:ring-1 focus:ring-blue-100 dark:focus:ring-cyan-900 focus:outline-none transition-all ml-1"
               title="Alterar status"
             >
               <option value="PENDING">⏳ Pendente</option>

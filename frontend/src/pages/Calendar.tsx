@@ -191,34 +191,68 @@ const Calendar: React.FC = () => {
     color: string
     description: string
   }> = ({ title, value, icon: Icon, color, description }) => {
-    
-    const getIconBackground = (colorClass: string) => {
-      const colorMap: { [key: string]: string } = {
-        'text-blue-500': 'bg-blue-100',
-        'text-emerald-500': 'bg-emerald-100', 
-        'text-red-500': 'bg-red-100',
-        'text-purple-500': 'bg-purple-100',
-        'text-slate-500': 'bg-slate-100',
+
+    const getColors = (colorClass: string) => {
+      const colorMap: { [key: string]: { bg: string, iconBg: string, icon: string, text: string, value: string } } = {
+        'text-blue-500': {
+          bg: 'bg-blue-50 dark:bg-cyan-900/30',
+          iconBg: 'bg-blue-100 dark:bg-cyan-800/50',
+          icon: 'text-blue-600 dark:text-cyan-400',
+          text: 'text-blue-700 dark:text-cyan-300',
+          value: 'text-blue-900 dark:text-cyan-200'
+        },
+        'text-emerald-500': {
+          bg: 'bg-green-50 dark:bg-green-900/30',
+          iconBg: 'bg-green-100 dark:bg-green-800/50',
+          icon: 'text-green-600 dark:text-green-400',
+          text: 'text-green-700 dark:text-green-300',
+          value: 'text-green-900 dark:text-green-200'
+        },
+        'text-red-500': {
+          bg: 'bg-red-50 dark:bg-red-900/30',
+          iconBg: 'bg-red-100 dark:bg-red-800/50',
+          icon: 'text-red-600 dark:text-red-400',
+          text: 'text-red-700 dark:text-red-300',
+          value: 'text-red-900 dark:text-red-200'
+        },
+        'text-purple-500': {
+          bg: 'bg-purple-50 dark:bg-purple-900/30',
+          iconBg: 'bg-purple-100 dark:bg-purple-800/50',
+          icon: 'text-purple-600 dark:text-purple-400',
+          text: 'text-purple-700 dark:text-purple-300',
+          value: 'text-purple-900 dark:text-purple-200'
+        }
       }
-      return colorMap[colorClass] || 'bg-gray-100'
+      return colorMap[colorClass] || {
+        bg: 'bg-gray-50 dark:bg-slate-900/30',
+        iconBg: 'bg-gray-100 dark:bg-slate-800/50',
+        icon: 'text-gray-600 dark:text-slate-400',
+        text: 'text-gray-700 dark:text-slate-300',
+        value: 'text-gray-900 dark:text-slate-200'
+      }
+    }
+
+    const colors = getColors(color)
+
+    const getBorderColor = (colorClass: string) => {
+      const borderMap: { [key: string]: string } = {
+        'text-blue-500': 'border-blue-200 dark:border-cyan-700',
+        'text-emerald-500': 'border-green-200 dark:border-green-700',
+        'text-red-500': 'border-red-200 dark:border-red-700',
+        'text-purple-500': 'border-purple-200 dark:border-purple-700'
+      }
+      return borderMap[colorClass] || 'border-gray-200 dark:border-slate-700'
     }
 
     return (
-      <Card className="relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className={`p-2.5 rounded-xl ${getIconBackground(color)} transition-transform hover:scale-105 duration-200`}>
-                <Icon className={`h-5 w-5 ${color}`} />
-              </div>
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                {title}
-              </h3>
-            </div>
-            <div className="space-y-1">
-              <p className="text-3xl font-bold text-gray-900">{value}</p>
-              <p className="text-xs text-gray-500 font-medium">{description}</p>
-            </div>
+      <Card className={`relative overflow-hidden ${colors.bg} ${getBorderColor(color)}`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 ${colors.iconBg} rounded-lg`}>
+            <Icon className={`h-5 w-5 ${colors.icon}`} />
+          </div>
+          <div>
+            <p className={`text-2xl font-bold ${colors.value}`}>{value}</p>
+            <p className={`text-sm ${colors.text}`}>{description}</p>
           </div>
         </div>
       </Card>
@@ -229,7 +263,7 @@ const Calendar: React.FC = () => {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl">
           Erro ao carregar tarefas. Tente novamente.
         </div>
       </div>
@@ -240,8 +274,8 @@ const Calendar: React.FC = () => {
     return (
       <div className="p-6 flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dados do usuário...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-slate-400">Carregando dados do usuário...</p>
         </div>
       </div>
     )
@@ -251,13 +285,13 @@ const Calendar: React.FC = () => {
     return (
       <div className="p-6 space-y-8">
         <div className="animate-pulse space-y-8">
-          <div className="h-12 bg-gray-200 rounded-xl w-1/3"></div>
+          <div className="h-12 bg-gray-200 dark:bg-slate-700 rounded-xl w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+              <div key={i} className="h-32 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
             ))}
           </div>
-          <div className="h-96 bg-gray-200 rounded-2xl"></div>
+          <div className="h-96 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
         </div>
       </div>
     )
@@ -268,13 +302,13 @@ const Calendar: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="heading-xl flex items-center gap-4 mb-2">
+          <h1 className="heading-xl flex items-center gap-4 mb-2 text-gray-900 dark:text-slate-100">
             <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-lg">
               <CalendarIcon className="h-8 w-8 text-white" />
             </div>
             Calendário de Tarefas
           </h1>
-          <p className="text-muted text-lg">
+          <p className="text-muted text-lg text-gray-600 dark:text-slate-400">
             Visualize as datas de meta das suas tarefas de forma organizada
           </p>
         </div>
@@ -338,7 +372,7 @@ const Calendar: React.FC = () => {
         <div className="xl:col-span-3">
           <Card className="overflow-hidden">
             {/* Header do Calendário */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 border-b dark:border-slate-700">
               <Button
                 variant="ghost"
                 onClick={goToPreviousMonth}
@@ -346,11 +380,11 @@ const Calendar: React.FC = () => {
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>
-              
-              <h2 className="text-xl font-semibold text-gray-900">
+
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100">
                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </h2>
-              
+
               <Button
                 variant="ghost"
                 onClick={goToNextMonth}
@@ -361,9 +395,9 @@ const Calendar: React.FC = () => {
             </div>
 
             {/* Dias da Semana */}
-            <div className="grid grid-cols-7 border-b">
+            <div className="grid grid-cols-7 border-b dark:border-slate-700">
               {dayNames.map((day: string) => (
-                <div key={day} className="p-3 text-center text-sm font-medium text-gray-500 bg-gray-50">
+                <div key={day} className="p-3 text-center text-sm font-medium text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50">
                   {day}
                 </div>
               ))}
@@ -380,20 +414,20 @@ const Calendar: React.FC = () => {
                     key={index}
                     onClick={() => setSelectedDate(date)}
                     className={`
-                      min-h-24 p-2 border-r border-b cursor-pointer transition-colors hover:bg-gray-50
-                      ${!isCurrentMonth(date) ? 'text-gray-400 bg-gray-50' : ''}
-                      ${isToday(date) ? 'bg-blue-50' : ''}
-                      ${isSelected(date) ? 'bg-blue-100' : ''}
+                      min-h-24 p-2 border-r dark:border-slate-700 border-b dark:border-slate-700 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50
+                      ${!isCurrentMonth(date) ? 'text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/50' : ''}
+                      ${isToday(date) ? 'bg-blue-50 dark:bg-cyan-900/20' : ''}
+                      ${isSelected(date) ? 'bg-blue-100 dark:bg-cyan-900/30' : ''}
                     `}
                   >
                     <div className={`
                       text-sm font-medium mb-1
-                      ${isToday(date) ? 'text-blue-600' : ''}
-                      ${hasOverdue ? 'text-red-600' : ''}
+                      ${isToday(date) ? 'text-blue-600 dark:text-cyan-400' : 'dark:text-slate-300'}
+                      ${hasOverdue ? 'text-red-600 dark:text-red-400' : ''}
                     `}>
                       {date.getDate()}
                     </div>
-                    
+
                     {/* Indicadores de Tarefas */}
                     <div className="space-y-1">
                       {tasks.slice(0, 3).map((task: Task) => (
@@ -401,9 +435,9 @@ const Calendar: React.FC = () => {
                           key={task.id}
                           className={`
                             text-xs p-1 rounded truncate flex items-center gap-1
-                            ${isOverdue(task) ? 'bg-red-100 text-red-800' : 
-                              task.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
-                              'bg-blue-100 text-blue-800'}
+                            ${isOverdue(task) ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                              task.status === 'COMPLETED' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300' :
+                              'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'}
                           `}
                         >
                           <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
@@ -429,19 +463,19 @@ const Calendar: React.FC = () => {
           {/* Tarefas do Dia Selecionado */}
           {selectedDate && (
             <Card>
-              <h3 className="font-semibold text-gray-900 mb-3">
-                {selectedDate.toLocaleDateString('pt-BR', { 
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">
+                {selectedDate.toLocaleDateString('pt-BR', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'
                 })}
               </h3>
-              
+
               <div className="space-y-3">
                 {getTasksForDate(selectedDate).length === 0 ? (
-                  <div className="text-center py-6 text-gray-500">
-                    <CalendarIcon className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+                  <div className="text-center py-6 text-gray-500 dark:text-slate-400">
+                    <CalendarIcon className="mx-auto h-8 w-8 text-gray-300 dark:text-slate-600 mb-2" />
                     <p className="font-medium text-sm">Nenhuma tarefa para este dia</p>
                   </div>
                 ) : (
@@ -449,22 +483,22 @@ const Calendar: React.FC = () => {
                     <div
                       key={task.id}
                       className={`
-                        p-3 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 transition-colors
-                        ${isOverdue(task) ? 'border-red-500 bg-red-50' :
-                          task.status === 'COMPLETED' ? 'border-emerald-500 bg-emerald-50' :
-                          'border-blue-500 bg-blue-50'}
+                        p-3 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors
+                        ${isOverdue(task) ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/20' :
+                          task.status === 'COMPLETED' ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' :
+                          'border-blue-500 dark:border-cyan-500 bg-blue-50 dark:bg-cyan-900/20'}
                       `}
                       onClick={() => navigate('/tasks')}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         {getStatusIcon(task.status)}
-                        <span className="font-medium text-sm truncate">{task.title}</span>
+                        <span className="font-medium text-sm truncate text-gray-900 dark:text-slate-100">{task.title}</span>
                       </div>
-                      
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
+
+                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-slate-400">
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
                         <span className="capitalize">{TaskPriorityLabels[task.priority]}</span>
-                        
+
                         {task.assignedTo && (
                           <>
                             <span>•</span>
@@ -473,9 +507,9 @@ const Calendar: React.FC = () => {
                           </>
                         )}
                       </div>
-                      
+
                       {isOverdue(task) && (
-                        <div className="text-xs text-red-600 mt-1 font-medium">
+                        <div className="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">
                           ⚠️ Atrasada
                         </div>
                       )}
@@ -488,11 +522,11 @@ const Calendar: React.FC = () => {
 
           {/* Legenda */}
           <Card>
-            <h3 className="font-semibold text-gray-900 mb-3">Legenda</h3>
-            
+            <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">Legenda</h3>
+
             <div className="space-y-3">
-              <div className="text-sm font-medium text-gray-700 mb-2">Prioridades:</div>
-              <div className="space-y-2 text-sm">
+              <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Prioridades:</div>
+              <div className="space-y-2 text-sm text-gray-700 dark:text-slate-300">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-slate-400"></div>
                   <span>Baixa</span>
@@ -510,20 +544,20 @@ const Calendar: React.FC = () => {
                   <span>Urgente</span>
                 </div>
               </div>
-              
-              <div className="border-t pt-3 mt-3">
-                <div className="text-sm font-medium text-gray-700 mb-2">Status:</div>
-                <div className="space-y-2 text-sm">
+
+              <div className="border-t dark:border-slate-700 pt-3 mt-3">
+                <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Status:</div>
+                <div className="space-y-2 text-sm text-gray-700 dark:text-slate-300">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="w-3 h-3 text-emerald-600" />
+                    <CheckCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                     <span>Concluída</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3 text-blue-600" />
+                    <Clock className="w-3 h-3 text-blue-600 dark:text-cyan-400" />
                     <span>Em Progresso</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="w-3 h-3 text-slate-600" />
+                    <AlertCircle className="w-3 h-3 text-slate-600 dark:text-slate-400" />
                     <span>Pendente</span>
                   </div>
                 </div>

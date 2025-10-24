@@ -134,23 +134,23 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
       {/* ✅ HEADER SIMPLES */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-700">
         <div className="flex items-center gap-3">
-          <Filter className="h-5 w-5 text-gray-600" />
-          <h3 className="font-medium text-gray-900">Filtros</h3>
+          <Filter className="h-5 w-5 text-gray-600 dark:text-slate-400" />
+          <h3 className="font-medium text-gray-900 dark:text-slate-100">Filtros</h3>
           {hasActiveFilters && (
-            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
+            <span className="bg-blue-100 dark:bg-cyan-900/30 text-blue-700 dark:text-cyan-300 text-xs px-2 py-1 rounded-full">
               {Object.values(filters).filter(v => v !== undefined && v !== false).length}
             </span>
           )}
         </div>
-        
+
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            className="flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
           >
             <X className="h-4 w-4" />
             Limpar
@@ -161,40 +161,37 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
       <div className="p-4 space-y-4">
         {/* ✅ FILTROS RÁPIDOS PARA MANAGERS - MINIMALISTA */}
         {userRole === 'MANAGER' && currentUserId && (
-          <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-100">
+          <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-100 dark:border-slate-700">
             {[
               {
                 key: 'created',
                 label: 'Todas',
                 icon: Users,
-                color: 'gray',
+                activeClass: 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-600 shadow-sm',
+                inactiveClass: 'bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600',
                 isActive: !filters.assignedToId
               },
               {
                 key: 'my',
                 label: 'Atribuídas a Mim',
                 icon: Target,
-                color: 'blue',
+                activeClass: 'bg-blue-100 dark:bg-cyan-900/30 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-700 shadow-sm',
+                inactiveClass: 'bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600',
                 isActive: filters.assignedToId === currentUserId && !filters.archived
               },
               {
                 key: 'archived',
                 label: 'Arquivadas',
                 icon: Archive,
-                color: 'gray',
+                activeClass: 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-600 shadow-sm',
+                inactiveClass: 'bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600',
                 isActive: filters.archived === true
               }
-            ].map(({ key, label, icon: Icon, color, isActive }) => (
+            ].map(({ key, label, icon: Icon, activeClass, inactiveClass, isActive }) => (
               <button
                 key={key}
                 onClick={() => applyTaskTypeFilter(key as any)}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${isActive 
-                    ? `bg-${color}-100 text-${color}-700 border border-${color}-200 shadow-sm` 
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
-                  }
-                `}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? activeClass : inactiveClass}`}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -205,13 +202,13 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
 
         {/* ✅ BUSCA */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Buscar tarefas..."
             value={filters.search || ''}
             onChange={(e) => updateFilter('search', e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-cyan-500 focus:border-blue-500 dark:focus:border-cyan-500 text-sm"
           />
         </div>
 
@@ -221,7 +218,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           <select
             value={filters.status || 'all'}
             onChange={(e) => updateFilter('status', e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="px-3 py-2 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-cyan-500 focus:border-blue-500 dark:focus:border-cyan-500 text-sm"
           >
             <option value="all">Todos Status</option>
             <option value="PENDING">⏳ Pendente</option>
@@ -234,7 +231,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           <select
             value={filters.priority || 'all'}
             onChange={(e) => updateFilter('priority', e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="px-3 py-2 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-cyan-500 focus:border-blue-500 dark:focus:border-cyan-500 text-sm"
           >
             <option value="all">Todas Prioridades</option>
             <option value="URGENT">🚨 Urgente</option>
@@ -248,7 +245,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             <select
               value={filters.assignedToId || 'all'}
               onChange={(e) => updateFilter('assignedToId', e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="px-3 py-2 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-cyan-500 focus:border-blue-500 dark:focus:border-cyan-500 text-sm"
               disabled={loadingUsers}
             >
               <option value="all">
@@ -291,15 +288,15 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           )}
 
           {/* Atrasadas */}
-          <label className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer text-sm">
+          <label className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer text-sm">
             <input
               type="checkbox"
               checked={filters.overdue || false}
               onChange={(e) => updateFilter('overdue', e.target.checked || undefined)}
-              className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              className="w-4 h-4 text-red-600 dark:text-red-500 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded focus:ring-red-500"
             />
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-            <span className="text-red-700">Atrasadas</span>
+            <AlertTriangle className="h-4 w-4 text-red-500 dark:text-red-400" />
+            <span className="text-red-700 dark:text-red-400">Atrasadas</span>
           </label>
         </div>
 
@@ -307,7 +304,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         <div>
           <button
             onClick={() => setIsDateExpanded(!isDateExpanded)}
-            className="flex items-center justify-between w-full text-left text-sm text-gray-600 hover:text-gray-900"
+            className="flex items-center justify-between w-full text-left text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
           >
             <span className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -317,19 +314,19 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           </button>
 
           {isDateExpanded && (
-            <div className="mt-3 space-y-3 bg-gray-50 rounded-lg p-3">
+            <div className="mt-3 space-y-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3">
               {/* Filtros Rápidos */}
               <div className="flex gap-2">
                 <button
                   onClick={() => applyQuickFilter('thisMonth')}
-                  className="flex items-center gap-1 px-2 py-1 text-xs border border-blue-200 text-blue-700 hover:bg-blue-50 rounded"
+                  className="flex items-center gap-1 px-2 py-1 text-xs border border-blue-200 dark:border-cyan-700 text-blue-700 dark:text-cyan-300 bg-white dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-cyan-900/30 rounded"
                 >
                   <Calendar className="h-3 w-3" />
                   Este Mês
                 </button>
                 <button
                   onClick={() => applyQuickFilter('nextMonth')}
-                  className="flex items-center gap-1 px-2 py-1 text-xs border border-orange-200 text-orange-700 hover:bg-orange-50 rounded"
+                  className="flex items-center gap-1 px-2 py-1 text-xs border border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-300 bg-white dark:bg-slate-700 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded"
                 >
                   <Clock className="h-3 w-3" />
                   Próximo
@@ -341,7 +338,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 <select
                   value={filters.dueDateMonth || ''}
                   onChange={(e) => updateFilter('dueDateMonth', e.target.value ? Number(e.target.value) : '')}
-                  className="px-2 py-1 text-xs border border-gray-200 rounded"
+                  className="px-2 py-1 text-xs border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded"
                 >
                   <option value="">Mês</option>
                   {monthOptions.map(month => (
@@ -354,7 +351,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 <select
                   value={filters.dueDateYear || ''}
                   onChange={(e) => updateFilter('dueDateYear', e.target.value ? Number(e.target.value) : '')}
-                  className="px-2 py-1 text-xs border border-gray-200 rounded"
+                  className="px-2 py-1 text-xs border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded"
                 >
                   <option value="">Ano</option>
                   {yearOptions.map(year => (
@@ -368,7 +365,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                   type="date"
                   value={filters.dueDate || ''}
                   onChange={(e) => updateFilter('dueDate', e.target.value)}
-                  className="px-2 py-1 text-xs border border-gray-200 rounded"
+                  className="px-2 py-1 text-xs border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded"
                 />
               </div>
             </div>
@@ -377,34 +374,34 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
 
         {/* ✅ PREVIEW DOS FILTROS ATIVOS - MINIMALISTA */}
         {hasActiveFilters && (
-          <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100 dark:border-slate-700">
             {filters.search && (
-              <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+              <span className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-2 py-1 rounded text-xs">
                 🔍 "{filters.search.slice(0, 20)}"
               </span>
             )}
             {filters.status && filters.status !== 'all' && (
-              <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+              <span className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-2 py-1 rounded text-xs">
                 📊 {filters.status}
               </span>
             )}
             {filters.priority && filters.priority !== 'all' && (
-              <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+              <span className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-2 py-1 rounded text-xs">
                 🎯 {filters.priority}
               </span>
             )}
             {filters.assignedToId && filters.assignedToId !== 'all' && (
-              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+              <span className="bg-blue-100 dark:bg-cyan-900/30 text-blue-700 dark:text-cyan-300 px-2 py-1 rounded text-xs">
                 👤 {filters.assignedToId === currentUserId ? 'Minhas' : getSelectedUserName(filters.assignedToId)}
               </span>
             )}
             {filters.overdue && (
-              <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">
+              <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-1 rounded text-xs">
                 ⚠️ Atrasadas
               </span>
             )}
             {(filters.dueDateMonth || filters.dueDateYear || filters.dueDate) && (
-              <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+              <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded text-xs">
                 📅 Data
               </span>
             )}

@@ -15,7 +15,7 @@ const Card = ({ children, className = '', padding = 'md', ...props }: CardProps)
 
   return (
     <div
-      className={`bg-white rounded-xl border border-gray-100 shadow-sm ${paddingClasses[padding]} ${className}`}
+      className={`bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm transition-colors duration-200 ${paddingClasses[padding]} ${className}`}
       {...props} // <-- isso garante suporte a onClick, id, role, etc
     >
       {children}

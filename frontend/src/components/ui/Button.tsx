@@ -22,11 +22,11 @@ const Button = ({
   const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
   
   const variants = {
-    primary: 'bg-cyan-600 hover:bg-cyan-600 text-white shadow-sm focus:ring-cyan-500 disabled:bg-cyan-300',
-    secondary: 'bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 focus:ring-emerald-500',
-    ghost: 'hover:bg-cyan-50 text-cyan-600 hover:text-cyan-700 focus:ring-cyan-500',
-    danger: 'hover:bg-red-50 text-red-600 hover:text-red-700 focus:ring-red-500',
-    success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm focus:ring-emerald-500 disabled:bg-emerald-300'
+    primary: 'bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 text-white shadow-sm focus:ring-cyan-500 disabled:bg-cyan-300 dark:disabled:bg-cyan-700',
+    secondary: 'bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700 focus:ring-emerald-500',
+    ghost: 'hover:bg-cyan-50 dark:hover:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 focus:ring-cyan-500',
+    danger: 'hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:ring-red-500',
+    success: 'bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white shadow-sm focus:ring-emerald-500 disabled:bg-emerald-300 dark:disabled:bg-emerald-700'
   }
   
   const sizes = {

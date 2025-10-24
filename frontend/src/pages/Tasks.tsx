@@ -339,9 +339,9 @@ const Tasks: React.FC = () => {
       {user?.role === 'MANAGER' && filteredTasks.length > 0 && (
         <div className={`
           flex items-center justify-between p-4 rounded-xl border transition-all duration-300
-          ${selectedTaskIds.length > 0 
-            ? 'bg-blue-50 border-blue-200' 
-            : 'bg-gray-50 border-gray-200'}
+          ${selectedTaskIds.length > 0
+            ? 'bg-blue-50 dark:bg-cyan-900/30 border-blue-200 dark:border-cyan-700'
+            : 'bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-700'}
         `}>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -350,23 +350,23 @@ const Tasks: React.FC = () => {
                   type="checkbox"
                   checked={selectedTaskIds.length === filteredTasks.length && filteredTasks.length > 0}
                   onChange={handleSelectAll}
-                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                  className="w-5 h-5 text-cyan-600 dark:text-cyan-500 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded focus:ring-cyan-500 dark:focus:ring-cyan-400 focus:ring-2 cursor-pointer"
                   disabled={isDeleting}
                 />
-                <span className="ml-2 text-sm font-medium text-gray-700">
+                <span className="ml-2 text-sm font-medium text-gray-700 dark:text-slate-300">
                   {selectedTaskIds.length === filteredTasks.length ? 'Desmarcar' : 'Selecionar'} Todas
                 </span>
               </label>
             </div>
-            
+
             {selectedTaskIds.length > 0 && (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-blue-700 font-medium bg-blue-100 px-3 py-1 rounded-full">
+                <span className="text-sm text-blue-700 dark:text-cyan-300 font-medium bg-blue-100 dark:bg-cyan-900/30 px-3 py-1 rounded-full">
                   {selectedTaskIds.length} selecionada(s)
                 </span>
                 <button
                   onClick={clearSelection}
-                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+                  className="p-1 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
                   title="Limpar seleção"
                 >
                   <X className="h-4 w-4" />

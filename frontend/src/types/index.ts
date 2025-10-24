@@ -125,52 +125,52 @@ export const NotificationTypeLabels = {
 // ✅ CORES PARA TIPOS DE NOTIFICAÇÃO
 export const NotificationTypeColors = {
     TASK_ASSIGNED: {
-        bg: 'bg-blue-50',
-        text: 'text-blue-700',
-        border: 'border-blue-200',
-        icon: 'text-blue-600'
+        bg: 'bg-blue-50 dark:bg-blue-900/30',
+        text: 'text-blue-700 dark:text-blue-300',
+        border: 'border-blue-200 dark:border-blue-700',
+        icon: 'text-blue-600 dark:text-blue-400'
     },
     TASK_UPDATED: {
-        bg: 'bg-orange-50',
-        text: 'text-orange-700',
-        border: 'border-orange-200',
-        icon: 'text-orange-600'
+        bg: 'bg-orange-50 dark:bg-orange-900/30',
+        text: 'text-orange-700 dark:text-orange-300',
+        border: 'border-orange-200 dark:border-orange-700',
+        icon: 'text-orange-600 dark:text-orange-400'
     },
     TASK_COMPLETED: {
-        bg: 'bg-green-50',
-        text: 'text-green-700',
-        border: 'border-green-200',
-        icon: 'text-green-600'
+        bg: 'bg-green-50 dark:bg-green-900/30',
+        text: 'text-green-700 dark:text-green-300',
+        border: 'border-green-200 dark:border-green-700',
+        icon: 'text-green-600 dark:text-green-400'
     },
     TASK_OVERDUE: {
-        bg: 'bg-red-50',
-        text: 'text-red-700',
-        border: 'border-red-200',
-        icon: 'text-red-600'
+        bg: 'bg-red-50 dark:bg-red-900/30',
+        text: 'text-red-700 dark:text-red-300',
+        border: 'border-red-200 dark:border-red-700',
+        icon: 'text-red-600 dark:text-red-400'
     },
     TASK_CANCELLED: {
-        bg: 'bg-gray-50',
-        text: 'text-gray-700',
-        border: 'border-gray-200',
-        icon: 'text-gray-600'
+        bg: 'bg-gray-50 dark:bg-slate-800',
+        text: 'text-gray-700 dark:text-slate-300',
+        border: 'border-gray-200 dark:border-slate-700',
+        icon: 'text-gray-600 dark:text-slate-400'
     },
     TASK_REASSIGNED: {
-        bg: 'bg-purple-50',
-        text: 'text-purple-700',
-        border: 'border-purple-200',
-        icon: 'text-purple-600'
+        bg: 'bg-purple-50 dark:bg-purple-900/30',
+        text: 'text-purple-700 dark:text-purple-300',
+        border: 'border-purple-200 dark:border-purple-700',
+        icon: 'text-purple-600 dark:text-purple-400'
     },
     COMMENT_ADDED: { // ✅ NOVO
-        bg: 'bg-cyan-50',
-        text: 'text-cyan-700',
-        border: 'border-cyan-200',
-        icon: 'text-cyan-600'
+        bg: 'bg-cyan-50 dark:bg-cyan-900/30',
+        text: 'text-cyan-700 dark:text-cyan-300',
+        border: 'border-cyan-200 dark:border-cyan-700',
+        icon: 'text-cyan-600 dark:text-cyan-400'
     },
     ATTACHMENT_ADDED: { // ✅ NOVO
-        bg: 'bg-emerald-50',
-        text: 'text-emerald-700',
-        border: 'border-emerald-200',
-        icon: 'text-emerald-600'
+        bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+        text: 'text-emerald-700 dark:text-emerald-300',
+        border: 'border-emerald-200 dark:border-emerald-700',
+        icon: 'text-emerald-600 dark:text-emerald-400'
     }
 } as const;
 

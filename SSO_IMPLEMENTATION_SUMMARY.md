@@ -45,14 +45,14 @@ Foi implementado um sistema completo de Single Sign-On (SSO) entre o Canellahub 
    - Validação de tokens SSO
    - Abstração de storage (sessionStorage)
 
-2. **[canellahub/script-improved.js](canellahub/script-improved.js)** ⭐ NOVO
+2. **[canellahub/script-improved.js](canellahub/script.js)** ⭐ NOVO
    - Lógica de autenticação melhorada
    - Validação de sessão com expiração
    - Tratamento de erros robusto
    - Timeout de requisições
    - Verificação periódica de token
 
-3. **[canellahub/index-improved.html](canellahub/index-improved.html)** ⭐ NOVO
+3. **[canellahub/index-improved.html](canellahub/index.html)** ⭐ NOVO
    - HTML semântico e acessível
    - Meta tags de segurança
    - Badges de status nas aplicações
