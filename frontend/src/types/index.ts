@@ -185,6 +185,7 @@ export interface RegisterForm {
     email: string;
     password: string;
     role: 'MANAGER' | 'EMPLOYEE';
+    registrationCode: string;
 }
 
 // ✅ NOVOS TIPOS PARA VERIFICAÇÃO DE EMAIL

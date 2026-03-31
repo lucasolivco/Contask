@@ -6,6 +6,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import slowDown from 'express-slow-down'
+import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import path from 'path'
 import metricsMiddleware from 'express-prom-bundle';
@@ -61,14 +62,19 @@ app.use(helmet({
 const allowedOrigins = isProduction
   ? [
       process.env.FRONTEND_URL, // URL do Contask (ex: https://contask.canellahub.com.br)
-      'https://canellahub.com.br', // ✅ URL de produção do CanellaHub
-      'https://www.canellahub.com.br' // ✅ URL com www
-    ].filter(Boolean) // Remove valores undefined
+      'https://canellahub.com.br',
+      'https://www.canellahub.com.br',
+      'https://ata.canellahub.com.br',
+      'https://tree.canellahub.com.br',
+      'https://contratos.canellahub.com.br',
+      'https://gestaovendas.canellahub.com.br',
+      'https://moodle.canellahub.com.br',
+    ].filter(Boolean)
   : [
       'http://localhost:5173', // Frontend do Contask (Vite)
       'http://127.0.0.1:5173',
-      'http://localhost:5500', // ✅ Live Server para o CanellaHub
-      'http://127.0.0.1:5500'  // ✅ Live Server para o CanellaHub
+      'http://localhost:5500', // Live Server para o CanellaHub
+      'http://127.0.0.1:5500'
     ]
 
 app.use(cors({
@@ -164,6 +170,14 @@ const uploadLimiter = rateLimit({
   message: { error: 'Muitos uploads. Aguarde 1 minuto.' }
 })
 
+// ✅ RATE LIMITER PARA VALIDAÇÃO DE SESSÃO SSO (chamado a cada page load nos subdomínios)
+const sessionValidationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 120, // Generoso — é chamado em toda navegação
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
 // ✅ SLOW DOWN PARA REQUESTS SUSPEITAS
 // ✅ CONFIGURAÇÃO CORRETA PARA express-slow-down v2
 const speedLimiter = slowDown({
@@ -189,6 +203,7 @@ app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 app.use('/api/auth/hub-login', hubLoginLimiter) // ✅ NOVO: Rate limit específico para hub
 app.use('/api/auth/sso-login', ssoLoginLimiter) // ✅ NOVO: Rate limit para SSO
+app.use('/api/auth/validate-session', sessionValidationLimiter) // ✅ SSO session validation
 app.use('/api/tasks/*path/attachments', uploadLimiter)  // ✅ *path com nome
 app.use(speedLimiter)
 app.use(generalLimiter)
@@ -208,8 +223,11 @@ app.use(morgan(isProduction
   : 'dev'
 ))
 
+// ✅ COOKIE PARSER (necessário para SSO entre subdomínios)
+app.use(cookieParser())
+
 // ✅ BODY PARSER SEGURO
-app.use(express.json({ 
+app.use(express.json({
   limit: '2mb', // ✅ REDUZIDO DE 10MB
   verify: (req, res, buf) => {
     // ✅ VERIFICAR SE É JSON VÁLIDO

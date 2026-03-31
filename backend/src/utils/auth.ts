@@ -166,10 +166,45 @@ export const sanitizeInput = (input: string): string => {
 export const generateTemporaryPassword = (length: number = 12): string => {
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
     let password = ''
-    
+
     for (let i = 0; i < length; i++) {
         password += charset.charAt(Math.floor(Math.random() * charset.length))
     }
-    
+
     return password
+}
+
+// ✅ FUNÇÕES DE SESSÃO JWT PARA SSO (Cookie compartilhado entre subdomínios)
+export const generateSessionJWT = (userId: string, userName: string): string => {
+    if (!userId || !userName) {
+        throw new Error('userId e userName são obrigatórios para gerar sessão')
+    }
+
+    const payload = { userId, userName, type: 'session' }
+    const options: SignOptions = {
+        expiresIn: '24h',
+        issuer: 'canellahub',
+        audience: 'canellahub-session'
+    }
+
+    return jwt.sign(payload, JWT_SECRET as string, options)
+}
+
+export const verifySessionJWT = (token: string): { userId: string; userName: string } | null => {
+    try {
+        if (!token) return null
+
+        const decoded = jwt.verify(token, JWT_SECRET as string, {
+            issuer: 'canellahub',
+            audience: 'canellahub-session'
+        }) as jwt.JwtPayload
+
+        if (typeof decoded === 'object' && decoded.userId && decoded.userName && decoded.type === 'session') {
+            return { userId: decoded.userId, userName: decoded.userName }
+        }
+
+        return null
+    } catch (error) {
+        return null
+    }
 }

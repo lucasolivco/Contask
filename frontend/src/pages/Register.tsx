@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { UserPlus, Eye, EyeOff, Users, Crown } from 'lucide-react'
+import { Eye, EyeOff, Users, Crown } from 'lucide-react'
 
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -29,6 +29,9 @@ const registerSchema = z.object({
     .string()
     .min(1, 'Senha é obrigatória')
     .min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  registrationCode: z
+    .string()
+    .min(1, 'Código de registro é obrigatório'),
   role: z.enum(['MANAGER', 'EMPLOYEE'])
 })
 
@@ -136,6 +139,21 @@ const Register: React.FC = () => {
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+            </div>
+
+            {/* ✅ CÓDIGO DE REGISTRO */}
+            <div>
+              <Input
+                label="Código de Registro"
+                type="text"
+                placeholder="Digite o código fornecido"
+                error={errors.registrationCode?.message}
+                className="w-full"
+                {...register('registrationCode')}
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                Solicite o código ao administrador do sistema.
+              </p>
             </div>
 
             {/* ✅ TIPO DE CONTA - SIMPLES */}

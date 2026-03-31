@@ -917,6 +917,78 @@ export const sendPasswordChangedEmail = async (email: string, name: string): Pro
   }
 }
 
+// ✅ EMAIL DE RECUPERAÇÃO DE NOME DE USUÁRIO
+export const sendUsernameRecoveryEmail = async (email: string, name: string): Promise<boolean> => {
+  if (!validateEmail(email)) return false
+  if (!checkEmailRateLimit(email)) return false
+
+  const safe = sanitizeData({ name, email })
+
+  const mailOptions = {
+    from: {
+      name: 'Canellahub',
+      address: process.env.SMTP_FROM || process.env.SMTP_USER!
+    },
+    to: email,
+    subject: 'Seu nome de usuário - Canellahub',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Recuperação de Nome de Usuário</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: white;">
+          <div style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0;">Recuperação de Nome de Usuário</h1>
+          </div>
+
+          <div style="padding: 20px;">
+            <p style="margin: 0 0 15px 0;">Olá,</p>
+            <p style="margin: 0 0 20px 0;">Você solicitou a recuperação do seu nome de usuário. Aqui estão suas informações:</p>
+
+            <div style="background-color: #ecfeff; border: 1px solid #a5f3fc; border-radius: 5px; padding: 15px; margin: 20px 0; text-align: center;">
+              <p style="color: #0891b2; margin: 0; font-size: 12px; text-transform: uppercase;">Seu nome de usuário</p>
+              <p style="color: #164e63; margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">${safe.name}</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${BASE_URL}"
+                 style="background-color: #06b6d4; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Ir para o Login
+              </a>
+            </div>
+
+            <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 5px; padding: 15px; margin: 20px 0;">
+              <p style="color: #d97706; margin: 0; font-weight: bold;">Não solicitou isso?</p>
+              <p style="color: #92400e; margin: 10px 0 0 0;">
+                Se você não solicitou esta recuperação, ignore este email. Sua conta está segura.
+              </p>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; padding: 15px; text-align: center; color: #64748b; font-size: 14px;">
+            <p style="margin: 0;">Canellahub - Portal de Aplicações</p>
+            <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().toISOString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    console.log(`✅ Username recovery email sent to: ${email}`)
+    return true
+  } catch (error) {
+    console.error('❌ Failed to send username recovery email:', error)
+    return false
+  }
+}
+
 // ✅ CLEANUP DE RATE LIMITING (EXECUTAR PERIODICAMENTE)
 export const cleanupRateLimit = () => {
   const now = Date.now()
@@ -937,5 +1009,6 @@ export default {
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
+  sendUsernameRecoveryEmail,
   cleanupRateLimit
 }

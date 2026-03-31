@@ -1,22 +1,26 @@
 // controllers/authController.ts - ADICIONAR RECUPERAÇÃO DE SENHA + VALIDAÇÃO DE NOME
 import { Request, Response } from 'express'
 import crypto from 'crypto'
-import { 
-  hashPassword, 
-  comparePassword, 
-  generateToken, 
-  generateEmailVerificationToken, 
+import {
+  hashPassword,
+  comparePassword,
+  generateToken,
+  generateEmailVerificationToken,
   generatePasswordResetToken,
   getTokenExpirationDate,
   getPasswordResetExpirationDate,
   isTokenExpired,
-  validateName
+  validateName,
+  generateSessionJWT,
+  verifySessionJWT
 } from '../utils/auth'
-import { 
-  sendVerificationEmail, 
+import jwt from 'jsonwebtoken'
+import {
+  sendVerificationEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
-  sendPasswordChangedEmail
+  sendPasswordChangedEmail,
+  sendUsernameRecoveryEmail
 } from '../services/emailService'
 import prisma from '../config/database'
 
@@ -24,13 +28,21 @@ import prisma from '../config/database'
 // ✅ REGISTRO ATUALIZADO COM VALIDAÇÃO DE NOME ÚNICO
 export const register = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, role } = req.body
+        const { name, email, password, role, registrationCode } = req.body
 
         // Validações básicas
         if (!name || !email || !password) {
             return res.status(400).json({
                 error: 'Nome, email e senha são obrigatórios'
             })
+        }
+
+        // ✅ VALIDAR CÓDIGO DE REGISTRO
+        const VALID_REGISTRATION_CODE = process.env.REGISTRATION_CODE || 'Canellahub123*';
+        if (!registrationCode || registrationCode !== VALID_REGISTRATION_CODE) {
+            return res.status(400).json({
+                error: 'Código de registro inválido ou ausente'
+            });
         }
 
         // ✅ VALIDAR NOME
@@ -233,6 +245,18 @@ export const hubLogin = async (req: Request, res: Response) => {
                 ssoToken,
                 ssoTokenExpiresAt
             }
+        });
+
+        // ✅ GERAR COOKIE DE SESSÃO COMPARTILHADO ENTRE SUBDOMÍNIOS
+        const isProduction = process.env.NODE_ENV === 'production';
+        const sessionJWT = generateSessionJWT(user.id, user.name);
+        res.cookie('canellahub_session', sessionJWT, {
+            domain: isProduction ? '.canellahub.com.br' : undefined,
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000, // 24 horas
+            path: '/'
         });
 
         const elapsed = Date.now() - startTime;
@@ -625,5 +649,109 @@ export const verifyResetToken = async (req: Request, res: Response) => {
         res.status(500).json({
             error: 'Erro interno do servidor'
         });
+    }
+};
+
+// ✅ VALIDAR SESSÃO (para Nginx auth_request - SSO entre subdomínios)
+export const validateSession = async (req: Request, res: Response) => {
+    try {
+        const sessionToken = req.cookies?.canellahub_session;
+
+        if (!sessionToken) {
+            return res.status(401).json({ error: 'Sessão não encontrada' });
+        }
+
+        const decoded = verifySessionJWT(sessionToken);
+        if (!decoded) {
+            return res.status(401).json({ error: 'Sessão inválida' });
+        }
+
+        // Verificar se usuário ainda existe e está ativo
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: { id: true, emailVerified: true, name: true }
+        });
+
+        if (!user || !user.emailVerified) {
+            return res.status(401).json({ error: 'Usuário não encontrado ou não verificado' });
+        }
+
+        // ✅ REFRESH AUTOMÁTICO: se JWT tem menos de 12h restantes, renovar cookie
+        const isProduction = process.env.NODE_ENV === 'production';
+        try {
+            const tokenPayload = jwt.decode(sessionToken) as any;
+            if (tokenPayload?.exp) {
+                const timeLeft = (tokenPayload.exp * 1000) - Date.now();
+                const twelveHours = 12 * 60 * 60 * 1000;
+                if (timeLeft < twelveHours) {
+                    const newSessionJWT = generateSessionJWT(decoded.userId, user.name);
+                    res.cookie('canellahub_session', newSessionJWT, {
+                        domain: isProduction ? '.canellahub.com.br' : undefined,
+                        httpOnly: true,
+                        secure: isProduction,
+                        sameSite: 'lax',
+                        maxAge: 24 * 60 * 60 * 1000,
+                        path: '/'
+                    });
+                }
+            }
+        } catch (refreshError) {
+            // Ignorar erro de refresh — sessão ainda é válida
+        }
+
+        res.setHeader('X-User-Id', decoded.userId);
+        res.setHeader('X-User-Name', decoded.userName);
+        return res.status(200).json({ valid: true });
+
+    } catch (error) {
+        console.error('Erro ao validar sessão:', error);
+        return res.status(401).json({ error: 'Falha na validação da sessão' });
+    }
+};
+
+// ✅ LOGOUT DO HUB (limpa cookie de sessão compartilhado)
+export const hubLogout = async (req: Request, res: Response) => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.clearCookie('canellahub_session', {
+        domain: isProduction ? '.canellahub.com.br' : undefined,
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/'
+    });
+    return res.status(200).json({ message: 'Logout realizado com sucesso' });
+};
+
+// ✅ RECUPERAR NOME DE USUÁRIO POR EMAIL
+export const findUsername = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email é obrigatório' });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Email inválido' });
+        }
+
+        // Mensagem genérica por segurança (não revelar se email existe)
+        const genericMessage = 'Se o email existir em nossa base, você receberá as informações.';
+
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+            select: { name: true, email: true }
+        });
+
+        if (user) {
+            await sendUsernameRecoveryEmail(user.email, user.name);
+        }
+
+        return res.status(200).json({ message: genericMessage });
+
+    } catch (error) {
+        console.error('Erro ao recuperar nome de usuário:', error);
+        return res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };

@@ -1,36 +1,43 @@
-// "Menu" de funcionalidades relacionadas à autenticação
+// Rotas de autenticação e sessão SSO
 import { Router } from 'express';
-import { 
-  register, 
-  login, 
-  getMe, 
-  verifyEmail, 
+import {
+  register,
+  login,
+  getMe,
+  verifyEmail,
   resendVerificationEmail,
-  requestPasswordReset,     // ✅ NOVA
-  resetPassword,           // ✅ NOVA  
-  verifyResetToken,        // ✅ NOVA
+  requestPasswordReset,
+  resetPassword,
+  verifyResetToken,
   hubLogin,
-  ssoLogin                 // ✅ NOVA: Rota para SSO
+  ssoLogin,
+  validateSession,
+  hubLogout,
+  findUsername
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
-// Cria um "cardápio" de rotas
 const router = Router()
 
 // ✅ ROTAS PÚBLICAS (não precisam de autenticação)
 router.post('/register', register)
 router.post('/login', login)
-router.post('/hub-login', hubLogin);
-router.post('/sso-login', ssoLogin); // ✅ NOVA: Rota para SSO
+router.post('/hub-login', hubLogin)
+router.post('/sso-login', ssoLogin)
 router.get('/verify-email', verifyEmail)
 router.post('/resend-verification', resendVerificationEmail)
 
-// ✅ ROTAS PROTEGIDAS (precisam de autenticação)
-router.get('/me', authenticateToken, getMe)
+// ✅ ROTAS DE SESSÃO SSO (cookie compartilhado entre subdomínios)
+router.get('/validate-session', validateSession)
+router.post('/hub-logout', hubLogout)
+router.post('/find-username', findUsername)
 
-// ✅ NOVAS ROTAS DE RESET DE SENHA
+// ✅ ROTAS DE RESET DE SENHA
 router.post('/request-password-reset', requestPasswordReset)
 router.post('/reset-password', resetPassword)
 router.get('/verify-reset-token', verifyResetToken)
+
+// ✅ ROTAS PROTEGIDAS (precisam de autenticação)
+router.get('/me', authenticateToken, getMe)
 
 export default router
