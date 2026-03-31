@@ -211,7 +211,7 @@ Registro → Email de verificação → Verificação via token → Login (JWT)
 - **JWT:** Expira em 3 dias, inclui userId e role
 - **Blacklist:** Tokens são invalidados no logout (limpeza automática a cada 24h)
 - **SSO (Token):** Hub gera token → usuário redireciona para `/sso-login` → login automático
-- **SSO (Cookie):** Login no Hub seta cookie `canellahub_session` (JWT, 24h, `Domain=.canellahub.com.br`, httpOnly). Nginx usa `auth_request` para validar o cookie em todos os subdomínios (exceto Moodle). Cookie é auto-renovado quando faltam menos de 12h.
+- **SSO (Cookie):** Login no Hub seta cookie `canellahub_session` (JWT, 10h, `Domain=.canellahub.com.br`, httpOnly). Nginx usa `auth_request` para validar o cookie em todos os subdomínios (exceto Moodle). Cookie é auto-renovado quando faltam menos de 5h.
 - **Código de registro:** Campo `registrationCode` obrigatório no cadastro. Valor padrão: `Canellahub123*` (configurável via `REGISTRATION_CODE` no `.env`)
 
 ## Segurança

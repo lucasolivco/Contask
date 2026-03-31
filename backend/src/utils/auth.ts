@@ -182,7 +182,7 @@ export const generateSessionJWT = (userId: string, userName: string): string => 
 
     const payload = { userId, userName, type: 'session' }
     const options: SignOptions = {
-        expiresIn: '24h',
+        expiresIn: '10h',
         issuer: 'canellahub',
         audience: 'canellahub-session'
     }

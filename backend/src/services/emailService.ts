@@ -627,11 +627,11 @@ export const sendVerificationEmail = async (email: string, name: string, token: 
   
   const mailOptions = {
     from: {
-      name: 'Contask - Task Manager',
+      name: 'CanellaHub',
       address: process.env.SMTP_FROM || process.env.SMTP_USER!
     },
     to: email,
-    subject: '📧 Confirme seu email - Contask',
+    subject: 'Confirme seu email - CanellaHub',
     html: `
       <!DOCTYPE html>
       <html>
@@ -640,41 +640,51 @@ export const sendVerificationEmail = async (email: string, name: string, token: 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Confirme seu email</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: white;">
-          <div style="background: #e11d48; color: white; padding: 20px; text-align: center;">
-            <h1 style="margin: 0;">📧 Bem-vindo ao Contask!</h1>
+      <body style="margin: 0; padding: 0; background-color: #101018;">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1d1d29;">
+          <div style="background: linear-gradient(135deg, #1ECBE1, #0ea5c7); color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">Bem-vindo ao CanellaHub!</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 14px;">Portal de aplicações Canella &amp; Santos</p>
           </div>
-          
-          <div style="padding: 20px;">
-            <p style="margin: 0 0 15px 0;">Olá <strong>${safe.name}</strong>,</p>
-            <p style="margin: 0 0 20px 0;">Obrigado por se cadastrar! Para ativar sua conta, clique no botão abaixo:</p>
-            
+
+          <div style="padding: 30px; color: #c0c0d0;">
+            <p style="margin: 0 0 15px 0; color: #ffffff;">Olá <strong>${safe.name}</strong>,</p>
+            <p style="margin: 0 0 10px 0;">Obrigado por se cadastrar no CanellaHub! Sua conta dará acesso ao <strong style="color: #1ECBE1;">Contask</strong> e a todos os sistemas integrados da plataforma.</p>
+            <p style="margin: 0 0 20px 0;">Para ativar sua conta, clique no botão abaixo:</p>
+
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationUrl}" 
-                 style="background-color: #e11d48; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              <a href="${verificationUrl}"
+                 style="background-color: #1ECBE1; color: #101018; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
                 Confirmar Email
               </a>
             </div>
-            
-            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 5px; padding: 15px; margin: 20px 0;">
-              <p style="color: #d97706; margin: 0; font-weight: bold;">⏰ Importante:</p>
-              <p style="color: #92400e; margin: 10px 0 0 0;">Este link expira em 24 horas</p>
+
+            <div style="background: rgba(30, 203, 225, 0.1); border: 1px solid rgba(30, 203, 225, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0;">
+              <p style="color: #1ECBE1; margin: 0; font-weight: 600;">Importante:</p>
+              <p style="color: #c0c0d0; margin: 8px 0 0 0; font-size: 14px;">Este link expira em 24 horas.</p>
             </div>
-            
-            <p style="color: #666; font-size: 14px; margin: 20px 0;">
+
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 15px; margin: 20px 0;">
+              <p style="color: #ffffff; margin: 0 0 8px 0; font-weight: 600; font-size: 14px;">Após a confirmação você terá acesso a:</p>
+              <p style="color: #c0c0d0; margin: 0; font-size: 14px; line-height: 1.8;">
+                ✅ CanellaHub — Portal central de aplicações<br>
+                ✅ Contask — Gestão de tarefas e produtividade<br>
+                ✅ Todos os sistemas integrados da plataforma
+              </p>
+            </div>
+
+            <p style="color: #888; font-size: 13px; margin: 20px 0;">
               Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-              <a href="${verificationUrl}" style="color: #e11d48; word-break: break-all;">${verificationUrl}</a>
+              <a href="${verificationUrl}" style="color: #1ECBE1; word-break: break-all;">${verificationUrl}</a>
             </p>
-            
+
             <p style="color: #666; font-size: 12px;">
               Se você não criou esta conta, ignore este email.
             </p>
           </div>
-          
-          <div style="background: #f8fafc; padding: 15px; text-align: center; color: #64748b; font-size: 14px;">
-            <p style="margin: 0;">Sistema de Gerenciamento de Tarefas - Contask</p>
-            <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().toISOString()}</p>
+
+          <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; text-align: center; color: #64748b; font-size: 13px;">
+            <p style="margin: 0;">CanellaHub — Canella &amp; Santos</p>
           </div>
         </div>
       </body>

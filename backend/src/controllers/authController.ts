@@ -255,7 +255,7 @@ export const hubLogin = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: isProduction,
             sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000, // 24 horas
+            maxAge: 10 * 60 * 60 * 1000, // 10 horas
             path: '/'
         });
 
@@ -682,15 +682,15 @@ export const validateSession = async (req: Request, res: Response) => {
             const tokenPayload = jwt.decode(sessionToken) as any;
             if (tokenPayload?.exp) {
                 const timeLeft = (tokenPayload.exp * 1000) - Date.now();
-                const twelveHours = 12 * 60 * 60 * 1000;
-                if (timeLeft < twelveHours) {
+                const fiveHours = 5 * 60 * 60 * 1000;
+                if (timeLeft < fiveHours) {
                     const newSessionJWT = generateSessionJWT(decoded.userId, user.name);
                     res.cookie('canellahub_session', newSessionJWT, {
                         domain: isProduction ? '.canellahub.com.br' : undefined,
                         httpOnly: true,
                         secure: isProduction,
                         sameSite: 'lax',
-                        maxAge: 24 * 60 * 60 * 1000,
+                        maxAge: 10 * 60 * 60 * 1000, // 10 horas
                         path: '/'
                     });
                 }
