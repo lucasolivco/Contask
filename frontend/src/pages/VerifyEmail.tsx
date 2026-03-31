@@ -1,6 +1,6 @@
 // pages/VerifyEmail.tsx - VERSÃO CORRIGIDA
 import React, { useEffect } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
@@ -133,12 +133,12 @@ const VerifyEmail: React.FC = () => {
               </div>
 
               <div className="pt-4">
-                <Link to="/login" className="block">
+                <a href="https://canellahub.com.br" className="block">
                   <Button className="w-full">
-                    Fazer Login Agora
+                    Ir para o CanellaHub
                     <ArrowRight size={16} className="ml-2" />
                   </Button>
-                </Link>
+                </a>
               </div>
             </div>
           </Card>
@@ -186,16 +186,11 @@ const VerifyEmail: React.FC = () => {
             </div>
 
             <div className="space-y-2 pt-4">
-              <Link to="/register" className="block">
+              <a href="https://canellahub.com.br" className="block">
                 <Button className="w-full">
-                  Tentar Novamente
+                  Ir para o CanellaHub
                 </Button>
-              </Link>
-              <Link to="/login" className="block">
-                <Button variant="ghost" className="w-full">
-                  Voltar ao Login
-                </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </Card>
