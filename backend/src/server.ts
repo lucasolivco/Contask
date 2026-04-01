@@ -230,7 +230,7 @@ app.use(cookieParser())
 // ✅ VALIDATE SESSION — registrado ANTES do body parser para evitar crash
 // O Nginx auth_request pode encaminhar headers residuais (Content-Type: application/json)
 // que causam 500 no express.json() verify. Registrando aqui, o request nunca toca no body parser.
-app.get('/api/auth/validate-session', sessionValidationLimiter, validateSession)
+app.use('/api/auth/validate-session', sessionValidationLimiter, validateSession)
 
 // ✅ BODY PARSER SEGURO
 app.use(express.json({
