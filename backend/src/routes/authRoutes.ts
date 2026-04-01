@@ -11,7 +11,6 @@ import {
   verifyResetToken,
   hubLogin,
   ssoLogin,
-  validateSession,
   hubLogout,
   findUsername
 } from '../controllers/authController';
@@ -28,7 +27,7 @@ router.get('/verify-email', verifyEmail)
 router.post('/resend-verification', resendVerificationEmail)
 
 // ✅ ROTAS DE SESSÃO SSO (cookie compartilhado entre subdomínios)
-router.get('/validate-session', validateSession)
+// validate-session está registrada diretamente no server.ts (antes do body parser)
 router.post('/hub-logout', hubLogout)
 router.post('/find-username', findUsername)
 
