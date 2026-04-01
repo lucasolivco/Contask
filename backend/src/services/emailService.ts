@@ -783,11 +783,11 @@ export const sendPasswordResetEmail = async (email: string, name: string, token:
   
   const mailOptions = {
     from: {
-      name: 'Contask - Task Manager',
+      name: 'CanellaHub',
       address: process.env.SMTP_FROM || process.env.SMTP_USER!
     },
     to: email,
-    subject: '🔐 Recuperação de senha - Contask',
+    subject: 'Recuperação de senha - CanellaHub',
     html: `
       <!DOCTYPE html>
       <html>
@@ -796,46 +796,46 @@ export const sendPasswordResetEmail = async (email: string, name: string, token:
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Recuperação de Senha</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: white;">
-          <div style="background: #dc2626; color: white; padding: 20px; text-align: center;">
-            <h1 style="margin: 0;">🔐 Recuperação de senha</h1>
+      <body style="margin: 0; padding: 0; background-color: #101018;">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1d1d29;">
+          <div style="background: linear-gradient(135deg, #1ECBE1, #0ea5c7); color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">Recuperação de Senha</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 14px;">CanellaHub — Canella &amp; Santos</p>
           </div>
-          
-          <div style="padding: 20px;">
-            <p style="margin: 0 0 15px 0;">Olá <strong>${safe.name}</strong>,</p>
-            <p style="margin: 0 0 20px 0;">Você solicitou a recuperação da sua senha. Clique no botão abaixo para criar uma nova senha:</p>
-            
+
+          <div style="padding: 30px; color: #c0c0d0;">
+            <p style="margin: 0 0 15px 0; color: #ffffff;">Olá <strong>${safe.name}</strong>,</p>
+            <p style="margin: 0 0 20px 0;">Você solicitou a recuperação da sua senha do CanellaHub. Clique no botão abaixo para criar uma nova senha:</p>
+
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" 
-                 style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              <a href="${resetUrl}"
+                 style="background-color: #1ECBE1; color: #101018; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
                 Redefinir Senha
               </a>
             </div>
-            
-            <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 5px; padding: 15px; margin: 20px 0;">
-              <p style="color: #dc2626; margin: 0; font-weight: bold;">⚠️ Importante:</p>
-              <ul style="color: #991b1b; margin: 10px 0; padding-left: 20px;">
+
+            <div style="background: rgba(30, 203, 225, 0.1); border: 1px solid rgba(30, 203, 225, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0;">
+              <p style="color: #1ECBE1; margin: 0; font-weight: 600;">Importante:</p>
+              <ul style="color: #c0c0d0; margin: 10px 0; padding-left: 20px; font-size: 14px;">
                 <li>Este link expira em <strong>2 horas</strong></li>
                 <li>Use apenas se você solicitou a recuperação</li>
                 <li>Após usar, o link se torna inválido</li>
               </ul>
             </div>
-            
-            <p style="color: #666; font-size: 14px; margin: 20px 0;">
+
+            <p style="color: #888; font-size: 13px; margin: 20px 0;">
               Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-              <a href="${resetUrl}" style="color: #dc2626; word-break: break-all;">${resetUrl}</a>
+              <a href="${resetUrl}" style="color: #1ECBE1; word-break: break-all;">${resetUrl}</a>
             </p>
-            
+
             <p style="color: #666; font-size: 12px;">
-              Se você não solicitou esta recuperação, ignore este email. 
+              Se você não solicitou esta recuperação, ignore este email.
               Sua senha atual permanecerá inalterada.
             </p>
           </div>
-          
-          <div style="background: #f8fafc; padding: 15px; text-align: center; color: #64748b; font-size: 14px;">
-            <p style="margin: 0;">Sistema de Gerenciamento de Tarefas - Contask</p>
-            <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().toISOString()}</p>
+
+          <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; text-align: center; color: #64748b; font-size: 13px;">
+            <p style="margin: 0;">CanellaHub — Canella &amp; Santos</p>
           </div>
         </div>
       </body>
@@ -965,9 +965,9 @@ export const sendUsernameRecoveryEmail = async (email: string, name: string): Pr
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${BASE_URL}"
-                 style="background-color: #06b6d4; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                Ir para o Login
+              <a href="https://canellahub.com.br"
+                 style="background-color: #1ECBE1; color: #101018; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+                Ir para o CanellaHub
               </a>
             </div>
 

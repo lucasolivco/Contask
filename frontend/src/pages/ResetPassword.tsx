@@ -3,7 +3,7 @@ import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Lock, Eye, EyeOff, CheckCircle, XCircle, Loader } from 'lucide-react'
@@ -65,7 +65,7 @@ const ResetPassword: React.FC = () => {
       setIsSuccess(true)
       toast.success('Senha alterada com sucesso!')
       setTimeout(() => {
-        navigate('/login')
+        window.location.href = 'https://canellahub.com.br'
       }, 3000)
     },
     onError: (error: any) => {
@@ -117,11 +117,11 @@ const ResetPassword: React.FC = () => {
               <p className="text-sm text-gray-600 mb-4">
                 Solicite um novo link de recuperação para continuar.
               </p>
-              <Link to="/forgot-password">
+              <a href="https://canellahub.com.br">
                 <Button className="w-full">
-                  Solicitar novo link
+                  Voltar ao CanellaHub
                 </Button>
-              </Link>
+              </a>
             </div>
           </Card>
         </div>
@@ -147,13 +147,13 @@ const ResetPassword: React.FC = () => {
           <Card>
             <div className="text-center space-y-4">
               <p className="text-sm text-gray-600">
-                Redirecionando para o login em alguns segundos...
+                Redirecionando para o CanellaHub em alguns segundos...
               </p>
-              <Link to="/login">
+              <a href="https://canellahub.com.br">
                 <Button className="w-full">
-                  Ir para o login
+                  Ir para o CanellaHub
                 </Button>
-              </Link>
+              </a>
             </div>
           </Card>
         </div>
@@ -260,12 +260,12 @@ const ResetPassword: React.FC = () => {
         </Card>
 
         <div className="text-center">
-          <Link
-            to="/login"
+          <a
+            href="https://canellahub.com.br"
             className="text-sm font-medium text-primary-600 hover:text-primary-500"
           >
-            Voltar para o login
-          </Link>
+            Voltar para o CanellaHub
+          </a>
         </div>
       </div>
     </div>
