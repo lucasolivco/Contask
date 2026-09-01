@@ -216,7 +216,9 @@ Registro → Email de verificação → Verificação via token → Login (JWT)
 
 ## Segurança
 
-- **Rate Limiting:** Auth: 30 req/15min, Geral: 100 req/15min, Upload: 10 req/min, Hub Login: 20 req/15min, SSO: 10 req/5min, Validate Session: 120 req/min
+- **Rate Limiting:** Auth: 30 req/15min, Geral: 100 req/15min, Upload: 10 req/min, Hub Login: 20 req/15min, SSO: 10 req/5min
+- **Isenções de rate limit (`RATE_LIMIT_EXEMPT_PATHS` em `server.ts`):** `/api/auth/validate-session` e `/api/health` ficam FORA de todos os limitadores (inclusive `speedLimiter`). O Nginx chama o validate-session via `auth_request` a cada requisição de cada subdomínio, sempre do mesmo IP — limitá-lo gera 429, que o `auth_request` converte em 500, derrubando todos os sites do hub simultaneamente.
+- **Trust proxy:** `app.set('trust proxy', 1)` — o rate limit é contado pelo IP real do usuário (`X-Forwarded-For` repassado pelo Nginx), não pelo IP do container do proxy
 - **Headers:** Helmet.js (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
 - **CORS:** Origins whitelist por ambiente
 - **Sanitização:** DOMPurify para HTML, express-mongo-sanitize contra NoSQL injection

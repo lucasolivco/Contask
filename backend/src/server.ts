@@ -22,6 +22,11 @@ dotenv.config()
 
 const app = express()
 
+// ✅ TRUST PROXY: o backend fica atrás do Nginx. Sem isso, req.ip é sempre o IP
+// do container do Nginx e TODOS os usuários compartilham o mesmo balde de rate limit.
+// '1' = confia apenas no primeiro proxy (o Nginx), lendo o X-Forwarded-For repassado.
+app.set('trust proxy', 1)
+
 // ✅ ADICIONE ESTE TRECHO AQUI
 app.use((req, res, next) => {
   console.log(`--> [INÍCIO] Nova requisição recebida: ${req.method} ${req.originalUrl}`);
@@ -119,16 +124,31 @@ app.use(cors({
 }))
 
 // ✅ RATE LIMITING SEGURO
+
+// ✅ ROTAS INTERNAS DE ALTÍSSIMA FREQUÊNCIA — ISENTAS DE RATE LIMIT
+// O Nginx chama /api/auth/validate-session (auth_request) a CADA requisição HTTP de
+// CADA subdomínio do hub, sempre a partir do mesmo IP (o container do Nginx). Contar
+// essas chamadas estoura qualquer limite em segundos: o endpoint passa a responder 429,
+// o auth_request trata 429 como erro e devolve 500 ao navegador → TODOS os sites do hub
+// caem juntos. O health check tem o mesmo problema (monitoramento bate nele continuamente).
+const RATE_LIMIT_EXEMPT_PATHS = [
+  '/api/auth/validate-session',
+  '/auth/validate-session',
+  '/api/health'
+]
+
+const skipInternalEndpoints = (req: express.Request) => {
+  const path = (req.originalUrl || req.url).split('?')[0]
+  return RATE_LIMIT_EXEMPT_PATHS.includes(path)
+}
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: isProduction ? 100 : 1000, // ✅ MAIS RESTRITIVO EM PRODUÇÃO
   message: { error: 'Muitas requisições. Tente novamente em 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // ✅ PULAR RATE LIMITING PARA HEALTH CHECK
-    return req.url === '/api/health'
-  }
+  skip: skipInternalEndpoints
 })
 
 const authLimiter = rateLimit({
@@ -171,13 +191,8 @@ const uploadLimiter = rateLimit({
   message: { error: 'Muitos uploads. Aguarde 1 minuto.' }
 })
 
-// ✅ RATE LIMITER PARA VALIDAÇÃO DE SESSÃO SSO (chamado a cada page load nos subdomínios)
-const sessionValidationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minuto
-  max: 120, // Generoso — é chamado em toda navegação
-  standardHeaders: true,
-  legacyHeaders: false
-})
+// ℹ️ /api/auth/validate-session NÃO tem rate limiter: é endpoint interno chamado pelo
+// Nginx (auth_request) a cada request de cada site. Ver RATE_LIMIT_EXEMPT_PATHS acima.
 
 // ✅ SLOW DOWN PARA REQUESTS SUSPEITAS
 // ✅ CONFIGURAÇÃO CORRETA PARA express-slow-down v2
@@ -193,6 +208,8 @@ const speedLimiter = slowDown({
   maxDelayMs: 5000, // Delay máximo de 5 segundos
   skipFailedRequests: false,
   skipSuccessfulRequests: false,
+  // ✅ Mesma isenção do rate limiter: nunca atrasar a validação de sessão do Nginx
+  skip: skipInternalEndpoints,
   // ✅ DESABILITAR WARNING
   validate: {
     delayMs: false
@@ -204,7 +221,6 @@ app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 app.use('/api/auth/hub-login', hubLoginLimiter) // ✅ NOVO: Rate limit específico para hub
 app.use('/api/auth/sso-login', ssoLoginLimiter) // ✅ NOVO: Rate limit para SSO
-app.use('/api/auth/validate-session', sessionValidationLimiter) // ✅ SSO session validation
 app.use('/api/tasks/*path/attachments', uploadLimiter)  // ✅ *path com nome
 app.use(speedLimiter)
 app.use(generalLimiter)
@@ -230,7 +246,7 @@ app.use(cookieParser())
 // ✅ VALIDATE SESSION — registrado ANTES do body parser para evitar crash
 // O Nginx auth_request pode encaminhar headers residuais (Content-Type: application/json)
 // que causam 500 no express.json() verify. Registrando aqui, o request nunca toca no body parser.
-app.use('/api/auth/validate-session', sessionValidationLimiter, validateSession)
+app.use('/api/auth/validate-session', validateSession)
 
 // ✅ BODY PARSER SEGURO
 app.use(express.json({
